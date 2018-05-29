@@ -1,0 +1,189 @@
+ {% extends "base1.html" %}
+
+{% block title %}灾难演练{% endblock %}
+
+{% block content %}
+
+   <section class="scrollable wrapper">
+
+    <ul class="breadcrumb">
+        <li><a href="/index"><i class="fa fa-home"></i>首页</a></li>
+        <li>灾备操作</li>
+        <li class="active">灾难演练</li>
+    </ul>
+    <section class="panel panel-default">
+        <header class="panel-heading">
+                灾难演练
+        </header>
+        <div style="height:10px"></div>
+
+        <table class="table table-striped table-bordered table-hover table-checkable order-column" id="sample_1">
+                                <thead>
+                                    <tr>
+                                        <th> 应用组 </th>
+                                        <th> 平台 </th>
+                                        <th> 主机类型 </th>
+                                        <th> 灾备状态</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                </tbody>
+                            </table>
+
+        <div id="static1" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false" >
+                            <div class="modal-dialog" style="width:900px;">
+                                <div class="modal-content" >
+                                    <div class="portlet light bordered" >
+                                        <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                                        </div>
+
+                                        <form class="form-horizontal" action="#" id="submit_form" method="POST">
+                                            <div class="form-wizard">
+                                                <div class="form-body">
+                                                    <ul class="nav nav-pills nav-justified steps">
+                                                        <li class='active' >
+                                                            <a href="#tab1" id="li1"  data-toggle="tab" class="step">
+                                                                <span class="number" style="background:Gold"> 1 </span>
+                                                                <span class="desc">
+                                                                    <i class="fa fa-check"></i> 选择应用 </span>
+                                                            </a>
+                                                        </li>
+                                                        <li >
+                                                            <a href="#tab2" id="li2" data-toggle="tab" class="step">
+                                                                <span class="number"> 2 </span>
+                                                                <span class="desc">
+                                                                    <i class="fa fa-check"></i> 选择灾备资源 </span>
+                                                            </a>
+                                                        </li>
+                                                        <li >
+                                                            <a href="#tab3" id="li3" data-toggle="tab" class="step">
+                                                                <span class="number" > 3 </span>
+                                                                <span class="desc">
+                                                                    <i class="fa fa-check"></i> 服务检查 </span>
+                                                            </a>
+                                                        </li>
+                                                        <li >
+                                                            <a href="#tab4" id="li4" data-toggle="tab" class="step">
+                                                                <span class="number"> 4 </span>
+                                                                <span class="desc">
+                                                                    <i class="fa fa-check"></i> 业务验证 </span>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                    <div id="myTabContent1" class="tab-content">
+                                                        <div class="tab-pane active" id="tab1" style="margin-bottom:50px">
+                                                            <div class="form-group form-md-line-input has-success">
+                                                                <label class="col-md-3 control-label" >选择应用</label>
+                                                                <div class="col-md-9">
+                                                                    <input hidden id="clientGUID" type="text" name="clientGUID" >
+                                                                    <input hidden id="dataSetGUID" type="text" name="dataSetGUID" >
+                                                                    <input hidden id="type" type="text" name="type" >
+                                                                    <input readonly  id="appGroup" autocomplete="off" type="text" name="appGroup" class="form-control"  >
+                                                                </div>
+                                                            </div>
+                                                            <div id="vmdiv" class="form-group form-md-line-input has-success">
+                                                                <label class="col-md-3 control-label" >选择虚机</label>
+                                                                <div class="col-md-9">
+                                                                    <select class="form-control" id="vmlist" name="vmlist">
+
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-actions col-md-10 col-md-offset-1">
+                                                                        <button id="next1" style="float:right" type="button" class="btn green">下一步</button>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="tab-pane " id="tab2" style="margin-bottom:50px">
+                                                            <div class="form-group form-md-line-input has-success">
+                                                                <label class="col-md-3 control-label" >选择资源池</label>
+                                                                <div class="col-md-9">
+                                                                    <select id="resourcepool" class="form-control"  name="resourcepool">
+
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group form-md-line-input has-success">
+                                                                <label class="col-md-3 control-label" >选择主机</label>
+                                                                <div class="col-md-9">
+                                                                    <select class="form-control" id="computerresource" name="computerresource">
+
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-actions col-md-10 col-md-offset-1">
+                                                                        <button id="last2" style="float:left" type="button" class="btn green">上一步</button>
+                                                                        <button id="next2" style="float:right" type="button" class="btn green">下一步</button>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="tab-pane " id="tab3" style="margin-bottom:50px">
+                                                            <div class="form-group form-md-line-input has-success">
+                                                                <label class="col-md-3 control-label" >服务已检查</label>
+                                                                <div class="col-md-9">
+                                                                    <input id="mssql_iscover" name="mssql_iscover" type="checkbox" value="True" style="width: 20px; height: 20px;"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-actions col-md-10 col-md-offset-1">
+                                                                        <button id="last3" style="float:left" type="button" class="btn green">上一步</button>
+                                                                        <button id="next3" style="float:right" type="button" class="btn green">下一步</button>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="tab-pane " id="tab4" style="margin-bottom:50px">
+                                                            <div class="form-group form-md-line-input has-success">
+                                                                <label class="col-md-3 control-label" >业务已验证</label>
+                                                                <div class="col-md-9">
+                                                                    <input id="mssql_isco2ver" name="mssql_iscover" type="checkbox" value="True" style="width: 20px; height: 20px;"/>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-actions col-md-10 col-md-offset-1">
+                                                                        <button id="last4" style="float:left" type="button" class="btn green">上一步</button>
+                                                                        <button id="next4" style="float:right" type="button" class="btn green">完成</button>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    </section>
+
+
+</section>
+
+ {% endblock %}
+
+{% block script %}
+<script>
+$.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+    });
+</script>
+
+    <link href="/static/assets/global/plugins/datatables/datatables.min.css" rel="stylesheet" type="text/css" />
+    <link href="/static/assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" rel="stylesheet" type="text/css" />
+    <link href="/static/assets/global/plugins/bootstrap-select/css/bootstrap-select.min.css" rel="stylesheet" type="text/css" />
+    <link href="/static/assets/global/plugins/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
+    <link href="/static/assets/global/plugins/select2/css/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="/static/assets/global/css/plugins.min.css" rel="stylesheet" type="text/css" />
+
+    <script src="/static/assets/global/plugins/datatables/datatables.min.js" type="text/javascript"></script>
+    <script src="/static/assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" type="text/javascript"></script>
+    <script src="/static/assets/global/plugins/bootstrap-select/js/bootstrap-select.min.js" type="text/javascript"></script>
+    <script src="/static/assets/global/plugins/select2/js/select2.full.min.js" type="text/javascript"></script>
+    <script src="/static/assets/pages/scripts/components-select2.min.js" type="text/javascript"></script>
+    <script src="/static/assets/global/plugins/jstree/dist/jstree.min.js" type="text/javascript"></script>
+    <script src="/static/assets/global/plugins/jquery-multi-select/js/jquery.multi-select.js" type="text/javascript"></script>
+    <script src="/static/myjs/disasterdrill.js" type="text/javascript"></script>
+
+
+{% endblock %}
