@@ -31,7 +31,7 @@ from cloud.vmApi import *
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
 
-
+#good
 def index(request):
     if request.user.is_authenticated():
         cvvendor = Vendor.objects.filter(name='CommVault')
