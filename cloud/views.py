@@ -27,7 +27,7 @@ from cloud.vmApi import *
 
 
 
-
+#why
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
 
