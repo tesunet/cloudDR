@@ -79,7 +79,7 @@
                         <span class="font-bold">首页 </span>
                       </a>
                     </li>
-                    <li class="{% if edituserpage %}active{% endif %} {% if childuserpage %}active{% endif %}">
+                    <li class="{% if edituserpage %}active{% endif %} {% if childuserpage %}active{% endif %}{% if grouppage %}active{% endif %}">
                       <a href="#" class="auto">
                         <span class="pull-right text-muted">
                           <i class="i i-circle-sm-o text"></i>
@@ -102,6 +102,13 @@
 
 
                             <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;子用户管理</span>
+                          </a>
+                        </li>
+                        <li class="{% if grouppage %}active{% endif %}">
+                          <a href="/group" class="auto">
+
+
+                            <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;角色管理</span>
                           </a>
                         </li>
                       </ul>
@@ -200,7 +207,7 @@
 
                       </ul>
                     </li>
-                    <li class="{% if disasterdrillpage %}active{% endif %} {% if manualrecoverypage %}active{% endif %}">
+                    <li class="{% if disasterdrillpage %}active{% endif %} {% if manualrecoverypage %}active{% endif %}{% if workflowsetpage %}active{% endif %}">
                       <a href="#" class="auto">
                         <span class="pull-right text-muted">
                           <i class="i i-circle-sm-o text"></i>
@@ -211,6 +218,12 @@
                         <span class="font-bold">灾备操作</span>
                       </a>
                       <ul class="nav dk">
+                        <li class="{% if workflowsetpage %}active{% endif %}">
+                          <a href="/workflowset" class="auto">
+
+                            <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;流程预案</span>
+                          </a>
+                        </li>
                         <li class="{% if manualrecoverypage %}active{% endif %}">
                           <a href="/manualrecovery" class="auto">
 
@@ -218,11 +231,10 @@
                           </a>
                         </li>
                       <li class="nav-item  {% if disasterdrillpage %}active open{% endif %}">
-                                    <a href="/disasterdrill" class="nav-link ">
-                                        <span class="title">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;灾难演练
-                                            </span>
-                                    </a>
-                                </li>
+                        <a href="/disasterdrill" class="nav-link ">
+                            <span >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;异机恢复</span>
+                        </a>
+                        </li>
                       </ul>
                     </li>
 

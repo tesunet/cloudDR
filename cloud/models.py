@@ -5,12 +5,19 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class Group(models.Model):
+    name = models.CharField(u"组名", blank=True, null=True,max_length=50)
+    remark = models.CharField(u"说明", blank=True, null=True, max_length=5000)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+    sort = models.IntegerField(u"排序", blank=True, null=True)
+
+
 class UserInfo(models.Model):
+    group = models.ManyToManyField(Group)
     user = models.OneToOneField(User, blank=True, null=True, )
     userGUID = models.CharField("GUID", null=True, max_length=50)
     fullname = models.CharField("姓名", blank=True, max_length=50)
     phone = models.CharField("电话", blank=True, null=True, max_length=50)
-    group = models.CharField("用户组", blank=True, null=True, max_length=50)
     pnode = models.ForeignKey('self', blank=True, null=True, related_name='children', verbose_name='父节点')
     type = models.CharField("类型", blank=True, null=True, max_length=20)
     state = models.CharField("状态", blank=True, null=True, max_length=20)

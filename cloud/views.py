@@ -840,6 +840,130 @@ def childuserdel(request):
             return HttpResponse(0)
 
 
+def group(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        allgroup = Group.objects.all().exclude(state="9")
+
+        return render(request, 'group.html',
+                      {'username': request.user.userinfo.fullname,
+                       "allgroup":allgroup,"grouppage":True})
+    else:
+        return HttpResponseRedirect("/login")
+
+def groupsave(request):
+    if 'id' in request.POST:
+        result = {}
+        id = request.POST.get('id', '')
+        name = request.POST.get('name', '')
+        remark = request.POST.get('remark', '')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        if name.strip() == '':
+            result["res"]='角色名称不能为空。'
+        else:
+            if id == 0:
+                allgroup = Group.objects.filter(name=name).exclude(state="9")
+                if (len(allgroup) > 0):
+                    result["res"]=name + '已存在。'
+                else:
+                    groupsave = Group()
+                    groupsave.name = name
+                    groupsave.remark = remark
+                    groupsave.save()
+                    result["res"] = "新增成功。"
+                    result["data"] = groupsave.id
+            else:
+                allgroup = Group.objects.filter(name=name).exclude(id=id).exclude(state="9")
+                if (len(allgroup) > 0):
+                    result["res"] = name + '已存在。'
+                else:
+                    try:
+                        groupsave = Group.objects.get(id=id)
+                        groupsave.name = name
+                        groupsave.remark = remark
+                        groupsave.save()
+                        result["res"] = "修改成功。"
+                    except:
+                        result["res"] = "修改失败。"
+        return HttpResponse(json.dumps(result))
+
+def groupdel(request):
+    if 'id' in request.POST:
+        id = request.POST.get('id', '')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        allgroup = Group.objects.filter(id=id)
+        if (len(allgroup) > 0):
+            groupsave = allgroup[0]
+            groupsave.state="9"
+            groupsave.save()
+            result = "删除成功。"
+        else:
+            result= '角色不存在。'
+        return HttpResponse(result)
+
+def group_get_user_tree(parent,selectusers):
+    nodes = []
+    children = parent.children.exclude(state="9").all()
+    for child in children:
+        node={}
+        node["text"] = child.fullname
+        node["id"] = "user_" +str(child.id)
+        if child in selectusers:
+            node["state"] = {"selected": True}
+        node["children"] = group_get_user_tree(child,selectusers)
+        nodes.append(node)
+    return nodes
+
+def getusertree(request):
+    if 'id' in request.POST:
+        id = request.POST.get('id', '')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+
+        treedata = []
+        groupsave = Group.objects.get(id=id)
+        selectusers = groupsave.userinfo_set.all()
+
+        rootnodes = UserInfo.objects.exclude(state="9").filter(pnode_id=None)
+
+        if len(rootnodes) > 0:
+            for rootnode in rootnodes:
+                root = {}
+                root["text"] = rootnode.fullname
+                root["id"] = "user_" +str(rootnode.id)
+                root["state"] = {"opened": True}
+                root["children"] = group_get_user_tree(rootnode,selectusers)
+                treedata.append(root)
+        treedata = json.dumps(treedata)
+        return HttpResponse(treedata)
+
+def groupsaveusertree(request):
+    if 'id' in request.POST:
+        id = request.POST.get('id', '')
+        selectedusers = request.POST.get('selecteduser', '')
+        selectedusers = selectedusers.split(',')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        groupsave = Group.objects.get(id=id)
+        groupsave.userinfo_set.clear()
+        if len(selectedusers)>0:
+            for selecteduser in selectedusers:
+                try:
+                    myuser = UserInfo.objects.get(id=int(selecteduser.replace("user_","")))
+                    myuser.group.add(groupsave)
+                except:
+                    pass
+        return HttpResponse("保存成功。")
+
 def resourcepool(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         return render(request, 'resourcepool.html',
@@ -4641,6 +4765,13 @@ def racproconfigdel(request):
             return HttpResponse("删除成功。")
         else:
             return HttpResponse("删除失败。")
+
+def workflowset(request):
+    if request.user.is_authenticated():
+        return render(request, 'workflowset.html',
+                      {'username': request.user.userinfo.fullname, "workflowsetpage": True})
+    else:
+        return HttpResponseRedirect("/login")
 
 
 def disasterdrill(request):

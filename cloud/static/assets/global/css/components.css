@@ -39,7 +39,14 @@ li {
 General reset
 ***/
 /* Set default body */
-
+body {
+  color: #333333;
+  font-family: "Open Sans", sans-serif;
+  padding: 0px !important;
+  margin: 0px !important;
+  direction: "ltr";
+  font-size: 14px;
+ }
 
 /*
  Internet Explorer 10 doesn't differentiate device width from viewport width, and thus doesn't 
@@ -1402,6 +1409,29 @@ File dropzone
   text-align: center; }
   .file-drop-zone.file-drop-zone-over {
     border-color: #aaa; }
+
+
+/***
+Fontawesome Icons
+***/
+
+
+
+/* Icon states */
+.icon-state-default {
+  color: #bac3d0; }
+
+.icon-state-success {
+  color: #36c6d3; }
+
+.icon-state-info {
+  color: #659be0; }
+
+.icon-state-warning {
+  color: #F1C40F; }
+
+.icon-state-danger {
+  color: #ed6b75; }
 
 
 /***
