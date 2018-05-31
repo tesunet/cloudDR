@@ -2941,8 +2941,6 @@ def matchdata(request):
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
-                clientNames = clientName.split('.')
-                clientName = clientNames[0]
                 platform = host.platform
                 agentTypeList = host.agentTypeList
                 if host.hostType == "VMWARE":
@@ -3113,8 +3111,6 @@ def phyproconfigdata(request):
             for host in allhost:
                 id = host.id
                 clientName = host.clientName
-                clientNames = clientName.split('.')
-                clientName = clientNames[0]
                 clientGUID = host.clientGUID
                 platform = host.platform
                 agentTypeList = host.agentTypeList
@@ -3801,8 +3797,6 @@ def vmproconfig(request):
                     for agenttypenode in node.getElementsByTagName("agentType"):
                         if agenttypenode.childNodes[0].data == "Virtual Server":
                             clientName = host.clientName
-                            clientNames = clientName.split('.')
-                            clientName = clientNames[0]
                             pyhhost.append({"GUID": host.clientGUID, "NAME": clientName})
                             break
         return render(request, 'vmproconfig.html',
@@ -3820,8 +3814,6 @@ def vmproconfigdata(request):
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
-                clientNames = clientName.split('.')
-                clientName = clientNames[0]
                 clientGUID = host.clientGUID
                 proxyClientID = host.proxyClientID
                 creditInfo = host.creditInfo
@@ -4203,8 +4195,6 @@ def racproconfig(request):
                     for agenttypenode in node.getElementsByTagName("agentType"):
                         if agenttypenode.childNodes[0].data == "ORACLE":
                             clientName = host.clientName
-                            clientNames = clientName.split('.')
-                            clientName = clientNames[0]
                             pyhhost.append({"GUID": host.clientGUID, "NAME": clientName})
                             break
         return render(request, 'racproconfig.html',
@@ -4222,8 +4212,6 @@ def racproconfigdata(request):
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
-                clientNames = clientName.split('.')
-                clientName = clientNames[0]
                 clientGUID = host.clientGUID
                 platform = host.platform
                 proxyClientID = host.proxyClientID
@@ -4238,8 +4226,6 @@ def racproconfigdata(request):
                             try:
                                 proxy = ClientHost.objects.get(clientGUID=proxylistnode.childNodes[0].data)
                                 listclientName = proxy.clientName
-                                listclientName = listclientName.split('.')
-                                listclientName = listclientName[0]
                                 proxylist.append({"clientGUID": proxy.clientGUID, "clientName": listclientName})
                             except:
                                 pass
@@ -4289,8 +4275,6 @@ def racproconfigdata(request):
                                 pyhclient = ClientHost.objects.exclude(status="9").filter(clientGUID=pyhGUID)
                                 if len(pyhclient) > 0:
                                     pyhclientName = pyhclient[0].clientName
-                                    pyhclientName = pyhclientName.split('.')
-                                    pyhclientName = pyhclientName[0]
                             except:
                                 pass
 
@@ -4674,8 +4658,6 @@ def disasterdrilldata(request):
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
-                clientNames = clientName.split('.')
-                clientName = clientNames[0]
                 clientGUID = host.clientGUID
                 platform = host.platform
                 appGroup = host.appGroup
@@ -4728,8 +4710,6 @@ def manualrecoverydata(request):
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
-                clientNames = clientName.split('.')
-                clientName = clientNames[0]
                 clientGUID = host.clientGUID
                 clientID = host.id
                 platform = host.platform
