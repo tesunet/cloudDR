@@ -27,7 +27,6 @@ from cloud.vmApi import *
 
 
 
-
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
 
@@ -79,7 +78,7 @@ def get_dashboard_amchart_1(request):
             type = request.GET.get('type', '')
         except:
             pass
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         hostlist = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -189,7 +188,7 @@ def get_dashboard_amchart_2(request):
         except:
             pass
         hostlist = []
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 hostlist.append(host.clientName)
@@ -249,7 +248,7 @@ def get_dashboard_amchart_3(request):
             type = request.GET.get('type', '')
         except:
             pass
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         hostlist = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -356,7 +355,7 @@ def get_dashboard_amchart_4(request):
         except:
             pass
         hostlist = []
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 hostlist.append(host.clientName)
@@ -749,11 +748,15 @@ def childuserdata(request):
                     company = userinfo.company
                     fullname = userinfo.fullname
                     tell = userinfo.tell
+                    selectedhosts = userinfo.client_host.all()
+                    selectedhost_list = []
+                    for selectedhost in selectedhosts:
+                        selectedhost_list.append(selectedhost.clientName)
                     state = "未激活"
                     if userinfo.state == "1":
                         state = "已激活"
                     result.append({"id": id, "username": username, "email": email, "phone": phone, "company": company,
-                                   "fullname": fullname, "tell": tell, "state": state})
+                                   "fullname": fullname, "tell": tell, "state": state, "selectedhost":selectedhost_list})
         return HttpResponse(json.dumps({"data": result}))
 
 
@@ -768,10 +771,12 @@ def childusersave(request):
             company = request.POST.get('company', '')
             fullname = request.POST.get('fullname', '')
             tell = request.POST.get('tell', '')
+
             try:
                 id = int(id)
             except:
                 raise Http404()
+
             if id == 0:
                 alluser = User.objects.filter(username=myusername)
                 if (len(alluser) > 0):
@@ -798,6 +803,13 @@ def childusersave(request):
                         profile.type = "2"
                         profile.state = "0"
                         profile.save()
+
+                        all_selected_clients = request.POST.getlist('my_multi_select1', '')
+                        for client in all_selected_clients:
+                            client_obj = ClientHost.objects.filter(clientName=client).filter(
+                                Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))[0]
+                            newuser.userinfo.client_host.add(client_obj)
+
                         result = "保存成功。"
                         try:
                             subject = u'注册成功'
@@ -813,6 +825,14 @@ def childusersave(request):
                     alluser[0].email = email
                     alluser[0].save()
                     myuserinfo = alluser[0].userinfo
+
+                    all_selected_clients = request.POST.getlist('my_multi_select1', '')
+                    myuserinfo.client_host.clear()
+                    for client in all_selected_clients:
+                        client_obj = ClientHost.objects.filter(clientName=client).filter(
+                            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))[0]
+                        myuserinfo.client_host.add(client_obj)
+
                     myuserinfo.phone = phone
                     myuserinfo.fullname = fullname
                     myuserinfo.company = company
@@ -840,10 +860,28 @@ def childuserdel(request):
             return HttpResponse(0)
 
 
+def getallclients(request):
+    if request.user.is_authenticated() and request.session['ispuser']:
+        if 'id' in request.POST:
+            id = request.POST.get('id', '')
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+            all_host = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            host_list = []
+            for host in all_host:
+                if (len(all_host) > 0):
+                    clientName = host.clientName
+                    host_list.append({
+                        "clientName": clientName,
+                    })
+            return JsonResponse({"data": host_list})
+
+
 def group(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         allgroup = Group.objects.all().exclude(state="9")
-
         return render(request, 'group.html',
                       {'username': request.user.userinfo.fullname,
                        "allgroup":allgroup,"grouppage":True})
@@ -906,49 +944,55 @@ def groupdel(request):
             result= '角色不存在。'
         return HttpResponse(result)
 
-def group_get_user_tree(parent,selectusers):
-    nodes = []
-    children = parent.children.exclude(state="9").all()
-    for child in children:
-        node={}
-        node["text"] = child.fullname
-        node["id"] = "user_" +str(child.id)
-        if child in selectusers:
-            node["state"] = {"selected": True}
-        node["children"] = group_get_user_tree(child,selectusers)
-        nodes.append(node)
-    return nodes
-
-def getusertree(request):
+def getusers(request):
     if 'id' in request.POST:
         id = request.POST.get('id', '')
         try:
             id = int(id)
         except:
             raise Http404()
+        users = UserInfo.objects.all()
+        selected_users = UserInfo.objects.filter(group__id=id)
+        selected_user_list = []
+        for selected_usr in selected_users:
+            selected_user_list.append({
+                "userid": selected_usr.id,
+                "username": selected_usr.fullname
+            })
+        user_list = []
+        for user in users:
+            user_list.append({
+                    "userid": user.id,
+                    "username": user.fullname
+                })
 
-        treedata = []
-        groupsave = Group.objects.get(id=id)
-        selectusers = groupsave.userinfo_set.all()
+        return JsonResponse({"data": {
+                "user_list": user_list,
+                "selected_user_list": selected_user_list,
+            }
+        })
 
-        rootnodes = UserInfo.objects.exclude(state="9").filter(pnode_id=None)
+def getselectedusers(request):
+    if 'id' in request.POST:
+        id = request.POST.get('id', '')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        users = UserInfo.objects.filter(group__id=id)
+        users_to_str = ""
+        if len(users)>0:
+            for num, user in enumerate(users):
+                users_to_str+= "&%s" % user.fullname
+            print({"data": users_to_str[1:]})
+            return JsonResponse({"data": users_to_str[1:]})
 
-        if len(rootnodes) > 0:
-            for rootnode in rootnodes:
-                root = {}
-                root["text"] = rootnode.fullname
-                root["id"] = "user_" +str(rootnode.id)
-                root["state"] = {"opened": True}
-                root["children"] = group_get_user_tree(rootnode,selectusers)
-                treedata.append(root)
-        treedata = json.dumps(treedata)
-        return HttpResponse(treedata)
 
-def groupsaveusertree(request):
+def groupsaveuser(request):
     if 'id' in request.POST:
         id = request.POST.get('id', '')
         selectedusers = request.POST.get('selecteduser', '')
-        selectedusers = selectedusers.split(',')
+        selectedusers = selectedusers.split('*!-!*')
         try:
             id = int(id)
         except:
@@ -958,7 +1002,7 @@ def groupsaveusertree(request):
         if len(selectedusers)>0:
             for selecteduser in selectedusers:
                 try:
-                    myuser = UserInfo.objects.get(id=int(selecteduser.replace("user_","")))
+                    myuser = UserInfo.objects.get(id=int(selecteduser))
                     myuser.group.add(groupsave)
                 except:
                     pass
@@ -2247,7 +2291,7 @@ def vm_installcvsave(request):
         vmuser = request.POST.get("user", "")
         vmpassword = request.POST.get("password", "")
 
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID).filter(
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(
             clientName=hostname+"."+request.user.username)
         if (len(allhost) > 0):
             result = {"value": "0", "text": u"主机名" + hostname+"."+request.user.usernamee + u'已注册,请勿重复安装。'}
@@ -2288,7 +2332,7 @@ def registercvsave(request):
         result = {}
         hostname = request.POST.get("hostname", "")
 
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID).filter(
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(
             clientName=hostname+"."+request.user.username)
         if (len(allhost) > 0):
             result = {"value": "0", "text": u"主机名" + hostname + u'已注册,请勿重复注册。'}
@@ -3061,7 +3105,7 @@ def match(request):
 def matchdata(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         result = []
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -3091,7 +3135,7 @@ def matching(request):
             clientList = cvAPI.getClientList()
             for client in clientList:
                 allhost = ClientHost.objects.filter(clientID=client["clientId"]).exclude(status="9").filter(
-                    owernID=request.user.userinfo.userGUID)
+                    Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
                 if (len(allhost) > 0):
                     client["selected"] = True
                 else:
@@ -3113,7 +3157,7 @@ def matchsave(request):
             myclientlist.remove("")
 
             oldhost = ClientHost.objects.exclude(status="9").filter(
-                owernID=request.user.userinfo.userGUID)
+                Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
             for client in oldhost:
                 if str(client.clientID) not in clientlist:
                     client.status = "9"
@@ -3125,7 +3169,7 @@ def matchsave(request):
 
                 clientInfo = cvAPI.getClientInfo(int(listid))
                 newhost = ClientHost.objects.exclude(status="9").filter(
-                    owernID=request.user.userinfo.userGUID).filter(clientID=int(listid)).exclude(status="9")
+                    Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(clientID=int(listid)).exclude(status="9")
                 clientName = clientInfo["clientName"]
                 hostType = ""
                 proxyClient = ""
@@ -3155,7 +3199,7 @@ def matchsave(request):
                     proxyClient = "<?xml version=\"1.0\" ?><PROXYLIST>"
                     for node in clientInfo["instance"]["PROXYLIST"]:
                         proxyhost = ClientHost.objects.exclude(status="9").filter(
-                            owernID=request.user.userinfo.userGUID).filter(clientID=int(node["clientId"])).exclude(
+                            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(clientID=int(node["clientId"])).exclude(
                             status="9")
                         if len(proxyhost) > 0:
                             proxyClient += "<PROXY>" + proxyhost[0].clientGUID + "</PROXY>"
@@ -3230,7 +3274,7 @@ def phyproconfigdata(request):
     if request.user.is_authenticated():
         result = []
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box").filter(
-            owernID=request.user.userinfo.userGUID)
+            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 id = host.id
@@ -3911,7 +3955,7 @@ def vmproconfig(request):
             schdules.append({"id": schdule.id, "name": schdule.name + "(" + schdule.description + ")"})
 
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box").filter(
-            owernID=request.user.userinfo.userGUID)
+            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         pyhhost = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -3934,7 +3978,7 @@ def vmproconfigdata(request):
     if request.user.is_authenticated():
         result = []
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="VMWARE").filter(
-            owernID=request.user.userinfo.userGUID)
+            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4309,7 +4353,7 @@ def racproconfig(request):
             schdules.append({"id": schdule.id, "name": schdule.name + "(" + schdule.description + ")"})
 
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box").filter(
-            owernID=request.user.userinfo.userGUID)
+            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         pyhhost = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -4332,7 +4376,7 @@ def racproconfigdata(request):
     if request.user.is_authenticated():
         result = []
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="RAC").filter(
-            owernID=request.user.userinfo.userGUID)
+            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4785,7 +4829,7 @@ def disasterdrill(request):
 def disasterdrilldata(request):
     if request.user.is_authenticated():
         result = []
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4837,7 +4881,7 @@ def manualrecovery(request):
 def manualrecoverydata(request):
     if request.user.is_authenticated():
         result = []
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4901,8 +4945,7 @@ def oraclerecovery(request, offset):
                 alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='ORACLE').exclude(
                     status="9")
                 if len(alldataset) > 0:
-                    allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box",
-                                                                            owernID=request.user.userinfo.userGUID).filter(
+                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box")&(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))).filter(
                         agentTypeList__contains="<agentType>ORACLE</agentType>")
                     destClient = []
                     for host in allhost:
@@ -4976,8 +5019,8 @@ def mssqlrecovery(request, offset):
                 alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='MSSQL').exclude(
                     status="9")
                 if len(alldataset) > 0:
-                    allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box",
-                                                                            owernID=request.user.userinfo.userGUID).filter(
+                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box")&
+                                                                            (Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))).filter(
                         agentTypeList__contains="<agentType>MSSQL</agentType>")
                     destClient = []
                     for host in allhost:
@@ -5054,8 +5097,8 @@ def filerecovery(request, offset):
                 alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='FILESYSTEM').exclude(
                     status="9")
                 if len(alldataset) > 0:
-                    allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box",
-                                                                            owernID=request.user.userinfo.userGUID).filter(
+                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box")&
+                                                                            (Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))).filter(
                         agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
                     destClient = []
                     for host in allhost:
@@ -5179,8 +5222,8 @@ def vmrecovery(request, offset):
         mydataset = DataSet.objects.filter(id=id)
         if len(mydataset) > 0:
             if mydataset[0].owernID == request.user.userinfo.userGUID:
-                allhost = ClientHost.objects.exclude(status="9").filter(hostType="VMWARE",
-                                                                        owernID=request.user.userinfo.userGUID)
+                allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="VMWARE")&
+                                                                        (Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)))
                 # allhost = ClientHost.objects.exclude(status="9").filter(hostType="VMWARE").exclude(clientGUID=mydataset[0].clientGUID)
                 destClient = []
                 vmlist = []
@@ -5340,7 +5383,7 @@ def report(request):
         nowtime = datetime.datetime.now()
         endtime = nowtime.strftime("%Y-%m-%d")
         starttime = (nowtime - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        allhost = ClientHost.objects.exclude(status="9").filter(owernID=request.user.userinfo.userGUID)
+        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
         client = []
         for host in allhost:
             client.append(host.clientName)
