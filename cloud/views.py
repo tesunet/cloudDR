@@ -4812,11 +4812,81 @@ def racproconfigdel(request):
 
 def workflowset(request):
     if request.user.is_authenticated():
+        processes = Process.objects.exclude(state="9").order_by("sort")
+        processlist = []
+        for process in processes:
+            processlist.append({"id": process.id, "code":process.code,"name": process.name })
+        grouplist = []
+        allgroup = Group.objects.all().exclude(state="9")
+        for group in allgroup:
+            grouplist.append({"id": group.id, "name": group.name})
         return render(request, 'workflowset.html',
-                      {'username': request.user.userinfo.fullname, "workflowsetpage": True})
+                      {'username': request.user.userinfo.fullname, "grouplist":grouplist,"processlist":processlist,"workflowsetpage": True})
     else:
         return HttpResponseRedirect("/login")
 
+def getsetps(request):
+    if request.user.is_authenticated():
+        if request.method == 'POST':
+            result = []
+            process = request.POST.get('process', '')
+            try:
+                process = int(process)
+            except:
+                raise Http404()
+            processes = Process.objects.exclude(state="9").filter(id=process)
+            if len(processes)>0:
+                steplist = Step.objects.exclude(state="9").filter(process=processes[0])
+                for step in steplist:
+                    curstring = ""
+                    if step.approval=="1":
+                        curstring+="需审批"
+                    if step.skip=="1":
+                        curstring += "可跳过"
+                    result.append({"id": step.id, "code": step.code,"name": step.name,"approval": step.approval,"skip": step.skip,"group": step.group,"time": step.time,"curstring":curstring})
+
+            return HttpResponse(json.dumps(result))
+
+def setpsave(request):
+    if request.method == 'POST':
+        result = ""
+        id = request.POST.get('id', '')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        name = request.POST.get('name', '')
+        time = request.POST.get('time', '')
+        skip = request.POST.get('skip', '')
+        approval = request.POST.get('approval', '')
+        group = request.POST.get('group', '')
+        step = Step.objects.filter(id=id)
+        if (len(step) > 0):
+            step[0].name = name
+            try:
+                time = int(time)
+                step[0].time = time
+            except:
+                pass
+            step[0].skip = skip
+            step[0].approval = approval
+            step[0].group = group
+            step[0].save()
+            result = "保存成功。"
+        else:
+            step = Step()
+            step[0].name = name
+            try:
+                time = int(time)
+                step[0].time = time
+            except:
+                pass
+            step.skip = skip
+            step.approval = approval
+            step.group = group
+            step.save()
+            result = "保存成功。"
+        return HttpResponse(result)
 
 def disasterdrill(request):
     if request.user.is_authenticated():

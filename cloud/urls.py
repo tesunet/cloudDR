@@ -123,6 +123,8 @@ urlpatterns = patterns('cloud.views',
                        (r'^racproconfigdel/$', 'racproconfigdel'),
 
                        (r'^workflowset/$', 'workflowset'),
+                        (r'^getsetps/$', 'getsetps'),
+                        (r'^setpsave/$', 'setpsave'),
                        (r'^disasterdrill/$', 'disasterdrill'),
                        (r'^disasterdrilldata/$', 'disasterdrilldata'),
                        (r'^manualrecovery/$', 'manualrecovery'),

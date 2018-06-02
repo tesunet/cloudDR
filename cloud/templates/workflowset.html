@@ -22,52 +22,17 @@
 
                         <label class="col-md-offset-6 col-md-2 control-label">预案名称</label>
                         <div class="col-md-4">
-                            <select class="form-control" id="disktype" name="disktype"
-                                    form="formactivate">
-                                <option value='thick'>本机恢复</option>
-                                <option value='thin'>异机恢复</option>
+                            <select class="form-control" id="process" name="process">
+                                {% for process in processlist %}
+                                        <option value="{{process.id}}">{{process.name}} </option>
+                                    {% endfor %}
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="mt-element-step">
-                    <div class="row step-line" style="height: 600px">
-                        <div id="div1" class="col-md-2 mt-step-col first active" data-toggle="modal"  data-target="#static">
-                            <div class="mt-step-number bg-white">1</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">选择需恢复的应用</div>
-                        </div>
-                        <div class="col-md-2 mt-step-col  active">
-                            <div class="mt-step-number bg-white">2</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">选择恢复时间点</div>
-                        </div>
-                        <div class="col-md-2 mt-step-col mt-step-col active">
-                            <div class="mt-step-number  bg-white">3</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">创建灾备资源</div>
-                            <div class="mt-step-content font-grey-cascade">需审批 可跳过</div>
-                        </div>
+                    <div id="stepdiv" class="row step-line" style="height: 600px">
 
-                        <div class="col-md-2 mt-step-col mt-step-col active">
-                            <div class="mt-step-number bg-white">4</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">选择灾备资源</div>
-                        </div>
-                        <div class="col-md-2 mt-step-col mt-step-col active">
-                            <div class="mt-step-number bg-white">5</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">输入参数</div>
-                        </div>
-                        <div class="col-md-2 mt-step-col mt-step-col active">
-                            <div class="mt-step-number bg-white">6</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">提交任务</div>
-                            <div class="mt-step-content font-grey-cascade">需审批</div>
-                        </div>
-                        <div class="col-md-2 mt-step-col mt-step-col active">
-                            <div class="mt-step-number bg-white">7</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">服务检查</div>
-                        </div>
-                        <div class="col-md-2 mt-step-col mt-step-col last active">
-                            <div class="mt-step-number bg-white">8</div>
-                            <div class="mt-step-title uppercase font-grey-cascade">业务验证</div>
-                            <div class="mt-step-content font-grey-cascade">需审批</div>
-                        </div>
                     </div>
                     <br/>
                     <br/>
@@ -80,7 +45,7 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
-                                    <h4 class="modal-title">子用户管理</h4>
+                                    <h4 class="modal-title">步骤配置</h4>
                             </div>
                             <div class="panel-body">
 
@@ -88,68 +53,54 @@
 
                                     <div class="form-body"  >
                                         <div class="form-group ">
-                                            <label class="col-md-2 control-label" >用户名</label>
-                                            <div class="col-md-10">
-                                                 <input hidden id="id" type="text" name="id" >
-                                                <input id="username" autocomplete="off" type="text" name="username" class="form-control" placeholder="用户名" >
+                                            <label class="col-md-3 control-label" >步骤名称</label>
+                                            <div class="col-md-9">
+                                                <input hidden  id="id" type="text" name="id" >
+                                                <input id="name" autocomplete="off" type="text" name="name" class="form-control" placeholder="步骤名称">
                                                 <div class="form-control-focus"> </div>
 
                                             </div>
                                         </div>
                                         <div class="form-group ">
-                                            <label class="col-md-2 control-label" >邮箱</label>
-                                            <div class="col-md-10">
-                                                <input id="email" autocomplete="off" type="text" name="email" class="form-control" placeholder="邮箱" >
+                                            <label class="col-md-3 control-label" >预计耗时(分钟)</label>
+                                            <div class="col-md-9">
+                                                <input id="time" type="number" name="time" class="form-control" placeholder="预计耗时">
                                                 <div class="form-control-focus"> </div>
 
                                             </div>
                                         </div>
                                         <div class="form-group ">
-                                            <label class="col-md-2 control-label" >手机</label>
-                                            <div class="col-md-10">
-                                                <input  id="phone" autocomplete="off" type="text" name="phone" class="form-control" placeholder="手机" >
-                                                <div class="form-control-focus"> </div>
-
-                                            </div>
-                                        </div>
-                                        <div class="form-group ">
-                                            <label class="col-md-2 control-label" >姓名</label>
-                                            <div class="col-md-10">
-                                                <input id="fullname" autocomplete="off" type="text" name="fullname" class="form-control" placeholder="姓名">
-                                                <div class="form-control-focus"> </div>
-
-                                            </div>
-                                        </div>
-                                        <div class="form-group ">
-                                            <label class="col-md-2 control-label" >单位</label>
-                                            <div class="col-md-10">
-                                                <input id="company" type="text" name="company" class="form-control" placeholder="单位">
-                                                <div class="form-control-focus"> </div>
-
-                                            </div>
-                                        </div>
-                                        <div class="form-group ">
-                                            <label class="col-md-2 control-label" >座机</label>
-                                            <div class="col-md-10">
-                                                <input  id="tell"  autocomplete="off" type="text" name="tell" class="form-control" placeholder="座机">
-                                                <div class="form-control-focus"> </div>
-
-                                            </div>
-                                        </div>
-                                        <div class="form-group ">
-                                            <label class="col-md-2 control-label" >客户端</label>
-                                            <div class="col-md-10">
-                                                <select multiple="multiple" class="multi-select" id="my_multi_select1" name="my_multi_select1">
-                                                    <option value='win-2qls3b7jx3v'>win-2qls3b7jx3v	</option>
-                                                    <option value='vctest'>vctest</option>
-                                                    <option value='linux1'>linux1</option>
-                                                    <option value='t2'>t2</option>
-                                                    <option value='newclhost'>newclhost</option>
-                                                    <option value='disktest'>disktest</option>
-
+                                            <label class="col-md-3 control-label" >可跳过</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" id="skip" name="skip">
+                                                    <option value="1">是</option>
+                                                    <option value="0">否</option>
                                                 </select>
+
                                             </div>
                                         </div>
+                                        <div class="form-group ">
+                                            <label class="col-md-3 control-label" >需审批</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" id="approval" name="approval">
+                                                    <option value="1">是</option>
+                                                    <option value="0">否</option>
+                                                </select>
+
+                                            </div>
+                                        </div>
+                                        <div class="form-group ">
+                                            <label class="col-md-3 control-label" >审批角色</label>
+                                            <div class="col-md-9">
+                                                <select class="form-control" id="group" name="group">
+                                                    {% for group in grouplist %}
+                                                        <option  value="{{group.id}}">{{group.name}} </option>
+                                                    {% endfor %}
+                                                </select>
+
+                                            </div>
+                                        </div>
+
                                     </div>
                                     <div class="form-actions " >
                                         <div class="modal-footer">

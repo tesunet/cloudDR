@@ -152,7 +152,7 @@ STATIC_URL = '/static/'
 SITE_ROOT=os.path.join(os.path.abspath(os.path.dirname(__file__)),'..')
 STATIC_ROOT = os.path.join(SITE_ROOT,'static')
 
-EMAIL_HOST = 'mail.tesunet.com.cn'
+EMAIL_HOST = 'smtp.exmail.qq.com'
 EMAIL_HOST_USER = 'huangzx@tesunet.com.cn'
-EMAIL_HOST_PASSWORD = 'china320701045'
+EMAIL_HOST_PASSWORD = 'China320701045'
 EMAIL_PORT = 25
