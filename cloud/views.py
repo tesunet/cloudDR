@@ -25,10 +25,9 @@ from django.db.models import Sum
 from django.db import connection
 from cloud.vmApi import *
 
-
-
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
+
 
 def index(request):
     if request.user.is_authenticated():
@@ -78,7 +77,8 @@ def get_dashboard_amchart_1(request):
             type = request.GET.get('type', '')
         except:
             pass
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         hostlist = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -188,7 +188,8 @@ def get_dashboard_amchart_2(request):
         except:
             pass
         hostlist = []
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 hostlist.append(host.clientName)
@@ -248,7 +249,8 @@ def get_dashboard_amchart_3(request):
             type = request.GET.get('type', '')
         except:
             pass
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         hostlist = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -276,7 +278,7 @@ def get_dashboard_amchart_3(request):
                     if len(rlfulljoblist) > 0:
                         rl = rlfulljoblist[0].diskcapacity
                         s = rlfulljoblist[0].startdate
-                    print(clientname,rl)
+                    print(clientname, rl)
                     rlsum = rlsum + rl
                     rlincjoblist = Joblist.objects.filter(startdate__range=(s, e), backuplevel='Incremental',
                                                           clientname=clientname)
@@ -355,7 +357,8 @@ def get_dashboard_amchart_4(request):
         except:
             pass
         hostlist = []
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 hostlist.append(host.clientName)
@@ -417,7 +420,7 @@ def download(request):
                         else:
                             break
 
-            #the_file_name = "/var/www/cloudDR/download/" + request.GET.get('filename', '').replace('^', ' ')
+            # the_file_name = "/var/www/cloudDR/download/" + request.GET.get('filename', '').replace('^', ' ')
             the_file_name = "download/" + request.GET.get('filename', '').replace('^', ' ')
             response = StreamingHttpResponse(file_iterator(the_file_name))
             response['Content-Type'] = 'application/octet-stream; charset=unicode'
@@ -756,7 +759,8 @@ def childuserdata(request):
                     if userinfo.state == "1":
                         state = "已激活"
                     result.append({"id": id, "username": username, "email": email, "phone": phone, "company": company,
-                                   "fullname": fullname, "tell": tell, "state": state, "selectedhost":selectedhost_list})
+                                   "fullname": fullname, "tell": tell, "state": state,
+                                   "selectedhost": selectedhost_list})
         return HttpResponse(json.dumps({"data": result}))
 
 
@@ -868,7 +872,8 @@ def getallclients(request):
                 id = int(id)
             except:
                 raise Http404()
-            all_host = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            all_host = ClientHost.objects.exclude(status="9").filter(
+                Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
             host_list = []
             for host in all_host:
                 if (len(all_host) > 0):
@@ -884,9 +889,10 @@ def group(request):
         allgroup = Group.objects.all().exclude(state="9")
         return render(request, 'group.html',
                       {'username': request.user.userinfo.fullname,
-                       "allgroup":allgroup,"grouppage":True})
+                       "allgroup": allgroup, "grouppage": True})
     else:
         return HttpResponseRedirect("/login")
+
 
 def groupsave(request):
     if 'id' in request.POST:
@@ -899,12 +905,12 @@ def groupsave(request):
         except:
             raise Http404()
         if name.strip() == '':
-            result["res"]='角色名称不能为空。'
+            result["res"] = '角色名称不能为空。'
         else:
             if id == 0:
                 allgroup = Group.objects.filter(name=name).exclude(state="9")
                 if (len(allgroup) > 0):
-                    result["res"]=name + '已存在。'
+                    result["res"] = name + '已存在。'
                 else:
                     groupsave = Group()
                     groupsave.name = name
@@ -927,6 +933,7 @@ def groupsave(request):
                         result["res"] = "修改失败。"
         return HttpResponse(json.dumps(result))
 
+
 def groupdel(request):
     if 'id' in request.POST:
         id = request.POST.get('id', '')
@@ -937,12 +944,13 @@ def groupdel(request):
         allgroup = Group.objects.filter(id=id)
         if (len(allgroup) > 0):
             groupsave = allgroup[0]
-            groupsave.state="9"
+            groupsave.state = "9"
             groupsave.save()
             result = "删除成功。"
         else:
-            result= '角色不存在。'
+            result = '角色不存在。'
         return HttpResponse(result)
+
 
 def getusers(request):
     if 'id' in request.POST:
@@ -962,15 +970,16 @@ def getusers(request):
         user_list = []
         for user in users:
             user_list.append({
-                    "userid": user.id,
-                    "username": user.fullname
-                })
+                "userid": user.id,
+                "username": user.fullname
+            })
 
         return JsonResponse({"data": {
-                "user_list": user_list,
-                "selected_user_list": selected_user_list,
-            }
+            "user_list": user_list,
+            "selected_user_list": selected_user_list,
+        }
         })
+
 
 def getselectedusers(request):
     if 'id' in request.POST:
@@ -981,9 +990,9 @@ def getselectedusers(request):
             raise Http404()
         users = UserInfo.objects.filter(group__id=id)
         users_to_str = ""
-        if len(users)>0:
+        if len(users) > 0:
             for num, user in enumerate(users):
-                users_to_str+= "&%s" % user.fullname
+                users_to_str += "&%s" % user.fullname
             print({"data": users_to_str[1:]})
             return JsonResponse({"data": users_to_str[1:]})
 
@@ -999,7 +1008,7 @@ def groupsaveuser(request):
             raise Http404()
         groupsave = Group.objects.get(id=id)
         groupsave.userinfo_set.clear()
-        if len(selectedusers)>0:
+        if len(selectedusers) > 0:
             for selecteduser in selectedusers:
                 try:
                     myuser = UserInfo.objects.get(id=int(selecteduser))
@@ -1007,6 +1016,7 @@ def groupsaveuser(request):
                 except:
                     pass
         return HttpResponse("保存成功。")
+
 
 def resourcepool(request):
     if request.user.is_authenticated() and request.session['isadmin']:
@@ -1776,6 +1786,48 @@ def vmresourcedel(request):
             return HttpResponse(0)
 
 
+def vmresourcedestroy(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        if 'id' in request.POST:
+            id = request.POST.get('id', '')
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+
+            pool_id = request.POST.get("pool_id", "")
+            name = request.POST.get("name", "")
+            uuid = request.POST.get("uuid", "")
+            print(name, uuid)
+            if pool_id:
+                resourcepool = ResourcePool.objects.filter(id=pool_id)[0]
+                certificate = resourcepool.certificate
+                doc = parseString(certificate)
+                ip = ""
+                username = ""
+                password = ""
+                for node in doc.getElementsByTagName("CERT_LIST"):
+                    for hostnode in node.getElementsByTagName("CERT"):
+                        ip = hostnode.getAttribute("ip")
+                        username = hostnode.getAttribute("username")
+                        password = hostnode.getAttribute("password")
+
+                vm_api = VM_API(ip, username, password)
+                ip = request.POST.get("ip", "")
+                try:
+                    vm_api.destroy_vm(uuid, name, ip)
+                except:
+                    return HttpResponse(0)
+                myresource = VmResource.objects.get(id=id)
+                myresource.name = myresource.name + u"(已删除)"
+                myresource.state = "9"
+                myresource.save()
+
+                return HttpResponse(1)
+        else:
+            return HttpResponse(0)
+
+
 def vmlistmanage(request):
     if request.user.is_authenticated() and request.session['ispuser']:
         return render(request, 'vmlistmanage.html',
@@ -2247,11 +2299,11 @@ def vm_disksave(request):
 
             try:
                 disknum = vm_api.add_disk(name, disktype, disksize, uuid)  # disknum
-                if disknum==-9:
+                if disknum == -9:
                     result = {"value": "0", "text": "超时！！！", "size": size}
                 else:
                     # initialize disk
-                    if vm_api.execute_program(uuid, vmuser, vmpassword, path, str(disknum)+" "+selectdisk):
+                    if vm_api.execute_program(uuid, vmuser, vmpassword, path, str(disknum) + " " + selectdisk):
                         resource = VmResource.objects.filter(id=id)
                         if (len(resource) > 0):
                             specifications = resource[0].specifications
@@ -2291,18 +2343,19 @@ def vm_installcvsave(request):
         vmuser = request.POST.get("user", "")
         vmpassword = request.POST.get("password", "")
 
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(
-            clientName=hostname+"."+request.user.username)
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id)).filter(
+            clientName=hostname + "." + request.user.username)
         if (len(allhost) > 0):
-            result = {"value": "0", "text": u"主机名" + hostname+"."+request.user.usernamee + u'已注册,请勿重复安装。'}
+            result = {"value": "0", "text": u"主机名" + hostname + "." + request.user.usernamee + u'已注册,请勿重复安装。'}
 
         else:
             cvToken = CV_RestApi_Token()
             cvToken.login(info)
             cvAPI = CV_API(cvToken)
-            clientInfo = cvAPI.getClientInfo(hostname+"."+request.user.username)
+            clientInfo = cvAPI.getClientInfo(hostname + "." + request.user.username)
             if clientInfo:
-                result = {"value": "0", "text": u"主机" + hostname+"."+request.user.username + u'已安装客户端,请勿重复安装。'}
+                result = {"value": "0", "text": u"主机" + hostname + "." + request.user.username + u'已安装客户端,请勿重复安装。'}
             else:
                 if pool_id:
                     resourcepool = ResourcePool.objects.filter(id=pool_id)[0]
@@ -2332,8 +2385,9 @@ def registercvsave(request):
         result = {}
         hostname = request.POST.get("hostname", "")
 
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(
-            clientName=hostname+"."+request.user.username)
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id)).filter(
+            clientName=hostname + "." + request.user.username)
         if (len(allhost) > 0):
             result = {"value": "0", "text": u"主机名" + hostname + u'已注册,请勿重复注册。'}
 
@@ -2341,7 +2395,7 @@ def registercvsave(request):
             cvToken = CV_RestApi_Token()
             cvToken.login(info)
             cvAPI = CV_API(cvToken)
-            clientInfo = cvAPI.getClientInfo(hostname+"."+request.user.username)
+            clientInfo = cvAPI.getClientInfo(hostname + "." + request.user.username)
             if not clientInfo:
                 result = {"value": "0", "text": u"主机" + hostname + u'未安装客户端,请先安装commvalut客户端。'}
             else:
@@ -3105,7 +3159,8 @@ def match(request):
 def matchdata(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         result = []
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -3135,7 +3190,7 @@ def matching(request):
             clientList = cvAPI.getClientList()
             for client in clientList:
                 allhost = ClientHost.objects.filter(clientID=client["clientId"]).exclude(status="9").filter(
-                    Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+                    Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
                 if (len(allhost) > 0):
                     client["selected"] = True
                 else:
@@ -3157,7 +3212,7 @@ def matchsave(request):
             myclientlist.remove("")
 
             oldhost = ClientHost.objects.exclude(status="9").filter(
-                Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+                Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
             for client in oldhost:
                 if str(client.clientID) not in clientlist:
                     client.status = "9"
@@ -3169,7 +3224,8 @@ def matchsave(request):
 
                 clientInfo = cvAPI.getClientInfo(int(listid))
                 newhost = ClientHost.objects.exclude(status="9").filter(
-                    Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(clientID=int(listid)).exclude(status="9")
+                    Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id)).filter(
+                    clientID=int(listid)).exclude(status="9")
                 clientName = clientInfo["clientName"]
                 hostType = ""
                 proxyClient = ""
@@ -3199,7 +3255,8 @@ def matchsave(request):
                     proxyClient = "<?xml version=\"1.0\" ?><PROXYLIST>"
                     for node in clientInfo["instance"]["PROXYLIST"]:
                         proxyhost = ClientHost.objects.exclude(status="9").filter(
-                            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)).filter(clientID=int(node["clientId"])).exclude(
+                            Q(owernID=request.user.userinfo.userGUID) | Q(
+                                userinfo__id=request.user.userinfo.id)).filter(clientID=int(node["clientId"])).exclude(
                             status="9")
                         if len(proxyhost) > 0:
                             proxyClient += "<PROXY>" + proxyhost[0].clientGUID + "</PROXY>"
@@ -3274,7 +3331,7 @@ def phyproconfigdata(request):
     if request.user.is_authenticated():
         result = []
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box").filter(
-            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 id = host.id
@@ -3955,7 +4012,7 @@ def vmproconfig(request):
             schdules.append({"id": schdule.id, "name": schdule.name + "(" + schdule.description + ")"})
 
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box").filter(
-            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         pyhhost = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -3978,7 +4035,7 @@ def vmproconfigdata(request):
     if request.user.is_authenticated():
         result = []
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="VMWARE").filter(
-            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4074,7 +4131,6 @@ def getvmlist(request):
                 vmlist = cvAPI.getVMWareVMList(allhost[0].clientName)
                 for node in vmlist:
                     result.append({"vmid": node["VMName"], "vmname": node["VMName"]})
-
 
         return HttpResponse(json.dumps(result))
 
@@ -4353,7 +4409,7 @@ def racproconfig(request):
             schdules.append({"id": schdule.id, "name": schdule.name + "(" + schdule.description + ")"})
 
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="physical box").filter(
-            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         pyhhost = []
         if (len(allhost) > 0):
             for host in allhost:
@@ -4376,7 +4432,7 @@ def racproconfigdata(request):
     if request.user.is_authenticated():
         result = []
         allhost = ClientHost.objects.exclude(status="9").filter(hostType="RAC").filter(
-            Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4810,20 +4866,23 @@ def racproconfigdel(request):
         else:
             return HttpResponse("删除失败。")
 
+
 def workflowset(request):
     if request.user.is_authenticated():
         processes = Process.objects.exclude(state="9").order_by("sort")
         processlist = []
         for process in processes:
-            processlist.append({"id": process.id, "code":process.code,"name": process.name })
+            processlist.append({"id": process.id, "code": process.code, "name": process.name})
         grouplist = []
         allgroup = Group.objects.all().exclude(state="9")
         for group in allgroup:
             grouplist.append({"id": group.id, "name": group.name})
         return render(request, 'workflowset.html',
-                      {'username': request.user.userinfo.fullname, "grouplist":grouplist,"processlist":processlist,"workflowsetpage": True})
+                      {'username': request.user.userinfo.fullname, "grouplist": grouplist, "processlist": processlist,
+                       "workflowsetpage": True})
     else:
         return HttpResponseRedirect("/login")
+
 
 def getsetps(request):
     if request.user.is_authenticated():
@@ -4835,17 +4894,19 @@ def getsetps(request):
             except:
                 raise Http404()
             processes = Process.objects.exclude(state="9").filter(id=process)
-            if len(processes)>0:
+            if len(processes) > 0:
                 steplist = Step.objects.exclude(state="9").filter(process=processes[0])
                 for step in steplist:
                     curstring = ""
-                    if step.approval=="1":
-                        curstring+="需审批"
-                    if step.skip=="1":
+                    if step.approval == "1":
+                        curstring += "需审批"
+                    if step.skip == "1":
                         curstring += "可跳过"
-                    result.append({"id": step.id, "code": step.code,"name": step.name,"approval": step.approval,"skip": step.skip,"group": step.group,"time": step.time,"curstring":curstring})
+                    result.append({"id": step.id, "code": step.code, "name": step.name, "approval": step.approval,
+                                   "skip": step.skip, "group": step.group, "time": step.time, "curstring": curstring})
 
             return HttpResponse(json.dumps(result))
+
 
 def setpsave(request):
     if request.method == 'POST':
@@ -4888,6 +4949,7 @@ def setpsave(request):
             result = "保存成功。"
         return HttpResponse(result)
 
+
 def disasterdrill(request):
     if request.user.is_authenticated():
         return render(request, 'disasterdrill.html',
@@ -4899,7 +4961,8 @@ def disasterdrill(request):
 def disasterdrilldata(request):
     if request.user.is_authenticated():
         result = []
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -4951,7 +5014,8 @@ def manualrecovery(request):
 def manualrecoverydata(request):
     if request.user.is_authenticated():
         result = []
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         if (len(allhost) > 0):
             for host in allhost:
                 clientName = host.clientName
@@ -5015,7 +5079,9 @@ def oraclerecovery(request, offset):
                 alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='ORACLE').exclude(
                     status="9")
                 if len(alldataset) > 0:
-                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box")&(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))).filter(
+                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box") & (
+                            Q(owernID=request.user.userinfo.userGUID) | Q(
+                        userinfo__id=request.user.userinfo.id))).filter(
                         agentTypeList__contains="<agentType>ORACLE</agentType>")
                     destClient = []
                     for host in allhost:
@@ -5089,8 +5155,10 @@ def mssqlrecovery(request, offset):
                 alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='MSSQL').exclude(
                     status="9")
                 if len(alldataset) > 0:
-                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box")&
-                                                                            (Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))).filter(
+                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box") &
+                                                                            (Q(
+                                                                                owernID=request.user.userinfo.userGUID) | Q(
+                                                                                userinfo__id=request.user.userinfo.id))).filter(
                         agentTypeList__contains="<agentType>MSSQL</agentType>")
                     destClient = []
                     for host in allhost:
@@ -5167,8 +5235,10 @@ def filerecovery(request, offset):
                 alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='FILESYSTEM').exclude(
                     status="9")
                 if len(alldataset) > 0:
-                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box")&
-                                                                            (Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))).filter(
+                    allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box") &
+                                                                            (Q(
+                                                                                owernID=request.user.userinfo.userGUID) | Q(
+                                                                                userinfo__id=request.user.userinfo.id))).filter(
                         agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
                     destClient = []
                     for host in allhost:
@@ -5292,8 +5362,9 @@ def vmrecovery(request, offset):
         mydataset = DataSet.objects.filter(id=id)
         if len(mydataset) > 0:
             if mydataset[0].owernID == request.user.userinfo.userGUID:
-                allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="VMWARE")&
-                                                                        (Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id)))
+                allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="VMWARE") &
+                                                                        (Q(owernID=request.user.userinfo.userGUID) | Q(
+                                                                            userinfo__id=request.user.userinfo.id)))
                 # allhost = ClientHost.objects.exclude(status="9").filter(hostType="VMWARE").exclude(clientGUID=mydataset[0].clientGUID)
                 destClient = []
                 vmlist = []
@@ -5453,7 +5524,8 @@ def report(request):
         nowtime = datetime.datetime.now()
         endtime = nowtime.strftime("%Y-%m-%d")
         starttime = (nowtime - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        allhost = ClientHost.objects.exclude(status="9").filter(Q(owernID=request.user.userinfo.userGUID)|Q(userinfo__id=request.user.userinfo.id))
+        allhost = ClientHost.objects.exclude(status="9").filter(
+            Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id))
         client = []
         for host in allhost:
             client.append(host.clientName)

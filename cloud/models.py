@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Group(models.Model):
-    name = models.CharField(u"组名", blank=True, null=True,max_length=50)
+    name = models.CharField(u"组名", blank=True, null=True, max_length=50)
     remark = models.CharField(u"说明", blank=True, null=True, max_length=5000)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
@@ -26,19 +26,21 @@ class UserInfo(models.Model):
     tell = models.CharField("电话", blank=True, null=True, max_length=50)
     forgetpassword = models.CharField("修改密码地址", blank=True, null=True, max_length=50)
 
+
 class Process(models.Model):
     code = models.CharField(u"预案编号", blank=True, max_length=50)
-    name = models.CharField(u"预案名称",blank=True,max_length=50)
-    remark = models.CharField(u"预案描述", blank=True,null=True, max_length=5000)
+    name = models.CharField(u"预案名称", blank=True, max_length=50)
+    remark = models.CharField(u"预案描述", blank=True, null=True, max_length=5000)
     sign = models.CharField(u"是否签到", blank=True, null=True, max_length=20)
     rto = models.IntegerField(u"RTO", blank=True, null=True)
     rpo = models.IntegerField(u"RPO", blank=True, null=True)
-    state = models.CharField(u"状态", blank=True,null=True, max_length=20)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
+
 
 class Step(models.Model):
     process = models.ForeignKey(Process)
-    code = models.CharField(u"步骤编号", blank=True, null=True,max_length=50)
+    code = models.CharField(u"步骤编号", blank=True, null=True, max_length=50)
     name = models.CharField(u"步骤名称", blank=True, null=True, max_length=50)
     approval = models.CharField(u"是否审批", blank=True, null=True, max_length=10)
     skip = models.CharField(u"能否跳过", blank=True, null=True, max_length=10)
@@ -46,6 +48,7 @@ class Step(models.Model):
     time = models.IntegerField(u"预计耗时", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=10)
     sort = models.IntegerField(u"排序", blank=True, null=True)
+
 
 class ResourcePool(models.Model):
     name = models.CharField("名称", blank=True, max_length=50)
@@ -93,6 +96,7 @@ class VmResource(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class BackupResource(models.Model):
     name = models.CharField("名称", blank=True, max_length=50)

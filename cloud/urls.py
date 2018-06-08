@@ -57,6 +57,7 @@ urlpatterns = patterns('cloud.views',
                        (r'^vmresourcepooldata/$', 'vmresourcepooldata'),
                        (r'^vmresourcesave/$', 'vmresourcesave'),
                        (r'^vmresourcedel/$', 'vmresourcedel'),
+                       (r'^vmresourcedestroy/$', 'vmresourcedestroy'),
                        (r'^vmresourcepooldatafordrill/$', 'vmresourcepooldatafordrill'),
                        (r'^vmresourcedatafordrill/$', 'vmresourcedatafordrill'),
 

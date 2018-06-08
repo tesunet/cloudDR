@@ -161,13 +161,14 @@ $(document).ready(function () {
             {"data": "memory"},
             {"data": "disks"},
             {"data": "state_tag"},
-            {"data": null}
+            {"data": null},
         ],
 
         "columnDefs": [{
             "targets": -1,
             "data": null,
-            "defaultContent": "<button  id='edit' title='编辑' data-toggle='modal'  data-target='#static'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-edit'></i></button><button title='删除'  id='delrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-trash-o'></i></button>"
+            "width": "90px",
+            "defaultContent": "<button  id='edit' title='编辑' data-toggle='modal'  data-target='#static'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-edit'></i></button><button title='逻辑删除'  id='delrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-trash-o'></i></button><button title='物理删除'  id='destroyvm' class='btn btn-xs btn-danger' type='button'><i class='fa fa-trash-o'></i></button>"
         }],
         "oLanguage": {
             "sLengthMenu": "&nbsp;&nbsp;每页显示 _MENU_ 条记录",
@@ -214,6 +215,38 @@ $(document).ready(function () {
 
         }
     });
+
+    $('#sample_1 tbody').on('click', 'button#destroyvm', function () {
+        if (confirm("确定要删除该数据/销毁当前虚机？")) {
+            var table = $('#sample_1').DataTable();
+            var data = table.row($(this).parents('tr')).data();
+            $.ajax({
+                type: "POST",
+                url: "../vmresourcedestroy/",
+                data:
+                    {
+                        id: data.id,
+                        ip:data.ip,
+                        pool_id:data.pool_id,
+                        uuid:data.uuid,
+                        name:data.name,
+                    },
+                success: function (data) {
+                    if (data == 1) {
+                        table.ajax.reload();
+                        alert("销毁成功！");
+                    }
+                    else
+                        alert("销毁失败，请于管理员联系。");
+                },
+                error: function (e) {
+                    alert("销毁失败，请于管理员联系。");
+                }
+            });
+
+        }
+    });
+
     $('#sample_1 tbody').on('click', 'button#edit', function () {
         // hide select button
         $("#bt_select").hide();

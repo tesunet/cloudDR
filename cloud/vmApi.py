@@ -9,7 +9,10 @@ import sys
 import time
 import textwrap
 import re
+import requests
 
+
+requests.packages.urllib3.disable_warnings()
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -518,10 +521,41 @@ class VM_API(object):
 
         # print(sys.exit(0))
 
+    def destroy_vm(self, uuid, name, ip):
+        if not self.service_instance:
+            raise SystemExit("Unable to connect to host with supplied info.")
+        VM = None
+        if uuid:
+            VM = self.service_instance.content.searchIndex.FindByUuid(None, uuid,
+                                                   True,
+                                                   False)
+        elif name:
+            VM = self.service_instance.content.searchIndex.FindByDnsName(None, name,
+                                                      True)
+        elif ip:
+            VM = self.service_instance.content.searchIndex.FindByIp(None, ip, True)
+
+        if VM is None:
+            raise SystemExit("Unable to locate VirtualMachine.")
+
+        print("Found: {0}".format(VM.name))
+        print("The current powerState is: {0}".format(VM.runtime.powerState))
+        if format(VM.runtime.powerState) == "poweredOn":
+            print("Attempting to power off {0}".format(VM.name))
+            TASK = VM.PowerOffVM_Task()
+            self.wait_for_tasks([TASK])
+            print("{0}".format(TASK.info.state))
+
+        print("Destroying VM from vSphere.")
+        TASK = VM.Destroy_Task()
+        self.wait_for_tasks([TASK])
+        print("Done.")
+
 
 # Start program
 if __name__ == "__main__":
     newvm = VM_API('192.168.100.136', 'administrator', 'tesunet@2016')
+    # newvm.destroy_vm("422383b8-27d8-39a3-f9de-1654bc2fd599", None, None)
     # print(newvm.execute_program("4223eb50-03bf-865c-3c99-5e0a5966d8c4", "root", "tesunet", "/root/host.sh", "modify_host"))
     # print(newvm.execute_program("4223eb50-03bf-865c-3c99-5e0a5966d8c4", "root", "tesunet", "/root/ip.sh", "192.168.100.70"))
 
