@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="app">
-<head>  
+<head>
   <meta charset="utf-8" />
   <title>{% block title %}自动化灾难恢复管理平台{% endblock %}</title>
   <meta name="description" content="app, web app, responsive, admin dashboard, admin, flat, flat ui, ui kit, off screen nav" />
@@ -47,7 +47,7 @@
             </span>
             {{username}} <b class="caret"></b>
           </a>
-          <ul class="dropdown-menu animated fadeInRight">            
+          <ul class="dropdown-menu animated fadeInRight">
             <li>
               <span class="arrow top"></span>
               <a href="/password">修改密码</a>
@@ -69,7 +69,7 @@
               <div class="slim-scroll" data-height="auto" data-disable-fade-out="true" data-distance="0" data-size="10px" data-railOpacity="0.2">
 
 
-                <!-- nav -->                 
+                <!-- nav -->
                 <nav class="nav-primary hidden-xs">
                   <ul class="nav nav-main" data-ride="collapse">
                     <li class="{% if homepage %}active{% endif %}">
@@ -84,7 +84,7 @@
                         <span class="pull-right text-muted">
                           <i class="i i-circle-sm-o text"></i>
                           <i class="i i-circle-sm text-active"></i>
-                        </span> 
+                        </span>
                         <i class="fa fa-user">
                         </i>
                         <span class="font-bold">用户管理</span>
@@ -224,6 +224,12 @@
                             <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;流程预案</span>
                           </a>
                         </li>
+                          <li class="{% if scriptpage %}active{% endif %}">
+                          <a href="/script" class="auto">
+
+                            <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;脚本管理</span>
+                          </a>
+                        </li>
                         <li class="{% if manualrecoverypage %}active{% endif %}">
                           <a href="/manualrecovery" class="auto">
 
@@ -259,7 +265,7 @@
                 <!-- / nav -->
               </div>
             </section>
-            
+
             <footer class="footer hidden-xs no-padder text-center-nav-xs">
 
               <a href="#nav" data-toggle="class:nav-xs" class="btn btn-icon icon-muted btn-inactive m-l-xs m-r-xs">
@@ -271,7 +277,7 @@
         </aside>
         <!-- /.aside -->
         <section id="content">
-          <section class="vbox">          
+          <section class="vbox">
 
             {% block content %}{% endblock %}
           </section>

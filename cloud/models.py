@@ -50,6 +50,27 @@ class Step(models.Model):
     sort = models.IntegerField(u"排序", blank=True, null=True)
 
 
+class Script(models.Model):
+    step = models.ForeignKey(Step, blank=True, null=True)
+    code = models.CharField(u"脚本编号", blank=True, max_length=50)
+    ip = models.CharField(u"主机IP", blank=True, null=True, max_length=50)
+    port = models.CharField(u"端口号", blank=True, null=True, max_length=10)
+    type = models.CharField(u"连接类型", blank=True, null=True, max_length=20)
+    runtype = models.CharField(u"运行类型", blank=True, null=True, max_length=20)
+    username = models.CharField(u"用户名", blank=True, null=True, max_length=50)
+    password = models.CharField(u"密码", blank=True, null=True, max_length=50)
+    filename = models.CharField(u"脚本文件名", blank=True, null=True, max_length=50)
+    paramtype = models.CharField(u"参数类型", blank=True, null=True, max_length=20)
+    param= models.CharField(u"脚本参数", blank=True, null=True, max_length=100)
+    scriptpath = models.CharField(u"脚本文件路径", blank=True, null=True, max_length=100)
+    runpath = models.CharField(u"执行路径", blank=True, null=True, max_length=100)
+    command = models.CharField(u"生产命令行", blank=True, null=True, max_length=500)
+    maxtime = models.IntegerField(u"超时时间", blank=True, null=True)
+    time = models.IntegerField(u"预计耗时", blank=True, null=True)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+    sort = models.IntegerField(u"排序", blank=True, null=True)
+
+
 class ResourcePool(models.Model):
     name = models.CharField("名称", blank=True, max_length=50)
     type = models.CharField("类型", blank=True, null=True, max_length=20)

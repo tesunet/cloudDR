@@ -24,6 +24,7 @@ from django.db.models import Count
 from django.db.models import Sum
 from django.db import connection
 from cloud.vmApi import *
+import xlrd, xlwt
 
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
@@ -278,7 +279,6 @@ def get_dashboard_amchart_3(request):
                     if len(rlfulljoblist) > 0:
                         rl = rlfulljoblist[0].diskcapacity
                         s = rlfulljoblist[0].startdate
-                    print(clientname, rl)
                     rlsum = rlsum + rl
                     rlincjoblist = Joblist.objects.filter(startdate__range=(s, e), backuplevel='Incremental',
                                                           clientname=clientname)
@@ -884,6 +884,443 @@ def getallclients(request):
             return JsonResponse({"data": host_list})
 
 
+def script(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        errors = []
+        if request.method == 'POST':
+            my_file = request.FILES.get("myfile", None)  # 获取上传的文件，如果没有文件，则默认为None
+            if not my_file:
+                errors.append("请选择要导入的文件。")
+            else:
+                filetype = my_file.name.split(".")[-1]
+                if filetype == "xls" or filetype == "xlsx":
+                    myfilepath = os.path.join(os.path.join(os.path.dirname(__file__), "upload\\temp"), my_file.name)
+                    destination = open(myfilepath, 'wb+')
+                    for chunk in my_file.chunks():  # 分块写入文件
+                        destination.write(chunk)
+                    destination.close()
+
+                    data = xlrd.open_workbook(myfilepath)
+                    sheet = data.sheets()[0]
+                    rows = sheet.nrows
+                    errors.append("导入成功。")
+                    for i in range(rows):
+                        if i > 0:
+                            try:
+                                allscript = Script.objects.filter(code=sheet.cell(i, 0).value).exclude(
+                                    state="9").filter(step_id=None)
+                                if (len(allscript) > 0):
+                                    errors.append(sheet.cell(i, 0).value + ":已存在。")
+                                else:
+                                    ncols = sheet.ncols
+                                    scriptsave = Script()
+                                    scriptsave.code = sheet.cell(i, 0).value
+                                    scriptsave.ip = sheet.cell(i, 1).value
+                                    scriptsave.port = sheet.cell(i, 2).value
+                                    scriptsave.type = sheet.cell(i, 3).value
+                                    scriptsave.runtype = sheet.cell(i, 4).value
+                                    scriptsave.username = sheet.cell(i, 5).value
+                                    scriptsave.password = sheet.cell(i, 6).value
+                                    scriptsave.filename = sheet.cell(i, 7).value
+                                    scriptsave.paramtype = sheet.cell(i, 8).value
+                                    scriptsave.param = sheet.cell(i, 9).value
+                                    scriptsave.scriptpath = sheet.cell(i, 10).value
+                                    scriptsave.runpath = sheet.cell(i, 11).value
+                                    scriptsave.maxtime = int(sheet.cell(i, 12).value)
+                                    scriptsave.time = int(sheet.cell(i, 13).value)
+                                    scriptsave.save()
+                            except:
+                                errors.append(sheet.cell(i, 0).value + ":数据存在问题，已剔除。")
+                    os.remove(myfilepath)
+                else:
+                    errors.append("只能上传xls和xlsx文件，请选择正确的文件类型。")
+        return render(request, 'script.html',
+                      {'username': request.user.userinfo.fullname, "scriptpage": True, "errors": errors})
+    else:
+        return HttpResponseRedirect("/login")
+
+
+def scriptdata(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        result = []
+        allscript = Script.objects.exclude(state="9").filter(step_id=None)
+        if (len(allscript) > 0):
+            for script in allscript:
+                result.append({"id": script.id, "code": script.code, "ip": script.ip, "port": script.port,
+                               "type": script.type, "runtype": script.runtype, "username": script.username,
+                               "password": script.password, "filename": script.filename,
+                               "paramtype": script.paramtype, "param": script.param, "scriptpath": script.scriptpath,
+                               "runpath": script.runpath,
+                               "maxtime": script.maxtime, "time": script.time})
+        return HttpResponse(json.dumps({"data": result}))
+
+
+def scriptdel(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        if 'id' in request.POST:
+            id = request.POST.get('id', '')
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+            script = Script.objects.get(id=id)
+            script.state = "9"
+            script.save()
+            return HttpResponse(1)
+        else:
+            return HttpResponse(0)
+
+
+def scriptsave(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        if 'id' in request.POST:
+            result = {}
+            id = request.POST.get('id', '')
+            code = request.POST.get('code', '')
+            ip = request.POST.get('ip', '')
+            port = request.POST.get('port', '')
+            type = request.POST.get('type', '')
+            runtype = request.POST.get('runtype', '')
+            username = request.POST.get('username', '')
+            password = request.POST.get('password', '')
+            filename = request.POST.get('filename', '')
+            paramtype = request.POST.get('paramtype', '')
+            param = request.POST.get('param', '')
+            scriptpath = request.POST.get('scriptpath', '')
+            runpath = request.POST.get('runpath', '')
+            maxtime = request.POST.get('maxtime', '')
+            time = request.POST.get('time', '')
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+            if code.strip() == '':
+                result["res"] = '脚本编码不能为空。'
+            else:
+                if ip.strip() == '':
+                    result["res"] = '主机IP不能为空。'
+                else:
+                    if port.strip() == '':
+                        result["res"] = '端口号不能为空。'
+                    else:
+                        if type.strip() == '':
+                            result["res"] = '连接类型不能为空。'
+                        else:
+                            if username.strip() == '':
+                                result["res"] = '用户名不能为空。'
+                            else:
+                                if password.strip() == '':
+                                    result["res"] = '密码不能为空。'
+                                else:
+                                    if filename.strip() == '':
+                                        result["res"] = '脚本文件名不能为空。'
+                                    else:
+                                        if scriptpath.strip() == '':
+                                            result["res"] = '脚本文件路径不能为空。'
+                                        else:
+                                            if runpath.strip() == '':
+                                                result["res"] = '执行路径不能为空。'
+                                            else:
+                                                if maxtime.strip() == '':
+                                                    result["res"] = '超时时间不能为空。'
+                                                else:
+                                                    if time.strip() == '':
+                                                        result["res"] = '预计耗时不能为空。'
+                                                    else:
+                                                        if id == 0:
+                                                            allscript = Script.objects.filter(code=code).exclude(
+                                                                state="9").filter(step_id=None)
+                                                            if (len(allscript) > 0):
+                                                                result["res"] = '脚本编码:' + code + '已存在。'
+                                                            else:
+                                                                scriptsave = Script()
+                                                                scriptsave.code = code
+                                                                scriptsave.ip = ip
+                                                                scriptsave.port = port
+                                                                scriptsave.type = type
+                                                                scriptsave.runtype = runtype
+                                                                scriptsave.username = username
+                                                                scriptsave.password = password
+                                                                scriptsave.filename = filename
+                                                                scriptsave.paramtype = paramtype
+                                                                scriptsave.param = param
+                                                                scriptsave.scriptpath = scriptpath
+                                                                scriptsave.runpath = runpath
+                                                                try:
+                                                                    scriptsave.maxtime = int(maxtime)
+                                                                except:
+                                                                    pass
+                                                                try:
+                                                                    scriptsave.time = int(time)
+                                                                except:
+                                                                    pass
+                                                                scriptsave.save()
+                                                                result["res"] = "保存成功。"
+                                                                result["data"] = scriptsave.id
+                                                        else:
+                                                            allscript = Script.objects.filter(code=code).exclude(
+                                                                id=id).exclude(state="9").filter(step_id=None)
+                                                            if (len(allscript) > 0):
+                                                                result["res"] = '脚本编码:' + code + '已存在。'
+                                                            else:
+                                                                try:
+                                                                    scriptsave = Script.objects.get(id=id)
+                                                                    scriptsave.code = code
+                                                                    scriptsave.ip = ip
+                                                                    scriptsave.port = port
+                                                                    scriptsave.type = type
+                                                                    scriptsave.runtype = runtype
+                                                                    scriptsave.username = username
+                                                                    scriptsave.password = password
+                                                                    scriptsave.filename = filename
+                                                                    scriptsave.paramtype = paramtype
+                                                                    scriptsave.param = param
+                                                                    scriptsave.scriptpath = scriptpath
+                                                                    scriptsave.runpath = runpath
+                                                                    try:
+                                                                        scriptsave.maxtime = int(maxtime)
+                                                                    except:
+                                                                        pass
+                                                                    try:
+                                                                        scriptsave.time = int(time)
+                                                                    except:
+                                                                        pass
+                                                                    scriptsave.save()
+                                                                    result["res"] = "保存成功。"
+                                                                    result["data"] = scriptsave.id
+                                                                except:
+                                                                    result["res"] = "修改失败。"
+            return HttpResponse(json.dumps(result))
+
+
+def scriptexport(request):
+    # do something...
+    if request.user.is_authenticated():
+        myfilepath = os.path.join(os.path.dirname(__file__), "upload\\temp\\scriptexport.xls")
+        try:
+            os.remove(myfilepath)
+        except:
+            pass
+        filename = xlwt.Workbook()
+        sheet = filename.add_sheet('sheet1')
+        allscript = Script.objects.exclude(state="9").filter(step_id=None)
+        sheet.write(0, 0, u'脚本编号')
+        sheet.write(0, 1, u'主机IP')
+        sheet.write(0, 2, u'端口号')
+        sheet.write(0, 3, u'连接类型')
+        sheet.write(0, 4, u'运行类型')
+        sheet.write(0, 5, u'用户名')
+        sheet.write(0, 6, u'密码')
+        sheet.write(0, 7, u'脚本文件名')
+        sheet.write(0, 8, u'参数类型')
+        sheet.write(0, 9, u'脚本参数')
+        sheet.write(0, 10, u'脚本文件路径')
+        sheet.write(0, 11, u'执行路径')
+        sheet.write(0, 12, u'超时时间')
+        sheet.write(0, 13, u'预计耗时')
+        if len(allscript) > 0:
+            for i in range(len(allscript)):
+                sheet.write(i + 1, 0, allscript[i].code)
+                sheet.write(i + 1, 1, allscript[i].ip)
+                sheet.write(i + 1, 2, allscript[i].port)
+                sheet.write(i + 1, 3, allscript[i].type)
+                sheet.write(i + 1, 4, allscript[i].runtype)
+                sheet.write(i + 1, 5, allscript[i].username)
+                sheet.write(i + 1, 6, allscript[i].password)
+                sheet.write(i + 1, 7, allscript[i].filename)
+                sheet.write(i + 1, 8, allscript[i].paramtype)
+                sheet.write(i + 1, 9, allscript[i].param)
+                sheet.write(i + 1, 10, allscript[i].scriptpath)
+                sheet.write(i + 1, 11, allscript[i].runpath)
+                sheet.write(i + 1, 12, allscript[i].maxtime)
+                sheet.write(i + 1, 13, allscript[i].time)
+        filename.save(myfilepath)
+
+        def file_iterator(file_name, chunk_size=512):
+            with open(file_name, "rb") as f:
+                while True:
+                    c = f.read(chunk_size)
+                    if c:
+                        yield c
+                    else:
+                        break
+
+        the_file_name = "scriptexport.xls"
+        response = StreamingHttpResponse(file_iterator(myfilepath))
+        response['Content-Type'] = 'application/octet-stream; charset=unicode'
+        response['Content-Disposition'] = 'attachment;filename="{0}"'.format(the_file_name)
+        return response
+
+    else:
+        return HttpResponseRedirect("/login")
+
+
+def processscriptsave(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        if 'id' in request.POST:
+            result = {}
+            processid = request.POST.get('processid', '')
+            pid = request.POST.get('pid', '')
+            id = request.POST.get('id', '')
+            code = request.POST.get('code', '')
+            ip = request.POST.get('ip', '')
+            port = request.POST.get('port', '')
+            type = request.POST.get('type', '')
+            runtype = request.POST.get('runtype', '')
+            username = request.POST.get('username', '')
+            password = request.POST.get('password', '')
+            filename = request.POST.get('filename', '')
+            paramtype = request.POST.get('paramtype', '')
+            param = request.POST.get('param', '')
+            scriptpath = request.POST.get('scriptpath', '')
+            runpath = request.POST.get('runpath', '')
+            maxtime = request.POST.get('maxtime', '')
+            time = request.POST.get('time', '')
+            try:
+                id = int(id)
+                pid = int(pid)
+                processid = int(processid)
+            except:
+                raise Http404()
+            if code.strip() == '':
+                result["res"] = '脚本编码不能为空。'
+            else:
+                if ip.strip() == '':
+                    result["res"] = '主机IP不能为空。'
+                else:
+                    if port.strip() == '':
+                        result["res"] = '端口号不能为空。'
+                    else:
+                        if type.strip() == '':
+                            result["res"] = '连接类型不能为空。'
+                        else:
+                            if username.strip() == '':
+                                result["res"] = '用户名不能为空。'
+                            else:
+                                if password.strip() == '':
+                                    result["res"] = '密码不能为空。'
+                                else:
+                                    if filename.strip() == '':
+                                        result["res"] = '脚本文件名不能为空。'
+                                    else:
+                                        if scriptpath.strip() == '':
+                                            result["res"] = '脚本文件路径不能为空。'
+                                        else:
+                                            if runpath.strip() == '':
+                                                result["res"] = '执行路径不能为空。'
+                                            else:
+                                                if maxtime.strip() == '':
+                                                    result["res"] = '超时时间不能为空。'
+                                                else:
+                                                    if time.strip() == '':
+                                                        result["res"] = '预计耗时不能为空。'
+                                                    else:
+                                                        if id == 0:
+                                                            allscript = Script.objects.filter(code=code).exclude(
+                                                                state="9").filter(step_id=pid)
+                                                            if (len(allscript) > 0):
+                                                                result["res"] = '脚本编码:' + code + '已存在。'
+                                                            else:
+                                                                steplist = Step.objects.filter(process_id=processid)
+                                                                if len(steplist) > 0:
+                                                                    scriptsave = Script()
+                                                                    scriptsave.code = code
+                                                                    scriptsave.ip = ip
+                                                                    scriptsave.port = port
+                                                                    scriptsave.type = type
+                                                                    scriptsave.runtype = runtype
+                                                                    scriptsave.username = username
+                                                                    scriptsave.password = password
+                                                                    scriptsave.filename = filename
+                                                                    scriptsave.paramtype = paramtype
+                                                                    scriptsave.param = param
+                                                                    scriptsave.scriptpath = scriptpath
+                                                                    scriptsave.runpath = runpath
+                                                                    try:
+                                                                        scriptsave.maxtime = int(maxtime)
+                                                                    except:
+                                                                        pass
+                                                                    try:
+                                                                        scriptsave.time = int(time)
+                                                                    except:
+                                                                        pass
+                                                                    scriptsave.step_id = pid
+                                                                    scriptsave.save()
+                                                                    result["res"] = "新增成功。"
+                                                                    result["data"] = scriptsave.id
+                                                        else:
+                                                            allscript = Script.objects.filter(code=code).exclude(
+                                                                id=id).exclude(state="9").filter(step_id=pid)
+                                                            if (len(allscript) > 0):
+                                                                result["res"] = '脚本编码:' + code + '已存在。'
+                                                            else:
+                                                                try:
+                                                                    scriptsave = Script.objects.get(id=id)
+                                                                    scriptsave.code = code
+                                                                    scriptsave.ip = ip
+                                                                    scriptsave.port = port
+                                                                    scriptsave.type = type
+                                                                    scriptsave.runtype = runtype
+                                                                    scriptsave.username = username
+                                                                    scriptsave.password = password
+                                                                    scriptsave.filename = filename
+                                                                    scriptsave.paramtype = paramtype
+                                                                    scriptsave.param = param
+                                                                    scriptsave.scriptpath = scriptpath
+                                                                    scriptsave.runpath = runpath
+                                                                    try:
+                                                                        scriptsave.maxtime = int(maxtime)
+                                                                    except:
+                                                                        pass
+                                                                    try:
+                                                                        scriptsave.time = int(time)
+                                                                    except:
+                                                                        pass
+                                                                    scriptsave.save()
+                                                                    result["res"] = "修改成功。"
+                                                                    result["data"] = scriptsave.id
+                                                                except:
+                                                                    result["res"] = "修改失败。"
+            return HttpResponse(json.dumps(result))
+
+
+def get_scripts(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        step_id = request.POST.get("step_id", "")
+        result = []
+        script_objs = Script.objects.exclude(state=9).filter(step_id=step_id)
+        for script in script_objs:
+            result.append({
+                "script_id": script.id,
+                "script_code": script.code,
+            })
+        return HttpResponse(json.dumps({"data": result}))
+
+
+def get_script_data(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        if 'id' in request.POST:
+            id = request.POST.get('id', '')
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+            script_id = request.POST.get("script_id", "")
+            allscript = Script.objects.exclude(state="9").filter(id=script_id)
+            script_data = ""
+            if (len(allscript) > 0):
+                script_data = {"id": allscript[0].id, "code": allscript[0].code, "ip": allscript[0].ip,
+                               "port": allscript[0].port,
+                               "type": allscript[0].type, "runtype": allscript[0].runtype,
+                               "username": allscript[0].username,
+                               "password": allscript[0].password, "filename": allscript[0].filename,
+                               "paramtype": allscript[0].paramtype, "param": allscript[0].param,
+                               "scriptpath": allscript[0].scriptpath,
+                               "runpath": allscript[0].runpath,
+                               "maxtime": allscript[0].maxtime, "time": allscript[0].time}
+            return HttpResponse(json.dumps(script_data))
+
+
 def group(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         allgroup = Group.objects.all().exclude(state="9")
@@ -993,7 +1430,6 @@ def getselectedusers(request):
         if len(users) > 0:
             for num, user in enumerate(users):
                 users_to_str += "&%s" % user.fullname
-            print({"data": users_to_str[1:]})
             return JsonResponse({"data": users_to_str[1:]})
 
 
@@ -1798,7 +2234,6 @@ def vmresourcedestroy(request):
             pool_id = request.POST.get("pool_id", "")
             name = request.POST.get("name", "")
             uuid = request.POST.get("uuid", "")
-            print(name, uuid)
             if pool_id:
                 resourcepool = ResourcePool.objects.filter(id=pool_id)[0]
                 certificate = resourcepool.certificate
@@ -2602,7 +3037,6 @@ def backupresourcedata(request):
                 for node in doc.getElementsByTagName("CERT_LIST"):
                     for hostnode in node.getElementsByTagName("CERT"):
                         cert_name = hostnode.getAttribute("name")
-                print(specifications)
                 doc2 = parseString(specifications)
                 spec_type = ""
                 spec_time = ""
