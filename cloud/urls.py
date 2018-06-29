@@ -162,4 +162,8 @@ urlpatterns = patterns('cloud.views',
 
                        (r'^report/$', 'report'),
                        (r'^reportdata/$', 'reportdata'),
+                        (r'^creatprocessrun/$', 'creatprocessrun'),
+                       (r'^filecross/(\d+)/$', 'filecross'),
+
+                       (r'^filecrossnext1/$', 'filecrossnext1'),
                        )

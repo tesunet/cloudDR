@@ -3,19 +3,18 @@ $(document).ready(function () {
         "bAutoWidth": true,
         "bSort": false,
         "bProcessing": true,
-        "ajax": "../disasterdrilldata/",
+        "ajax": "../manualrecoverydata/",
         "columns": [
-            {"data": "appGroup"},
-            {"data": "clientName"},
-            {"data": "type"},
-            {"data": "state"},
+            { "data": "clientName" },
+            { "data": "platform" },
+            { "data": "type" },
 
         ],
 
         "columnDefs": [{
             "targets": 0,
             "mRender": function (data, type, full) {
-                return "<a id='editapp'  data-toggle='modal'  data-target='#static1'>" + data + "</a>"
+                return "<a id='edit'  data-toggle='modal'  data-target='#static1'>" + data + "</a>"
             }
         }],
         "oLanguage": {
@@ -36,106 +35,235 @@ $(document).ready(function () {
         }
     });
     // 行按钮
+    $('#sample_1 tbody').on( 'click', 'a#edit', function () {
+                var table = $('#sample_1').DataTable();
+                var data = table.row( $(this).parents('tr') ).data();
+                $("#datasetid").val(data.id)
+                $("#physicalbox").hide()
+                if (data.type=="physical box"){
+                    $("#vm").hide()
+                    $("#filesystem").hide()
+                    $("#oracle").hide()
+                    $("#mssql").hide()
+                    for (var i=0;i<data.agentType.length;i++)
+                    {
+                        if(data.agentType[i]=="FILESYSTEM")
+                        {
+                            $("#filesystem").show()
+                        }
+                        if(data.agentType[i]=="ORACLE")
+                        {
+                            $("#oracle").show()
+                        }
+                        if(data.agentType[i]=="MSSQL")
+                        {
+                            $("#mssql").show()
+                        }
+                    }
 
-    $('#sample_1 tbody').on('click', 'a#editapp', function () {
-        var table = $('#sample_1').DataTable();
-        var data = table.row($(this).parents('tr')).data();
-        $("#dataSetGUID").val(data.dataSetGUID);
-        $("#clientGUID").val(data.clientGUID);
-        $("#appGroup").val(data.appGroup);
-        $("#type").val(data.type);
-        $("#vmlist").empty();
-        $("#vmdiv").hide();
-        $("#resourcepool").empty();
-        $("#computerresource").empty();
-        if (data.type == "VMWARE") {
-            $("#vmdiv").show();
-            for (var i = 0; i < data.backupContent.length; i++) {
+                }
+                else
+                {
+                    if (data.type=="VMWARE"){
+                        $("#vm").show()
+                    }
+                    else
+                        alert("暂不支持。");
+                }
+        });
 
-                $("#vmlist").append("<option value='" + data.backupContent[i] + "'>" + data.backupContent[i] + "</option>");
+    $('#filesystem').click(function () {
+        $.ajax({
+            type: "POST",
+            dataType: 'json',
+            url: "../creatprocessrun/",
+            data:
+                {
+                    datasetid: $("#datasetid").val(),
+                    processid: "1",
+                    type:"FILESYSTEM",
+                },
+            success: function (data) {
+                if (data["res"] == "新增成功。") {
+                    window.location.href= data["data"];
+                }
+                else
+                    alert(data["res"]);
+            },
+            error: function (e) {
+                alert("流程启动失败，请于管理员联系。");
             }
-            $.ajax({
-                type: "POST",
-                url: "../vmresourcepooldatafordrill/",
-                success: function (data) {
-                    var dataObj = eval("(" + data + ")");
-                    for (var i = 0; i < dataObj.data.length; i++) {
-                        if (i == 0) {
-                            $("#resourcepool").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
-                            for (var j = 0; j < (dataObj.data[i].myresource).length; j++) {
-                                $("#computerresource").append("<option selected value='" + dataObj.data[i].myresource[j].id + "'>" + dataObj.data[i].myresource[j].name + "</option>");
-
-                            }
-                        }
-                        else
-                            $("#resourcepool").append("<option  value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
-
-                    }
+        });
+    })
+    $('#oracle').click(function () {
+        $.ajax({
+            type: "POST",
+            dataType: 'json',
+            url: "../creatprocessrun/",
+            data:
+                {
+                    datasetid: $("#datasetid").val(),
+                    processid: "2",
+                    type:"ORACLE",
                 },
-            });
-        }
-        else {
-            $.ajax({
-                type: "POST",
-                url: "../computerresourcepooldatafordrill/",
-                success: function (data) {
-                    var dataObj = eval("(" + data + ")");
-                    for (var i = 0; i < dataObj.data.length; i++) {
-                        if (i == 0) {
-                            $("#resourcepool").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
-                            for (var j = 0; j < (dataObj.data[i].myresource).length; j++) {
-                                $("#computerresource").append("<option selected value='" + dataObj.data[i].myresource[j].id + "'>" + dataObj.data[i].myresource[j].name + "</option>");
-
-                            }
-                        }
-                        else
-                            $("#resourcepool").append("<option  value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
-                    }
+            success: function (data) {
+                if (data["res"] == "新增成功。") {
+                    window.location.href= data["data"];
+                }
+                else
+                    alert(data["res"]);
+            },
+            error: function (e) {
+                alert("流程启动失败，请于管理员联系。");
+            }
+        });
+    })
+    $('#mssql').click(function () {
+        $.ajax({
+            type: "POST",
+            dataType: 'json',
+            url: "../creatprocessrun/",
+            data:
+                {
+                    datasetid: $("#datasetid").val(),
+                    processid: "3",
+                    type:"MSSQL",
                 },
-            });
-        }
-    });
-
-    $("#resourcepool").change(function () {
-        $("#computerresource").empty();
-        $("#computerresource").val("")
-        $("#computerresource").text("")
-        if ($("#type").val() == "VMWARE") {
-
-            $.ajax({
-                type: "POST",
-                url: "../vmresourcedatafordrill/",
-                data:
-                    {
-                        id: $("#resourcepool").val()
-                    },
-                success: function (data) {
-                    var dataObj = eval("(" + data + ")");
-                    for (var i = 0; i < dataObj.data.length; i++) {
-                        $("#computerresource").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
-
-                    }
+            success: function (data) {
+                if (data["res"] == "新增成功。") {
+                    window.location.href= data["data"];
+                }
+                else
+                    alert(data["res"]);
+            },
+            error: function (e) {
+                alert("流程启动失败，请于管理员联系。");
+            }
+        });
+    })
+    $('#vm').click(function () {
+        $.ajax({
+            type: "POST",
+            dataType: 'json',
+            url: "../creatprocessrun/",
+            data:
+                {
+                    datasetid: $("#datasetid").val(),
+                    processid: "4",
+                    type:"Virtual Server",
                 },
-            });
-        }
-        else {
-            $.ajax({
-                type: "POST",
-                url: "../computerresourcedatafordrill/",
-                data:
-                    {
-                        id: $("#resourcepool").val()
-                    },
-                success: function (data) {
-                    var dataObj = eval("(" + data + ")");
-                    for (var i = 0; i < dataObj.data.length; i++) {
-                        $("#computerresource").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
-                    }
-                },
-            });
+            success: function (data) {
+                if (data["res"] == "新增成功。") {
+                    window.location.href= data["data"];
+                }
+                else
+                    alert(data["res"]);
+            },
+            error: function (e) {
+                alert("流程启动失败，请于管理员联系。");
+            }
+        });
+    })
 
-        }
-    });
+    // $('#sample_1 tbody').on('click', 'a#editapp', function () {
+    //     var table = $('#sample_1').DataTable();
+    //     var data = table.row($(this).parents('tr')).data();
+    //     $("#dataSetGUID").val(data.dataSetGUID);
+    //     $("#clientGUID").val(data.clientGUID);
+    //     $("#appGroup").val(data.appGroup);
+    //     $("#type").val(data.type);
+    //     $("#vmlist").empty();
+    //     $("#vmdiv").hide();
+    //     $("#resourcepool").empty();
+    //     $("#computerresource").empty();
+    //     if (data.type == "VMWARE") {
+    //         $("#vmdiv").show();
+    //         for (var i = 0; i < data.backupContent.length; i++) {
+    //
+    //             $("#vmlist").append("<option value='" + data.backupContent[i] + "'>" + data.backupContent[i] + "</option>");
+    //         }
+    //         $.ajax({
+    //             type: "POST",
+    //             url: "../vmresourcepooldatafordrill/",
+    //             success: function (data) {
+    //                 var dataObj = eval("(" + data + ")");
+    //                 for (var i = 0; i < dataObj.data.length; i++) {
+    //                     if (i == 0) {
+    //                         $("#resourcepool").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
+    //                         for (var j = 0; j < (dataObj.data[i].myresource).length; j++) {
+    //                             $("#computerresource").append("<option selected value='" + dataObj.data[i].myresource[j].id + "'>" + dataObj.data[i].myresource[j].name + "</option>");
+    //
+    //                         }
+    //                     }
+    //                     else
+    //                         $("#resourcepool").append("<option  value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
+    //
+    //                 }
+    //             },
+    //         });
+    //     }
+    //     else {
+    //         $.ajax({
+    //             type: "POST",
+    //             url: "../computerresourcepooldatafordrill/",
+    //             success: function (data) {
+    //                 var dataObj = eval("(" + data + ")");
+    //                 for (var i = 0; i < dataObj.data.length; i++) {
+    //                     if (i == 0) {
+    //                         $("#resourcepool").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
+    //                         for (var j = 0; j < (dataObj.data[i].myresource).length; j++) {
+    //                             $("#computerresource").append("<option selected value='" + dataObj.data[i].myresource[j].id + "'>" + dataObj.data[i].myresource[j].name + "</option>");
+    //
+    //                         }
+    //                     }
+    //                     else
+    //                         $("#resourcepool").append("<option  value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
+    //                 }
+    //             },
+    //         });
+    //     }
+    // });
+    //
+    // $("#resourcepool").change(function () {
+    //     $("#computerresource").empty();
+    //     $("#computerresource").val("")
+    //     $("#computerresource").text("")
+    //     if ($("#type").val() == "VMWARE") {
+    //
+    //         $.ajax({
+    //             type: "POST",
+    //             url: "../vmresourcedatafordrill/",
+    //             data:
+    //                 {
+    //                     id: $("#resourcepool").val()
+    //                 },
+    //             success: function (data) {
+    //                 var dataObj = eval("(" + data + ")");
+    //                 for (var i = 0; i < dataObj.data.length; i++) {
+    //                     $("#computerresource").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
+    //
+    //                 }
+    //             },
+    //         });
+    //     }
+    //     else {
+    //         $.ajax({
+    //             type: "POST",
+    //             url: "../computerresourcedatafordrill/",
+    //             data:
+    //                 {
+    //                     id: $("#resourcepool").val()
+    //                 },
+    //             success: function (data) {
+    //                 var dataObj = eval("(" + data + ")");
+    //                 for (var i = 0; i < dataObj.data.length; i++) {
+    //                     $("#computerresource").append("<option selected value='" + dataObj.data[i].id + "'>" + dataObj.data[i].name + "</option>");
+    //                 }
+    //             },
+    //         });
+    //
+    //     }
+    // });
 
     $('#next1').click(function () {
         $("#li2").tab("show");

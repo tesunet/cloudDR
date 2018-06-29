@@ -36,10 +36,12 @@ class Process(models.Model):
     rpo = models.IntegerField(u"RPO", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
+    url = models.CharField(u"页面链接", blank=True, max_length=100)
 
 
 class Step(models.Model):
     process = models.ForeignKey(Process)
+    last = models.ForeignKey('self', blank=True, null=True, related_name='next', verbose_name='上一步')
     code = models.CharField(u"步骤编号", blank=True, null=True, max_length=50)
     name = models.CharField(u"步骤名称", blank=True, null=True, max_length=50)
     approval = models.CharField(u"是否审批", blank=True, null=True, max_length=10)
@@ -69,7 +71,6 @@ class Script(models.Model):
     time = models.IntegerField(u"预计耗时", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
-
 
 class ResourcePool(models.Model):
     name = models.CharField("名称", blank=True, max_length=50)
@@ -231,3 +232,48 @@ class Joblist(models.Model):
     encrypted = models.CharField(blank=True, null=True, max_length=200)
     diskcapacity = models.BigIntegerField(blank=True, null=True)
     result = models.CharField(blank=True, null=True, max_length=200)
+
+class ProcessRun(models.Model):
+    process = models.ForeignKey(Process)
+    DataSet = models.ForeignKey(DataSet)
+    starttime = models.DateTimeField(u"开始时间", blank=True, null=True)
+    endtime = models.DateTimeField(u"结束时间", blank=True, null=True)
+    creatuser = models.CharField(u"发起人", blank=True, max_length=50)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+
+class StepRun(models.Model):
+    step = models.ForeignKey(Step, blank=True, null=True)
+    processrun = models.ForeignKey(ProcessRun, blank=True, null=True)
+    starttime = models.DateTimeField(u"开始时间", blank=True, null=True)
+    endtime = models.DateTimeField(u"结束时间", blank=True, null=True)
+    operator = models.CharField(u"操作人", blank=True, null=True, max_length=50)
+    parameter = models.CharField(u"运行参数", blank=True, null=True, max_length=5000)
+    result = models.CharField(u"运行结果", blank=True, null=True, max_length=5000)
+    explain = models.CharField(u"运行说明", blank=True, null=True, max_length=5000)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+
+class ScriptRun(models.Model):
+    script = models.ForeignKey(Script, blank=True, null=True)
+    steprun = models.ForeignKey(StepRun, blank=True, null=True)
+    starttime = models.DateTimeField(u"开始时间", blank=True, null=True)
+    endtime = models.DateTimeField(u"结束时间", blank=True, null=True)
+    operator = models.CharField(u"操作人", blank=True, null=True, max_length=50)
+    result = models.CharField(u"运行结果", blank=True, null=True, max_length=5000)
+    explain = models.CharField(u"运行说明", blank=True, null=True, max_length=5000)
+    runlog = models.CharField(u"运行日志", blank=True, null=True, max_length=5000)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+
+class ProcessTask(models.Model):
+    processrun = models.ForeignKey(ProcessRun, blank=True, null=True)
+    steprun = models.ForeignKey(StepRun, blank=True, null=True)
+    starttime = models.DateTimeField(u"发送时间", blank=True, null=True)
+    senduser = models.CharField(u"发送人", blank=True, null=True, max_length=50)
+    receiveuser = models.CharField(u"接收人", blank=True, null=True, max_length=50)
+    receiveauth = models.CharField(u"接收角色", blank=True, null=True, max_length=50)
+    operator = models.CharField(u"操作人", blank=True, null=True, max_length=50)
+    endtime = models.DateTimeField(u"处理时间", blank=True, null=True)
+    type = models.CharField(u"任务类型", blank=True, null=True, max_length=20)
+    content = models.CharField(u"任务内容", blank=True, null=True, max_length=5000)
+    state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+    result = models.CharField(u"处理结果", blank=True, null=True, max_length=5000)
+    explain = models.CharField(u"处理说明", blank=True, null=True, max_length=5000)

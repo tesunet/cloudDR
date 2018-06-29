@@ -8,7 +8,6 @@
                 { "data": "clientName" },
                 { "data": "platform" },
                 { "data": "type" },
-                { "data": "state" },
 
             ],
 
@@ -40,10 +39,8 @@
         $('#sample_1 tbody').on( 'click', 'a#edit', function () {
                 var table = $('#sample_1').DataTable();
                 var data = table.row( $(this).parents('tr') ).data();
-                $("#physicalbox").hide()
                 if (data.type=="physical box"){
-                    $("#physicalbox").show()
-                    $("#loading").hide()
+                    $("#vm").hide()
                     $("#filesystem").hide()
                     $("#oracle").hide()
                     $("#mssql").hide()
@@ -70,8 +67,11 @@
                 else
                 {
                     if (data.type=="VMWARE"){
-                        $("#loading").show()
-                         window.location.href="/vmrecovery/"+data.id;
+                        $("#vm").show()
+                        $("#filesystem").hide()
+                        $("#oracle").hide()
+                        $("#mssql").hide()
+                        $("#vm").attr("href","/vmrecovery/"+data.id);
                     }
                     else
                         alert("暂不支持。");

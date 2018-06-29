@@ -25,12 +25,23 @@ from django.db.models import Sum
 from django.db import connection
 from cloud.vmApi import *
 import xlrd, xlwt
+import pythoncom
+pythoncom.CoInitialize()
+import wmi
 
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
 
 
 def index(request):
+    # pythoncom.CoInitialize()
+    # conn = wmi.WMI(computer="192.168.100.151", user="administrator", password="tesunet@2017")
+    # filename = r"E:\hahah.bat"  # 此文件在远程服务器上
+    # cmd_callbat = r"cmd /c call %s" % filename
+    # conn.Win32_Process.Create(CommandLine=cmd_callbat)  # 执行bat文件
+    # print("执行成功!")
+
+
     if request.user.is_authenticated():
         cvvendor = Vendor.objects.filter(name='CommVault')
         if (len(cvvendor) > 0):
@@ -54,6 +65,68 @@ def index(request):
             global info
             info = {"webaddr": webaddr, "port": port, "username": username, "passwd": passwd, "token": "",
                     "lastlogin": 0}
+
+        alltask = []
+        mygroup = []
+        userinfo = request.user.userinfo
+        guoups = userinfo.group.all()
+        if len(guoups) > 0:
+            for curguoup in guoups:
+                mygroup.append(str(curguoup.id))
+        allprosstasks = ProcessTask.objects.filter(Q(receiveauth__in=mygroup) | Q(receiveuser=request.user.username)).filter(state="0").order_by("-starttime").all()
+        if len(allprosstasks) > 0:
+            for task in allprosstasks:
+                myurl = task.processrun.process.url + "/" + str(task.processrun_id)
+                time = ""
+                time = task.starttime
+                time=time.replace(tzinfo=None)
+                timenow = datetime.datetime.now()
+                days = int((timenow - time).days)
+                hours = int((timenow - time).seconds / 3600)
+
+                if days > 1095:
+                    time = "很久以前"
+                else:
+                    if days > 730:
+                        time = "2年前"
+                    else:
+                        if days > 365:
+                            time = "1年前"
+                        else:
+                            if days > 182:
+                                time = "半年前"
+                            else:
+                                if days > 150:
+                                    time = "5月前"
+                                else:
+                                    if days > 120:
+                                        time = "4月前"
+                                    else:
+                                        if days > 90:
+                                            time = "3月前"
+                                        else:
+                                            if days > 60:
+                                                time = "2月前"
+                                            else:
+                                                if days > 30:
+                                                    time = "1月前"
+                                                else:
+                                                    if days >= 1:
+                                                        time = str(days) + "天前"
+                                                    else:
+                                                        hours = int((timenow - time).seconds / 3600)
+                                                        if hours >= 1:
+                                                            time = str(hours) + "小时"
+                                                        else:
+                                                            minutes = int((timenow - time).seconds / 60)
+                                                            if minutes >= 1:
+                                                                time = str(minutes) + "分钟"
+                                                            else:
+                                                                time = "刚刚"
+
+                alltask.append({"content": task.content, "myurl": myurl, "time": time})
+
+
         # cvToken = CV_RestApi_Token()
         # cvToken.login(info)
         # cvAPI = CV_API(cvToken)
@@ -63,7 +136,7 @@ def index(request):
         # print clientInfo
         # print cvAPI.getClientList()
 
-        return render(request, "index.html", {'username': request.user.userinfo.fullname, "homepage": True})
+        return render(request, "index.html", {'username': request.user.userinfo.fullname,"alltask":alltask, "homepage": True})
     else:
         return HttpResponseRedirect("/login")
 
@@ -6000,3 +6073,201 @@ def reportdata(request):
                            "numbytesuncomp": str(job.numbytesuncomp / 1024 / 1024),
                            "diskcapacity": str(job.diskcapacity / 1024 / 1024)})
         return HttpResponse(json.dumps({"data": result}))
+
+def creatprocessrun(request):
+    if request.user.is_authenticated():
+        result = {}
+        datasetid = request.POST.get('datasetid', '')
+        processid = request.POST.get('processid', '')
+        type = request.POST.get('type', '')
+        try:
+            datasetid = int(datasetid)
+            processid = int(processid)
+        except:
+            raise Http404()
+        process = Process.objects.filter(id=processid).exclude(state="9")
+        if (len(process) <= 0):
+            result["res"] = '流程启动失败，该流程不存在。'
+        else:
+            dataset= DataSet.objects.filter(id=0)
+            if type =="Virtual Server":
+                dataset = DataSet.objects.filter(id=datasetid).exclude(status="9")
+            else:
+                clienthost = ClientHost.objects.filter(id=datasetid).exclude(status="9")
+                if (len(clienthost) > 0):
+                    dataset = DataSet.objects.filter(clientGUID=clienthost[0].clientGUID,agentType=type).exclude(status="9")
+            if (len(dataset) <= 0):
+                result["res"] = '流程启动失败，该应用已失效。'
+            else:
+
+                curprocessrun = ProcessRun.objects.filter(process=process[0],DataSet= dataset[0],state = "RUN")
+                if (len(curprocessrun) > 0):
+                    result["res"] = '流程启动失败，该应用的另一个流程正在进行中，请勿重复启动。'
+                else:
+                    myprocessrun = ProcessRun()
+                    myprocessrun.process = process[0]
+                    myprocessrun.DataSet = dataset[0]
+                    myprocessrun.starttime = datetime.datetime.now()
+                    myprocessrun.creatuser = request.user.username
+                    myprocessrun.state = "RUN"
+                    myprocessrun.save()
+                    mystep = process[0].step_set.exclude(state="9").filter(last=None)
+                    if (len(mystep) <= 0):
+                        result["res"] = '流程启动失败，没有找到可用步骤。'
+                    else:
+                        mysteprun = StepRun()
+                        mysteprun.step = mystep[0]
+                        mysteprun.starttime = datetime.datetime.now()
+                        mysteprun.processrun = myprocessrun
+                        mysteprun.state = "EDIT"
+                        mysteprun.save()
+
+                        myscript = mystep[0].script_set.exclude(state="9")
+                        for script in myscript:
+                            myscriptrun = ScriptRun()
+                            myscriptrun.script = script
+                            myscriptrun.steprun = mysteprun
+                            myscriptrun.state = "EDIT"
+                            myscriptrun.save()
+
+                        myprocesstask = ProcessTask()
+                        myprocesstask.processrun = myprocessrun
+                        myprocesstask.steprun = mysteprun
+                        myprocesstask.starttime = datetime.datetime.now()
+                        myprocesstask.senduser = request.user.username
+                        myprocesstask.receiveuser = request.user.username
+                        myprocesstask.type = "RUN"
+                        myprocesstask.state = "0"
+                        myprocesstask.content = dataset[0].clientName+ "的" + process[0].name + " 流程已启动，请" + request.user.userinfo.fullname + "处理。"
+                        myprocesstask.save()
+
+                        result["res"] = "新增成功。"
+                        result["data"] = process[0].url + "/" + str(myprocessrun.id)
+        return HttpResponse(json.dumps(result))
+
+
+def filecross(request, offset):
+    if request.user.is_authenticated():
+        id = 0
+        try:
+            id = int(offset)
+        except:
+            raise Http404()
+        processrun = ProcessRun.objects.filter(id=id, state="RUN")
+        if len(processrun):
+            task = processrun[0].processtask_set.filter(state="0")
+            if len(task) > 0:
+
+                steprunid=0
+                datasetid=0
+                clientID=0
+                instanceName=""
+                clientName=""
+                processrunid=processrun[0].id
+                try:
+                    steprunid=task[0].steprun_id
+                except:
+                    pass
+                try:
+                    datasetid=task[0].processrun.DataSet.id
+                    instanceName = task[0].processrun.DataSet.instanceName
+                    clientName = task[0].processrun.DataSet.clientName
+                    clientID = task[0].processrun.DataSet.clientID
+                except:
+                    pass
+
+                dataset = task[0].processrun.DataSet
+                allhost = ClientHost.objects.exclude(status="9").exclude(id=dataset.id).filter(Q(hostType="physical box") &
+                                                                        (Q(
+                                                                            owernID=request.user.userinfo.userGUID) | Q(
+                                                                            userinfo__id=request.user.userinfo.id))).filter(
+                    agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
+                destClient = []
+                for host in allhost:
+                    destClient.append(host.clientName)
+
+                steps = processrun[0].process.step_set.exclude(state="9")
+                stepinfo={}
+                for index in range(len(steps)):
+                    step=steps[index]
+                    steprun = StepRun.objects.filter(step=step,processrun=processrun[0]).exclude(state="9")
+                    if len(steprun)>0:
+                        curstep={"id":steprun[0].id,"state":steprun[0].state}
+                        try:
+                            doc = parseString(steprun[0].parameter)
+                            for node in doc.childNodes:
+                                curstep[node.nodeName]=node.childNodes[0].nodeValue
+                        except:
+                            pass
+
+                        stepinfo["step"+str(index+1)]=curstep
+
+
+                return render(request, 'filecross.html', {'username': request.user.userinfo.fullname,"taskid":id,"processrunid":processrunid,"curstepid":task[0].steprun.step_id,
+                                                          "steprunid":steprunid,"stepinfo":stepinfo,
+                                                          "datasetid":datasetid,
+                                                                 "instanceName": instanceName,
+                                                                 "clientName": clientName,"clientID":clientID,
+                                                                 "destClient": destClient, "disasterdrillpage": True})
+            else:
+                return HttpResponseRedirect("/index")
+        else:
+            return HttpResponseRedirect("/index")
+    else:
+        return HttpResponseRedirect("/index")
+
+def filecrossnext1(request):
+    if request.user.is_authenticated():
+        result = {}
+        restoreTime = request.POST.get('restoreTime', '')
+        setprunid = request.POST.get('setprunid', '')
+        try:
+            setprunid = int(setprunid)
+        except:
+            raise Http404()
+        setprun = StepRun.objects.filter(id=setprunid)
+        if len(setprun) <= 0:
+            result["res"] = '执行失败，该步骤配置异常。'
+        else:
+            setprun[0].state="DONE"
+            setprun[0].parameter = "<restoreTime>" + restoreTime + "</restoreTime>"
+            setprun[0].endtime = datetime.datetime.now()
+            setprun[0].save()
+
+            task = setprun[0].processtask_set.filter(state="0")
+            if len(task) > 0:
+                task[0].endtime = datetime.datetime.now()
+                task[0].state = "1"
+                task[0].operator=request.user.username
+                task[0].save()
+
+            nextsetp=setprun[0].step.next.exclude(state="9")
+            if len(nextsetp)>0:
+                mysteprun = StepRun()
+                mysteprun.step = nextsetp[0]
+                mysteprun.processrun = setprun[0].processrun
+                mysteprun.state = "EDIT"
+                mysteprun.save()
+
+                myscript = nextsetp[0].script_set.exclude(state="9")
+                for script in myscript:
+                    myscriptrun = ScriptRun()
+                    myscriptrun.script = script
+                    myscriptrun.steprun = mysteprun
+                    myscriptrun.state = "EDIT"
+                    myscriptrun.save()
+
+                myprocesstask = ProcessTask()
+                myprocesstask.processrun = setprun[0].processrun
+                myprocesstask.steprun = mysteprun
+                myprocesstask.starttime = datetime.datetime.now()
+                myprocesstask.senduser = request.user.username
+                myprocesstask.receiveuser = request.user.username
+                myprocesstask.type = "RUN"
+                myprocesstask.state = "0"
+                myprocesstask.content = setprun[0].processrun.DataSet.clientName + "的" + setprun[0].processrun.process.name + "流程进行到“" + nextsetp[0].name +"”，请" + request.user.userinfo.fullname + "处理。"
+                myprocesstask.save()
+
+                result["res"] = "执行成功。"
+                result["data"] = mysteprun.id
+        return HttpResponse(json.dumps(result))

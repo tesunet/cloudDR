@@ -9,7 +9,51 @@
     <div class="page-content">
         <!-- BEGIN PAGE HEADER-->
         <!-- BEGIN THEME PANEL -->
+        <div class="row">
+            <div class="col-md-6 col-sm-12 col-lg-6 hidden-xs hidden-sm">
 
+            </div>
+            <div class="col-md-6 col-sm-12 col-lg-6">
+                <div class="portlet light ">
+                        <div class="portlet-title tabbable-line">
+                            <div class="caption">
+                                <i class="fa fa-bell-o font-green-sharp"></i>
+                                <a href="/task"><span class="caption-subject font-green-sharp bold uppercase">待办任务</span></a>
+                            </div>
+                            </ul>
+                        </div>
+                        <div class="portlet-body">
+                                 <div class="scroller" style="height: 339px;" data-always-visible="1" data-rail-visible="0">
+                                        <ul class="feeds">
+                                            {% for task in alltask %}
+                                            <li>
+                                                <a href="{{task.myurl}}">
+                                                    <div class="col1">
+                                                        <div class="cont">
+                                                            <div class="cont-col1">
+                                                                <div class="label label-sm label-success">
+                                                                    <i class="fa fa-bell-o"></i>
+                                                                </div>
+                                                            </div>
+                                                            <div class="cont-col2">
+                                                                <div class="desc"> {{task.content}}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col2">
+                                                        <div class="date"> {{task.time}} </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+
+                                             {% endfor %}
+                                        </ul>
+                                    </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-md-6 col-sm-6">
                 <div class="portlet light bordered">
