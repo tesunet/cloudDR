@@ -45,11 +45,12 @@ var FormWizard = function () {
                 $.ajax({
                 type: "POST",
                 dataType: 'json',
-                url: "../../filecrossnext1/",
+                url: "../../filecrossnext/",
                 data:
                     {
                         restoreTime:myrestoreTime,
                         steprunid:$('#steprunid').val(),
+                        stepindex:"1"
                     },
                 success: function (data) {
                     if (data["res"] == "执行成功。") {
@@ -93,10 +94,11 @@ var FormWizard = function () {
                 $.ajax({
                 type: "POST",
                 dataType: 'json',
-                url: "../../filecrossnext2/",
+                url: "../../filecrossnext/",
                 data:
                     {
                         steprunid:$('#steprunid').val(),
+                        stepindex:"2"
                     },
                 success: function (data) {
                     if (data["res"] == "执行成功。") {
@@ -117,6 +119,79 @@ var FormWizard = function () {
                          $("#bt_shutdown").hide();
                          $("#bt_reboot").hide();
                          $("#bt_startup").hide();
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+
+            var previous2 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        $('#divtable').show();
+                        $('#radio1').removeProp("disabled");
+                        $('#radio2').removeProp("disabled");
+                        $('#datetimepicker').removeProp("readonly");
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+
+           var previous3 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+
+                        $('#instancename').removeProp("readonly");
+                         $('#currentvm').removeProp("readonly");
+                         $('#description').removeProp("readonly");
+                         $("#bt_select").show();
+                         $("#templatediv").addClass("input-group")
+                         $("#clone").show();
+                         $("#refresh").show();
+                         $("#bt_ip").show();
+                         $("#bt_hostname").show();
+                         $("#bt_installcv").show();
+                         $("#bt_registercv").show();
+                         $("#bt_adddisk").show();
+                         $("#bt_shutdown").show();
+                         $("#bt_reboot").show();
+                         $("#bt_startup").show();
+
 
                         return true
                     }
@@ -177,7 +252,12 @@ var FormWizard = function () {
                     handleTitle(tab, navigation, index);
                 },
                 onPrevious: function (tab, navigation, index) {
-
+                    if(index==0){
+                        previous2()
+                    }
+                    if(index==1){
+                        previous3()
+                    }
                     handleTitle(tab, navigation, index);
                 },
                 onTabShow: function (tab, navigation, index) {
@@ -389,6 +469,7 @@ jQuery(document).ready(function() {
         $("#div1").show();
         $("#div2").hide();
         $("#div3").hide();
+        $("#id").val("0")
     }
     else{
         $.ajax({
@@ -671,7 +752,7 @@ jQuery(document).ready(function() {
                         type: "POST",
                         dataType: 'json',
                         url: "../../clonevm/",
-                        data: $('#formactivate').serialize(),
+                        data: $('#submit_form').serialize(),
                         success: function (data) {
                             if (data["value"] == "1") {
                                 $("#id").val(data["id"]);
@@ -744,7 +825,7 @@ jQuery(document).ready(function() {
 
     //第三步，选择恢复资源
     if($('#steprunid').val()!=$('#steprunid3').val()){
-        $('#destClient').prop("disable", "disable");
+        $('#destClient').prop("disabled", "disabled");
 
 
     }else{

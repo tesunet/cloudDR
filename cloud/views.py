@@ -6484,10 +6484,9 @@ def filecross(request, offset):
         return HttpResponseRedirect("/index")
 
 
-def filecrossnext1(request):
+def filecrossprevious(request):
     if request.user.is_authenticated():
         result = {}
-        restoreTime = request.POST.get('restoreTime', '')
         steprunid = request.POST.get('steprunid', '')
         try:
             steprunid = int(steprunid)
@@ -6497,8 +6496,79 @@ def filecrossnext1(request):
         if len(steprun) <= 0:
             result["res"] = '执行失败，该步骤配置异常。'
         else:
+            steprun[0].state = "EDIT"
+            steprun[0].save()
+
+            task = steprun[0].processtask_set.filter(state="0")
+            if len(task) > 0:
+                task[0].endtime = datetime.datetime.now()
+                task[0].state = "9"
+                task[0].operator = request.user.username
+                task[0].save()
+
+            laststep = steprun[0].step.last
+            mysteprun=None
+            laststeprun = laststep.steprun_set.exclude(state="9").filter(processrun=steprun[0].processrun)
+            if len(laststeprun)>0:
+                mysteprun=laststeprun[0]
+                mysteprun.state = "EDIT"
+                mysteprun.save()
+
+                myscriptruns = mysteprun.scriptrun_set.exclude(state="9")
+                for myscriptrun in myscriptruns:
+                    myscriptrun.state = "EDIT"
+                    myscriptrun.save()
+
+            else:
+                mysteprun = StepRun()
+                mysteprun.step = laststep
+                mysteprun.processrun = steprun[0].processrun
+                mysteprun.starttime = datetime.datetime.now()
+                mysteprun.state = "EDIT"
+                mysteprun.save()
+
+                myscript = laststep.script_set.exclude(state="9")
+                for script in myscript:
+                    myscriptrun = ScriptRun()
+                    myscriptrun.script = script
+                    myscriptrun.steprun = mysteprun
+                    myscriptrun.state = "EDIT"
+                    myscriptrun.save()
+
+            myprocesstask = ProcessTask()
+            myprocesstask.processrun = steprun[0].processrun
+            myprocesstask.steprun = mysteprun
+            myprocesstask.starttime = datetime.datetime.now()
+            myprocesstask.senduser = request.user.username
+            myprocesstask.receiveuser = request.user.username
+            myprocesstask.type = "RUN"
+            myprocesstask.state = "0"
+            myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                0].processrun.process.name + "流程回退到“" + laststep.name + "”，请" + request.user.userinfo.fullname + "处理。"
+            myprocesstask.save()
+
+            result["res"] = "执行成功。"
+            result["data"] = mysteprun.id
+        return HttpResponse(json.dumps(result))
+
+
+def filecrossnext(request):
+    if request.user.is_authenticated():
+        result = {}
+        steprunid = request.POST.get('steprunid', '')
+        stepindex= request.POST.get('stepindex', '')
+        try:
+            steprunid = int(steprunid)
+        except:
+            raise Http404()
+        steprun = StepRun.objects.filter(id=steprunid)
+        if len(steprun) <= 0:
+            result["res"] = '执行失败，该步骤配置异常。'
+        else:
             steprun[0].state = "DONE"
-            steprun[0].parameter = "<restoreTime>" + restoreTime + "</restoreTime>"
+            if  stepindex=="1":
+                restoreTime = request.POST.get('restoreTime', '')
+                steprun[0].parameter = "<restoreTime>" + restoreTime + "</restoreTime>"
             steprun[0].endtime = datetime.datetime.now()
             steprun[0].save()
 
@@ -6511,20 +6581,33 @@ def filecrossnext1(request):
 
             nextstep = steprun[0].step.next.exclude(state="9")
             if len(nextstep) > 0:
-                mysteprun = StepRun()
-                mysteprun.step = nextstep[0]
-                mysteprun.processrun = steprun[0].processrun
-                mysteprun.starttime = datetime.datetime.now()
-                mysteprun.state = "EDIT"
-                mysteprun.save()
+                mysteprun=None
+                nextsteprun = nextstep[0].steprun_set.exclude(state="9").filter(processrun=steprun[0].processrun)
+                if len(nextsteprun)>0:
+                    mysteprun=nextsteprun[0]
+                    mysteprun.state = "EDIT"
+                    mysteprun.save()
 
-                myscript = nextstep[0].script_set.exclude(state="9")
-                for script in myscript:
-                    myscriptrun = ScriptRun()
-                    myscriptrun.script = script
-                    myscriptrun.steprun = mysteprun
-                    myscriptrun.state = "EDIT"
-                    myscriptrun.save()
+                    myscriptruns = mysteprun.scriptrun_set.exclude(state="9")
+                    for myscriptrun in myscriptruns:
+                        myscriptrun.state = "EDIT"
+                        myscriptrun.save()
+
+                else:
+                    mysteprun = StepRun()
+                    mysteprun.step = nextstep[0]
+                    mysteprun.processrun = steprun[0].processrun
+                    mysteprun.starttime = datetime.datetime.now()
+                    mysteprun.state = "EDIT"
+                    mysteprun.save()
+
+                    myscript = nextstep[0].script_set.exclude(state="9")
+                    for script in myscript:
+                        myscriptrun = ScriptRun()
+                        myscriptrun.script = script
+                        myscriptrun.steprun = mysteprun
+                        myscriptrun.state = "EDIT"
+                        myscriptrun.save()
 
                 myprocesstask = ProcessTask()
                 myprocesstask.processrun = steprun[0].processrun
@@ -6602,63 +6685,4 @@ def getsinglevm(request):
                       "template_name": template_name, "template_template_name": template_template_name,
                       "template_uuid": template_uuid, "system": system, "pool_id": pool_id,
                       "pool_name": pool_name, "uuid": uuid}
-        return HttpResponse(json.dumps(result))
-
-
-def filecrossnext2(request):
-    if request.user.is_authenticated():
-        result = {}
-        restoreTime = request.POST.get('restoreTime', '')
-        steprunid = request.POST.get('steprunid', '')
-        try:
-            steprunid = int(steprunid)
-        except:
-            raise Http404()
-        steprun = StepRun.objects.filter(id=steprunid)
-        if len(steprun) <= 0:
-            result["res"] = '执行失败，该步骤配置异常。'
-        else:
-            steprun[0].state = "DONE"
-            steprun[0].endtime = datetime.datetime.now()
-            steprun[0].save()
-
-            task = steprun[0].processtask_set.filter(state="0")
-            if len(task) > 0:
-                task[0].endtime = datetime.datetime.now()
-                task[0].state = "1"
-                task[0].operator = request.user.username
-                task[0].save()
-
-            nextstep = steprun[0].step.next.exclude(state="9")
-            if len(nextstep) > 0:
-                mysteprun = StepRun()
-                mysteprun.step = nextstep[0]
-                mysteprun.processrun = steprun[0].processrun
-                mysteprun.starttime = datetime.datetime.now()
-                mysteprun.state = "EDIT"
-                mysteprun.save()
-
-                myscript = nextstep[0].script_set.exclude(state="9")
-                for script in myscript:
-                    myscriptrun = ScriptRun()
-                    myscriptrun.script = script
-                    myscriptrun.steprun = mysteprun
-                    myscriptrun.state = "EDIT"
-                    myscriptrun.save()
-
-                myprocesstask = ProcessTask()
-                myprocesstask.processrun = steprun[0].processrun
-                myprocesstask.steprun = mysteprun
-                myprocesstask.starttime = datetime.datetime.now()
-                myprocesstask.senduser = request.user.username
-                myprocesstask.receiveuser = request.user.username
-                myprocesstask.type = "RUN"
-                myprocesstask.state = "0"
-                myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
-                    0].processrun.process.name + "流程进行到“" + nextstep[
-                                            0].name + "”，请" + request.user.userinfo.fullname + "处理。"
-                myprocesstask.save()
-
-                result["res"] = "执行成功。"
-                result["data"] = mysteprun.id
         return HttpResponse(json.dumps(result))
