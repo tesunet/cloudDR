@@ -5,6 +5,8 @@ from cloud.CVApi import *
 from cloud.models import *
 from django.db import connection
 from xml.dom.minidom import parse, parseString
+
+
 def is_connection_usable():
     try:
         connection.connection.ping()
@@ -13,6 +15,7 @@ def is_connection_usable():
     else:
         return True
 
+
 @shared_task
 def just_save():
     if not is_connection_usable():
@@ -20,7 +23,7 @@ def just_save():
     conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
     cur = conn.cursor()
     cur.execute('select * from CommCellBackupInfo')
-    joblist =cur.fetchall()
+    joblist = cur.fetchall()
     cur.close()
     conn.close()
 
@@ -52,7 +55,7 @@ def just_save():
     RestApi = CV_RestApi(cvToken)
     for job in joblist:
         oldjob = Joblist.objects.filter(jobid=job[0])
-        if len(oldjob)>0:
+        if len(oldjob) > 0:
             oldjob[0].isAged = job[26]
             oldjob[0].isAgedStr = job[27]
             oldjob[0].save()
@@ -62,7 +65,7 @@ def just_save():
                 tree = RestApi.getCmd('Job/' + str(job[0]))
                 jobdetail = tree.findall(".//jobs/jobSummary")
                 if len(jobdetail) > 0:
-                    sizeOfMediaOnDisk =  jobdetail[0].attrib["sizeOfMediaOnDisk"]
+                    sizeOfMediaOnDisk = jobdetail[0].attrib["sizeOfMediaOnDisk"]
             except:
                 pass
 
@@ -105,4 +108,3 @@ def just_save():
             newjob.diskcapacity = sizeOfMediaOnDisk
             newjob.result = ""
             newjob.save()
-

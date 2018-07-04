@@ -173,13 +173,13 @@ $('#se_1').contextmenu({
                 if (confirm("确定要删除该脚本吗？")) {
                     $.ajax({
                         type: "POST",
-                        url: "../../scriptdel/",
+                        url: "../../remove_script/",
                         data:
                             {
-                                id: $("#se_1").find('option:selected').attr("id").replace("script_", ""),
+                                script_id: $("#se_1").find('option:selected').val(),
                             },
                         success: function (data) {
-                            if (data == 1) {
+                            if (data["status"] == 1) {
                                 $("#se_1").find('option:selected').remove();
                                 alert("删除成功！");
                             }

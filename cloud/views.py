@@ -26,6 +26,8 @@ from django.db import connection
 from cloud.vmApi import *
 import xlrd, xlwt
 import pythoncom
+import pymssql
+
 pythoncom.CoInitialize()
 import wmi
 
@@ -40,7 +42,6 @@ def index(request):
     # cmd_callbat = r"cmd /c call %s" % filename
     # conn.Win32_Process.Create(CommandLine=cmd_callbat)  # 执行bat文件
     # print("执行成功!")
-
 
     if request.user.is_authenticated():
         cvvendor = Vendor.objects.filter(name='CommVault')
@@ -73,13 +74,15 @@ def index(request):
         if len(guoups) > 0:
             for curguoup in guoups:
                 mygroup.append(str(curguoup.id))
-        allprosstasks = ProcessTask.objects.filter(Q(receiveauth__in=mygroup) | Q(receiveuser=request.user.username)).filter(state="0").order_by("-starttime").all()
+        allprosstasks = ProcessTask.objects.filter(
+            Q(receiveauth__in=mygroup) | Q(receiveuser=request.user.username)).filter(state="0").order_by(
+            "-starttime").all()
         if len(allprosstasks) > 0:
             for task in allprosstasks:
                 myurl = task.processrun.process.url + "/" + str(task.processrun_id)
                 time = ""
                 time = task.starttime
-                time=time.replace(tzinfo=None)
+                time = time.replace(tzinfo=None)
                 timenow = datetime.datetime.now()
                 days = int((timenow - time).days)
                 hours = int((timenow - time).seconds / 3600)
@@ -126,7 +129,6 @@ def index(request):
 
                 alltask.append({"content": task.content, "myurl": myurl, "time": time})
 
-
         # cvToken = CV_RestApi_Token()
         # cvToken.login(info)
         # cvAPI = CV_API(cvToken)
@@ -136,9 +138,88 @@ def index(request):
         # print clientInfo
         # print cvAPI.getClientList()
 
-        return render(request, "index.html", {'username': request.user.userinfo.fullname,"alltask":alltask, "homepage": True})
+        # 进度
+        if not is_connection_usable():
+            connection.close()
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT *  FROM [commserv].[dbo].[RunningBackups]""")
+        backup_task_list = cur.fetchall()
+
+        cur.execute(
+            """SELECT *  FROM [commserv].[dbo].[RunningRestores]""")
+        restore_task_list = cur.fetchall()
+
+        # 告警
+        nowtime = datetime.datetime.now()
+        dttime = datetime.datetime.strptime(
+            ((nowtime - datetime.timedelta(days=28 + nowtime.weekday())).strftime("%Y-%m-%d")), '%Y-%m-%d')
+        jobid_list = []
+        display_error_joblist = []
+        joblist = Joblist.objects.values_list("jobid")
+        for job in joblist:
+            jobid_list.append(job[0])
+        cur.execute(
+            """select * from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and jobstatus!='Success'""".format(
+                dttime))
+        error_joblist = cur.fetchall()
+        for error_job in error_joblist:
+            if error_job[0] not in jobid_list:
+                display_error_joblist.append({
+                    "jobid": error_job[0],
+                    "appid": error_job[1],
+                    "jobinitfrom": error_job[2],
+                    "clientname": error_job[3],
+                    "idataagent": error_job[4],
+                    "instance": error_job[5],
+                    "backupset": error_job[6],
+                    "subclient": error_job[7],
+                    "data_sp": error_job[8],
+                    "backuplevelInt": error_job[9],
+                    "backuplevel": error_job[10],
+                    "incrlevel": error_job[11],
+                    "jobstatusInt": error_job[12],
+                    "jobstatus": error_job[13],
+                    "jobfailedreason": error_job[14],
+                    "transferTime": error_job[15],
+                    "startdateunixsec": error_job[16],
+                    "enddateunixsec": error_job[17],
+                    "startdate": error_job[18],
+                    "enddate": error_job[19],
+                    "durationunixsec": error_job[20],
+                    "duration": error_job[21],
+                    "numstreams": error_job[22],
+                    "numbytesuncomp": error_job[23],
+                    "numbytescomp": error_job[24],
+                    "numobjects": error_job[25],
+                    "isAged": error_job[26],
+                    "isAgedStr": error_job[27],
+                    "xmlJobOptions": error_job[28],
+                    "retentionDays": error_job[29],
+                    "systemStateBackup": error_job[30],
+                    "inPrimaryCopy": error_job[31],
+                    "failedobjects": error_job[32],
+                    "totalBackupSize": error_job[33],
+                    "encrypted": error_job[34],
+                })
+        cur.close()
+        conn.close()
+        return render(request, "index.html",
+                      {'username': request.user.userinfo.fullname, "alltask": alltask, "homepage": True,
+                       "backup_task_list": backup_task_list, "restore_task_list": restore_task_list,
+                       "display_error_joblist": display_error_joblist})
     else:
         return HttpResponseRedirect("/login")
+
+
+def is_connection_usable():
+    try:
+        connection.connection.ping()
+    except:
+        return False
+    else:
+        return True
 
 
 def get_dashboard_amchart_1(request):
@@ -159,7 +240,7 @@ def get_dashboard_amchart_1(request):
                 hostlist.append(host.clientName)
         nowtime = datetime.datetime.now()
         dttime = datetime.datetime.strptime(((nowtime - datetime.timedelta(days=6)).strftime("%Y-%m-%d")), '%Y-%m-%d')
-        select = {'day': connection.ops.date_trunc_sql('day', 'startdate')}
+        # select = {'day': connection.ops.date_trunc_sql('day', 'startdate')}
         if type == "2":
             dttime = datetime.datetime.strptime(
                 ((nowtime - datetime.timedelta(days=28 + nowtime.weekday())).strftime("%Y-%m-%d")), '%Y-%m-%d')
@@ -169,30 +250,51 @@ def get_dashboard_amchart_1(request):
         if type == "4":
             q, r = divmod(nowtime.month - 1 + 1, 12)
             dttime = datetime.datetime(nowtime.year - 1 + q, r + 1, 1)
-        joblist = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist)
-        joblist1 = joblist.extra(select=select).values("day").annotate(num_day=Count('id')).order_by("day")
+        fail_status = ["Failed", "Killed", "Failed to Start"]
+        if not is_connection_usable():
+            connection.close()
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
+        cur.execute(
+            """select startdate,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} group by startdate order by startdate""".format(
+                dttime, tuple(hostlist)))
+        joblist1 = cur.fetchall()
+
+        cur.execute(
+            """select startdate,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} and jobstatus in {2} group by startdate""".format(
+                dttime, tuple(hostlist), tuple(fail_status)))
+        joblist2 = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        # joblist1 = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist).extra(select=select).values("day").annotate(num_day=Count('id')).order_by("day")
+        # print("joblist1", joblist1)
+        # joblist2 = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist).filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).extra(select=select).values(
+        #     "day").annotate(num_day=Count('id'))
         for job in joblist1:
             times = 0
             try:
-                times = int(job["num_day"])
+                times = int(job[1])
             except:
                 pass
-            datarow = {"date": job["day"].strftime("%y-%m-%d"), "times": times}
+            datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
             if type == "3" or type == "4":
-                datarow = {"date": job["day"].strftime("%y-%m-%d"), "times": times}
+                datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
             times1.append(datarow)
-        joblist2 = joblist.filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).extra(select=select).values(
-            "day").annotate(num_day=Count('id'))
+        # joblist2 = joblist.filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).extra(select=select).values(
+        #     "day").annotate(num_day=Count('id'))   # 做一次sql查询
         for job in joblist2:
             times = 0
             try:
-                times = int(job["num_day"])
+                times = int(job[1])
             except:
                 pass
-            datarow = {"date": job["day"].strftime("%y-%m-%d"), "times": times}
+            datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
             if type == "3" or type == "4":
-                datarow = {"date": job["day"].strftime("%y-%m-%d"), "times": times}
+                datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
             times2.append(datarow)
+
         if type == "1":
             for i in range((nowtime - dttime).days + 1):
                 day = dttime + datetime.timedelta(days=i)
@@ -247,7 +349,6 @@ def get_dashboard_amchart_1(request):
                         {"date": day.strftime("%y-%m"), "times1": count1, "times2": count2, "times3": count1 - count2})
                     count1 = 0
                     count2 = 0
-
         return HttpResponse(json.dumps(result))
 
 
@@ -280,26 +381,45 @@ def get_dashboard_amchart_2(request):
             q, r = divmod(nowtime.month - 1 + 1, 12)
             dttime = datetime.datetime(nowtime.year - 1 + q, r + 1, 1)
 
-        joblist = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist)
-        joblist1 = joblist.values("clientname").annotate(num_clientname=Count('id'))
+        fail_status = ["Failed", "Killed", "Failed to Start"]
+        if not is_connection_usable():
+            connection.close()
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
+
+        cur.execute(
+            """select clientname,count(jobid),max(startdate) from [commserv].[dbo].[CommCellBackupInfo] group by clientname""")
+        joblist1 = cur.fetchall()
+        # cur.execute("""select startdate,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} and jobstatus in {2} group by startdate""".format(dttime, tuple(hostlist), tuple(fail_status)))
+        # joblist2 = cur.fetchall()
+        cur.execute(
+            """select clientname,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where jobstatus in {0} group by clientname""".format(
+                tuple(fail_status)))
+        joblist2 = cur.fetchall()
+
+        cur.close()
+        conn.close()
+        # joblist = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist)
+        # joblist1 = joblist.values("clientname").annotate(num_clientname=Count('id'))
         for job in joblist1:
             times = 0
             try:
-                times = int(job["num_clientname"])
+                times = int(job[1])
             except:
                 pass
-            lastjob = Joblist.objects.filter(clientname=job["clientname"]).latest("startdate")
-            times1.append({"clientname": job["clientname"], "times": times,
-                           "lasttime": lastjob.startdate.strftime("%Y-%m-%d %X")})
-        joblist2 = joblist.filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).values("clientname").annotate(
-            num_clientname=Count('id'))
+            lastjob = job[2]
+            # lastjob = Joblist.objects.filter(clientname=job["clientname"]).latest("startdate")
+            times1.append({"clientname": job[0], "times": times,
+                           "lasttime": lastjob.strftime("%Y-%m-%d %X")})
+        # joblist2 = joblist.filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).values("clientname").annotate(
+        #     num_clientname=Count('id'))
         for job in joblist2:
             times = 0
             try:
-                times = int(job["num_clientname"])
+                times = int(job[0])
             except:
                 pass
-            times2.append({"clientname": job["clientname"], "times": times})
+            times2.append({"clientname": job[0], "times": times})
         for time1 in times1:
             count1 = time1["times"]
             count2 = 0
@@ -315,6 +435,10 @@ def get_dashboard_amchart_2(request):
 
 def get_dashboard_amchart_3(request):
     if request.user.is_authenticated():
+        if not is_connection_usable():
+            connection.close()
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
         result = []
         ll = []
         rl = []
@@ -337,28 +461,55 @@ def get_dashboard_amchart_3(request):
             for i in range(7):
                 ll = 0
                 day = dttime + datetime.timedelta(days=i)
-                s = datetime.datetime(day.year, day.month, day.day)
-                e = datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=1)
-                curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
-                    select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
-                if curjoblist[0]["llsum"] is not None:
-                    ll = curjoblist[0]["llsum"]
+                s = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%S:%M")
+                e = (datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=1)).strftime(
+                    "%Y-%m-%d %H:%S:%M")
+                cur.execute(
+                    """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
+                        s, e, tuple(hostlist)))
+                curjoblist = cur.fetchall()
+                # curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
+                #     select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
+                # if curjoblist[0]["llsum"] is not] None:
+                #     ll = curjoblist[0]["llsum"]
+                if curjoblist:
+                    if curjoblist[0][0] is not None:
+                        ll = curjoblist[0][0]
+                        # print("ll", ll)  # 0???
 
                 rlsum = 0
                 for clientname in hostlist:
-                    rlfulljoblist = Joblist.objects.filter(startdate__lte=e, backuplevel='Full',
-                                                           clientname=clientname).order_by("-startdate")
+                    cur.execute(
+                        """select startdate, jobid from [commserv].[dbo].[CommCellBackupInfo] where backuplevel='Full' and clientname='{0}' and startdate<='{1}' order by startdate desc""".format(
+                            clientname, e))
+                    rlfulljoblist = cur.fetchall()
+                    # rlfulljoblist = Joblist.objects.filter(startdate__lte=e, backuplevel='Full',
+                    #                                        clientname=clientname).order_by("-startdate")
                     rl = 0
                     if len(rlfulljoblist) > 0:
-                        rl = rlfulljoblist[0].diskcapacity
-                        s = rlfulljoblist[0].startdate
-                    rlsum = rlsum + rl
-                    rlincjoblist = Joblist.objects.filter(startdate__range=(s, e), backuplevel='Incremental',
-                                                          clientname=clientname)
-                    rlincjoblist = rlincjoblist.extra(select={'rlsum': 'sum(numbytesuncomp)'}).values('rlsum')
+                        job_id = rlfulljoblist[0][1]
+                        cur.execute(
+                            """SELECT SUM(sizeOnMedia) FROM [commserv].[dbo].[JMJobDataStats] where jobid={0}""".format(
+                                job_id))
+                        rl = cur.fetchall()[0][0]
+                        # rl = rlfulljoblist[0].diskcapacity
+                        s = rlfulljoblist[0][0].strftime("%Y-%m-%d %H:%S:%M")
+                    try:
+                        rlsum = rlsum + rl
+                    except:
+                        # print("rl为None!")
+                        pass
+                    cur.execute(
+                        """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where backuplevel='Incremental' and clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
+                            s, e, tuple(hostlist)))
+                    rlincjoblist = cur.fetchall()
 
-                    if rlincjoblist[0]["rlsum"] is not None:
-                        rl = rlincjoblist[0]["rlsum"]
+                    # rlincjoblist = Joblist.objects.filter(startdate__range=(s, e), backuplevel='Incremental',
+                    #                                       clientname=clientname)
+                    # rlincjoblist = rlincjoblist.extra(select={'rlsum': 'sum(numbytesuncomp)'}).values('rlsum')
+                    if rlincjoblist:
+                        if rlincjoblist[0][0] is not None:
+                            rl = rlincjoblist[0][0]
                         rlsum = rlsum + rl
                 result.append(
                     {"date": day.strftime("%m-%d"), "ll": int(ll / 1024 / 1024), "rl": int(rlsum / 1024 / 1024)})
@@ -370,10 +521,21 @@ def get_dashboard_amchart_3(request):
                 day = dttime + datetime.timedelta(days=i * 7)
                 s = datetime.datetime(day.year, day.month, day.day)
                 e = datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=7)
-                curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
-                    select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
-                if curjoblist[0]["llsum"] is not None:
-                    ll = curjoblist[0]["llsum"]
+                s1 = s.strftime("%Y-%m-%d %H:%S:%M")
+                e1 = e.strftime("%Y-%m-%d %H:%S:%M")
+
+                cur.execute(
+                    """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
+                        s1, e1, tuple(hostlist)))
+                curjoblist = cur.fetchall()
+                if curjoblist:
+                    if curjoblist[0][0] is not None:
+                        ll = curjoblist[0][0]
+
+                # curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
+                #     select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
+                # if curjoblist[0]["llsum"] is not None:
+                #     ll = curjoblist[0]["llsum"]
 
                 rlsum = 0
 
@@ -390,10 +552,20 @@ def get_dashboard_amchart_3(request):
                 s = datetime.datetime(day.year, day.month, day.day)
                 q, r = divmod(s.month - 1 + 1, 12)
                 e = datetime.datetime(s.year + q, r + 1, 1)
-                curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
-                    select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
-                if curjoblist[0]["llsum"] is not None:
-                    ll = curjoblist[0]["llsum"]
+                s1 = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%S:%M")
+                e1 = datetime.datetime(s.year + q, r + 1, 1).strftime("%Y-%m-%d %H:%S:%M")
+                cur.execute(
+                    """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
+                        s1, e1, tuple(hostlist)))
+                curjoblist = cur.fetchall()
+                if curjoblist:
+                    if curjoblist[0][0] is not None:
+                        ll = curjoblist[0][0]
+
+                # curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
+                #     select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
+                # if curjoblist[0]["llsum"] is not None:
+                #     ll = curjoblist[0]["llsum"]
 
                 rlsum = 0
 
@@ -409,16 +581,28 @@ def get_dashboard_amchart_3(request):
                 s = datetime.datetime(day.year, day.month, day.day)
                 q, r = divmod(s.month - 1 + 1, 12)
                 e = datetime.datetime(s.year + q, r + 1, 1)
-                curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
-                    select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
-                if curjoblist[0]["llsum"] is not None:
-                    ll = curjoblist[0]["llsum"]
+                s1 = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%S:%M")
+                e1 = datetime.datetime(s.year + q, r + 1, 1).strftime("%Y-%m-%d %H:%S:%M")
+
+                cur.execute(
+                    """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
+                        s, e, tuple(hostlist)))
+                curjoblist = cur.fetchall()
+                if curjoblist:
+                    if curjoblist[0][0] is not None:
+                        ll = curjoblist[0][0]
+
+                # curjoblist = Joblist.objects.filter(startdate__range=(s, e), clientname__in=hostlist).extra(
+                #     select={'llsum': 'sum(numbytesuncomp)'}).values('llsum')
+                # if curjoblist[0]["llsum"] is not None:
+                #     ll = curjoblist[0]["llsum"]
 
                 rlsum = 0
 
                 result.append(
                     {"date": s.strftime("%y-%m"), "ll": int(ll / 1024 / 1024), "rl": int(rlsum / 1024 / 1024)})
-
+        cur.close()
+        conn.close()
         return HttpResponse(json.dumps(result))
 
 
@@ -448,30 +632,60 @@ def get_dashboard_amchart_4(request):
         if type == "4":
             q, r = divmod(nowtime.month - 1 + 1, 12)
             dttime = datetime.datetime(nowtime.year - 1 + q, r + 1, 1)
-        joblist = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist).values("jobstatus").annotate(
-            num_jobstatus=Count('jobstatus')).values("jobstatus", "num_jobstatus")
+
+        fail_status = ["Failed", "Killed", "Failed to Start"]
+        if not is_connection_usable():
+            connection.close()
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
+        cur.execute(
+            """select jobstatus,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} group by jobstatus""".format(
+                dttime, tuple(hostlist)))
+        joblist = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        # joblist = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist).values("jobstatus").annotate(
+        #     num_jobstatus=Count('jobstatus')).values("jobstatus", "num_jobstatus")
         Completed = 0
         Failed = 0
         errors = 0
         for job in joblist:
-            if str(job["jobstatus"]) == "Success":
-                Completed += int(job["num_jobstatus"])
+            if str(job[0]) == "Success":
+                Completed += int(job[1])
             else:
-                if str(job["jobstatus"]) == "Failed":
-                    Failed += int(job["num_jobstatus"])
+                if str(job[0]) == "Failed":
+                    Failed += int(job[1])
                 else:
-                    if str(job["jobstatus"]) == "Killed":
-                        Failed += int(job["num_jobstatus"])
+                    if str(job[0]) == "Killed":
+                        Failed += int(job[1])
                     else:
-                        if str(job["jobstatus"]) == "Failed to Start":
-                            Failed += int(job["num_jobstatus"])
+                        if str(job[0]) == "Failed to Start":
+                            Failed += int(job[1])
                         else:
-                            errors = job["num_jobstatus"]
+                            errors = job[1]
         result.append({"country": "成功", "value": Completed})
         result.append({"country": "失败", "value": Failed})
         result.append({"country": "报警", "value": errors})
 
         return HttpResponse(json.dumps(result))
+
+
+def not_display_jobs(request):
+    if request.user.is_authenticated():
+        job_id = request.POST.get("jobid", "")
+        print(job_id)
+        result = ''
+        if job_id:
+            job_obj = Joblist()
+            job_obj.jobid = job_id
+            job_obj.save()
+            result = "0"
+        else:
+            result = "1"
+        print(result)
+        return JsonResponse({"result": result})
 
 
 def downloadlist(request):
@@ -1392,6 +1606,22 @@ def get_script_data(request):
                                "runpath": allscript[0].runpath,
                                "maxtime": allscript[0].maxtime, "time": allscript[0].time}
             return HttpResponse(json.dumps(script_data))
+
+
+def remove_script(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        # 移除当前步骤中的脚本关联
+        script_id = request.POST.get("script_id", "")
+        try:
+            current_script = Script.objects.filter(id=script_id)[0]
+        except:
+            pass
+        else:
+            current_script.step_id = None
+            current_script.save()
+        return JsonResponse({
+            "status": 1
+        })
 
 
 def group(request):
@@ -2564,15 +2794,15 @@ def clonevm(request):
                     ip = hostnode.getAttribute("ip")
                     username = hostnode.getAttribute("username")
                     password = hostnode.getAttribute("password")
-            vm_api = VM_API(ip, username, password)
-            task = vm_api.clone_vm(name, vm_name, datacenter, cluster)
-            if task:
 
-                if id == 0:
-                    allresource = VmResource.objects.filter(name=vm_name)
-                    if (len(allresource) > 0):
-                        result = u"新虚机名称" + vm_name + u'已存在。'
-                    else:
+            if id == 0:
+                allresource = VmResource.objects.filter(name=vm_name)
+                if (len(allresource) > 0):
+                    result = u"新虚机名称" + vm_name + u'已存在。'
+                else:
+                    vm_api = VM_API(ip, username, password)
+                    task = vm_api.clone_vm(name, vm_name, datacenter, cluster)
+                    if task:
                         resource = VmResource()
                         resource.description = description
 
@@ -2602,8 +2832,23 @@ def clonevm(request):
 
                         resource.save()
                         result = {"value": "1", "id": resource.id, "text": u"克隆启动成功。"}
-                else:
-                    result = {"value": "0", "text": u"克隆失败。"}
+
+                        # 流程中克隆，保存步骤信息
+                        if 'steprunid' in request.POST:
+                            steprunid = request.POST.get('steprunid', '')
+                            try:
+                                steprunid = int(steprunid)
+                            except:
+                                raise Http404()
+                            steprun = StepRun.objects.filter(id=steprunid)
+                            if len(steprun) <= 0:
+                                result["res"] = '执行失败，该步骤配置异常。'
+                            else:
+                                steprun[0].state = "RUN"
+                                steprun[0].parameter = "<clonevmid>" + str(resource.id) + "</clonevmid>"
+                                steprun[0].save()
+                    else:
+                        result = {"value": "0", "text": u"克隆失败。"}
             else:
                 result = {"value": "0", "text": u"克隆失败。"}
             return HttpResponse(json.dumps(result))
@@ -6046,33 +6291,54 @@ def report(request):
 
 def reportdata(request):
     if request.user.is_authenticated():
+        fail_status = ["Failed", "Killed", "Failed to Start"]
+        if not is_connection_usable():
+            connection.close()
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
         result = []
         client = request.GET.get('client', '')
         type = request.GET.get('type', '')
         startdate = request.GET.get('startdate', '')
         enddate = request.GET.get('enddate', '')
+        # joblist = Joblist.objects.all().order_by("-startdate")
+        start_time = datetime.datetime.strptime(startdate, '%Y-%m-%d')
+        end_time = datetime.datetime.strptime(enddate, '%Y-%m-%d') + datetime.timedelta(days=1) - datetime.timedelta(
+            seconds=1)
+        # 默认
+        exec_sql = """select * from [commserv].[dbo].[CommCellBackupInfo] where startdate between '{0}' and '{1}'""".format(
+            start_time, end_time)
 
-        joblist = Joblist.objects.all().order_by("-startdate")
-        if client != "":
-            joblist = joblist.filter(clientname=client)
-        if type != "":
-            joblist = joblist.filter(idataagent=type)
-        if startdate != "":
-            date_time = datetime.datetime.strptime(startdate, '%Y-%m-%d')
-            joblist = joblist.filter(startdate__gte=date_time)
-        if enddate != "":
-            date_time = datetime.datetime.strptime(enddate, '%Y-%m-%d') + datetime.timedelta(
-                days=1) - datetime.timedelta(seconds=1)
-            joblist = joblist.filter(startdate__lte=date_time)
+        if client != "" and type != "":
+            exec_sql = """select * from [commserv].[dbo].[CommCellBackupInfo] where clientname='{0}' and idataagent='{1}' and startdate between '{2}' and '{3}'""".format(
+                client, type, start_time, end_time)
+
+        if client == "" and type != "":
+            exec_sql = """select * from [commserv].[dbo].[CommCellBackupInfo] where idataagent='{0}' and startdate between '{1}' and '{2}'""".format(
+                type, start_time, end_time)
+
+        if client != "" and type == "":
+            exec_sql = """select * from [commserv].[dbo].[CommCellBackupInfo] where clientname='{0}' and startdate between '{1}' and '{2}' """.format(
+                client, start_time, end_time)
+        cur.execute(exec_sql)
+        joblist = cur.fetchall()
 
         for job in joblist:
-            result.append({"jobid": job.jobid, "clientname": job.clientname, "idataagent": job.idataagent,
-                           "backuplevel": job.backuplevel, "backupset": job.backupset,
-                           "startdate": job.startdate.strftime('%Y-%m-%d %H:%M:%S'),
-                           "enddate": job.enddate.strftime('%Y-%m-%d %H:%M:%S'), "jobstatus": job.jobstatus,
-                           "numbytesuncomp": str(job.numbytesuncomp / 1024 / 1024),
-                           "diskcapacity": str(job.diskcapacity / 1024 / 1024)})
+            job_id = job[0]
+            cur.execute(
+                """SELECT SUM(sizeOnMedia) FROM [commserv].[dbo].[JMJobDataStats] where jobid={0}""".format(job_id))
+            diskcapacity = cur.fetchall()
+            if diskcapacity[0][0]:
+                result.append({"jobid": job[0], "clientname": job[3], "idataagent": job[4],
+                               "backuplevel": job[10], "backupset": job[6],
+                               "startdate": job[18].strftime('%Y-%m-%d %H:%M:%S'),
+                               "enddate": job[19].strftime('%Y-%m-%d %H:%M:%S'), "jobstatus": job[13],
+                               "numbytesuncomp": str(job[23] / 1024 / 1024),
+                               "diskcapacity": str(diskcapacity[0][0] / 1024 / 1024)})
+        cur.close()
+        conn.close()
         return HttpResponse(json.dumps({"data": result}))
+
 
 def creatprocessrun(request):
     if request.user.is_authenticated():
@@ -6089,18 +6355,19 @@ def creatprocessrun(request):
         if (len(process) <= 0):
             result["res"] = '流程启动失败，该流程不存在。'
         else:
-            dataset= DataSet.objects.filter(id=0)
-            if type =="Virtual Server":
+            dataset = DataSet.objects.filter(id=0)
+            if type == "Virtual Server":
                 dataset = DataSet.objects.filter(id=datasetid).exclude(status="9")
             else:
                 clienthost = ClientHost.objects.filter(id=datasetid).exclude(status="9")
                 if (len(clienthost) > 0):
-                    dataset = DataSet.objects.filter(clientGUID=clienthost[0].clientGUID,agentType=type).exclude(status="9")
+                    dataset = DataSet.objects.filter(clientGUID=clienthost[0].clientGUID, agentType=type).exclude(
+                        status="9")
             if (len(dataset) <= 0):
                 result["res"] = '流程启动失败，该应用已失效。'
             else:
 
-                curprocessrun = ProcessRun.objects.filter(process=process[0],DataSet= dataset[0],state = "RUN")
+                curprocessrun = ProcessRun.objects.filter(process=process[0], DataSet=dataset[0], state="RUN")
                 if (len(curprocessrun) > 0):
                     result["res"] = '流程启动失败，该应用的另一个流程正在进行中，请勿重复启动。'
                 else:
@@ -6138,7 +6405,8 @@ def creatprocessrun(request):
                         myprocesstask.receiveuser = request.user.username
                         myprocesstask.type = "RUN"
                         myprocesstask.state = "0"
-                        myprocesstask.content = dataset[0].clientName+ "的" + process[0].name + " 流程已启动，请" + request.user.userinfo.fullname + "处理。"
+                        myprocesstask.content = dataset[0].clientName + "的" + process[
+                            0].name + " 流程已启动，请" + request.user.userinfo.fullname + "处理。"
                         myprocesstask.save()
 
                         result["res"] = "新增成功。"
@@ -6158,18 +6426,18 @@ def filecross(request, offset):
             task = processrun[0].processtask_set.filter(state="0")
             if len(task) > 0:
 
-                steprunid=0
-                datasetid=0
-                clientID=0
-                instanceName=""
-                clientName=""
-                processrunid=processrun[0].id
+                steprunid = 0
+                datasetid = 0
+                clientID = 0
+                instanceName = ""
+                clientName = ""
+                processrunid = processrun[0].id
                 try:
-                    steprunid=task[0].steprun_id
+                    steprunid = task[0].steprun_id
                 except:
                     pass
                 try:
-                    datasetid=task[0].processrun.DataSet.id
+                    datasetid = task[0].processrun.DataSet.id
                     instanceName = task[0].processrun.DataSet.instanceName
                     clientName = task[0].processrun.DataSet.clientName
                     clientID = task[0].processrun.DataSet.clientID
@@ -6177,38 +6445,40 @@ def filecross(request, offset):
                     pass
 
                 dataset = task[0].processrun.DataSet
-                allhost = ClientHost.objects.exclude(status="9").exclude(id=dataset.id).filter(Q(hostType="physical box") &
-                                                                        (Q(
-                                                                            owernID=request.user.userinfo.userGUID) | Q(
-                                                                            userinfo__id=request.user.userinfo.id))).filter(
+                allhost = ClientHost.objects.exclude(status="9").exclude(id=dataset.id).filter(
+                    Q(hostType="physical box") &
+                    (Q(
+                        owernID=request.user.userinfo.userGUID) | Q(
+                        userinfo__id=request.user.userinfo.id))).filter(
                     agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
                 destClient = []
                 for host in allhost:
                     destClient.append(host.clientName)
 
                 steps = processrun[0].process.step_set.exclude(state="9")
-                stepinfo={}
+                stepinfo = {}
                 for index in range(len(steps)):
-                    step=steps[index]
-                    steprun = StepRun.objects.filter(step=step,processrun=processrun[0]).exclude(state="9")
-                    if len(steprun)>0:
-                        curstep={"id":steprun[0].id,"state":steprun[0].state}
+                    step = steps[index]
+                    steprun = StepRun.objects.filter(step=step, processrun=processrun[0]).exclude(state="9")
+                    if len(steprun) > 0:
+                        curstep = {"id": steprun[0].id, "state": steprun[0].state}
                         try:
                             doc = parseString(steprun[0].parameter)
                             for node in doc.childNodes:
-                                curstep[node.nodeName]=node.childNodes[0].nodeValue
+                                curstep[node.nodeName] = node.childNodes[0].nodeValue
                         except:
                             pass
 
-                        stepinfo["step"+str(index+1)]=curstep
+                        stepinfo["step" + str(index + 1)] = curstep
 
-
-                return render(request, 'filecross.html', {'username': request.user.userinfo.fullname,"taskid":id,"processrunid":processrunid,"curstepid":task[0].steprun.step_id,
-                                                          "steprunid":steprunid,"stepinfo":stepinfo,
-                                                          "datasetid":datasetid,
-                                                                 "instanceName": instanceName,
-                                                                 "clientName": clientName,"clientID":clientID,
-                                                                 "destClient": destClient, "disasterdrillpage": True})
+                return render(request, 'filecross.html',
+                              {'username': request.user.userinfo.fullname, "taskid": id, "processrunid": processrunid,
+                               "curstepid": task[0].steprun.step_id,
+                               "steprunid": steprunid, "stepinfo": stepinfo,
+                               "datasetid": datasetid,
+                               "instanceName": instanceName,
+                               "clientName": clientName, "clientID": clientID,
+                               "destClient": destClient, "disasterdrillpage": True})
             else:
                 return HttpResponseRedirect("/index")
         else:
@@ -6216,40 +6486,42 @@ def filecross(request, offset):
     else:
         return HttpResponseRedirect("/index")
 
+
 def filecrossnext1(request):
     if request.user.is_authenticated():
         result = {}
         restoreTime = request.POST.get('restoreTime', '')
-        setprunid = request.POST.get('setprunid', '')
+        steprunid = request.POST.get('steprunid', '')
         try:
-            setprunid = int(setprunid)
+            steprunid = int(steprunid)
         except:
             raise Http404()
-        setprun = StepRun.objects.filter(id=setprunid)
-        if len(setprun) <= 0:
+        steprun = StepRun.objects.filter(id=steprunid)
+        if len(steprun) <= 0:
             result["res"] = '执行失败，该步骤配置异常。'
         else:
-            setprun[0].state="DONE"
-            setprun[0].parameter = "<restoreTime>" + restoreTime + "</restoreTime>"
-            setprun[0].endtime = datetime.datetime.now()
-            setprun[0].save()
+            steprun[0].state = "DONE"
+            steprun[0].parameter = "<restoreTime>" + restoreTime + "</restoreTime>"
+            steprun[0].endtime = datetime.datetime.now()
+            steprun[0].save()
 
-            task = setprun[0].processtask_set.filter(state="0")
+            task = steprun[0].processtask_set.filter(state="0")
             if len(task) > 0:
                 task[0].endtime = datetime.datetime.now()
                 task[0].state = "1"
-                task[0].operator=request.user.username
+                task[0].operator = request.user.username
                 task[0].save()
 
-            nextsetp=setprun[0].step.next.exclude(state="9")
-            if len(nextsetp)>0:
+            nextstep = steprun[0].step.next.exclude(state="9")
+            if len(nextstep) > 0:
                 mysteprun = StepRun()
-                mysteprun.step = nextsetp[0]
-                mysteprun.processrun = setprun[0].processrun
+                mysteprun.step = nextstep[0]
+                mysteprun.processrun = steprun[0].processrun
+                mysteprun.starttime = datetime.datetime.now()
                 mysteprun.state = "EDIT"
                 mysteprun.save()
 
-                myscript = nextsetp[0].script_set.exclude(state="9")
+                myscript = nextstep[0].script_set.exclude(state="9")
                 for script in myscript:
                     myscriptrun = ScriptRun()
                     myscriptrun.script = script
@@ -6258,14 +6530,136 @@ def filecrossnext1(request):
                     myscriptrun.save()
 
                 myprocesstask = ProcessTask()
-                myprocesstask.processrun = setprun[0].processrun
+                myprocesstask.processrun = steprun[0].processrun
                 myprocesstask.steprun = mysteprun
                 myprocesstask.starttime = datetime.datetime.now()
                 myprocesstask.senduser = request.user.username
                 myprocesstask.receiveuser = request.user.username
                 myprocesstask.type = "RUN"
                 myprocesstask.state = "0"
-                myprocesstask.content = setprun[0].processrun.DataSet.clientName + "的" + setprun[0].processrun.process.name + "流程进行到“" + nextsetp[0].name +"”，请" + request.user.userinfo.fullname + "处理。"
+                myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                    0].processrun.process.name + "流程进行到“" + nextstep[
+                                            0].name + "”，请" + request.user.userinfo.fullname + "处理。"
+                myprocesstask.save()
+
+                result["res"] = "执行成功。"
+                result["data"] = mysteprun.id
+        return HttpResponse(json.dumps(result))
+
+
+def getsinglevm(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        result = {}
+        id = request.POST.get('id', '')
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        vmlist = VmResource.objects.exclude(state="9").exclude(vm_type='模板虚机').filter(id=id)
+        if (len(vmlist) > 0):
+            resource = vmlist[0]
+            id = resource.id
+            name = resource.name
+            pool_id = resource.pool_id
+            specifications = resource.specifications
+            description = resource.description
+            instance_name = resource.template_name  # ...对应的name
+            system = resource.system
+            template_id = resource.template_id
+            template_name = resource.template.name
+            template_template_name = resource.template.template_name
+            template_uuid = resource.template.uuid
+            uuid = resource.uuid
+
+            resourcepool = ResourcePool.objects.filter(id=pool_id)[0]
+            certificate = resourcepool.certificate
+            pool_name = resourcepool.name
+            # 从资源池中获取certificate,并获取ip,user,password
+
+            doc = parseString(certificate)
+            ip = ""
+            username = ""
+            password = ""
+            cert_name = ""
+            for node in doc.getElementsByTagName("CERT_LIST"):
+                for hostnode in node.getElementsByTagName("CERT"):
+                    ip = hostnode.getAttribute("ip")
+                    username = hostnode.getAttribute("username")
+                    password = hostnode.getAttribute("password")
+                    datacenter = hostnode.getAttribute("datacenter")
+                    cluster = hostnode.getAttribute("cluster")
+
+            doc2 = parseString(specifications)
+            for node in doc2.getElementsByTagName("SPEC_LIST"):
+                cpu = node.getAttribute("cpu")
+                memory = node.getAttribute("memory")
+                disk = node.getAttribute("disk")
+                vmip = node.getAttribute("vmip")
+                hostname = node.getAttribute("hostname")
+                clone = node.getAttribute("clone")
+
+            result = {"id": id, "name": name, "description": description,
+                      "cpu": cpu, "memory": memory, "datacenter": datacenter, "cluster": cluster, "ip": vmip,
+                      "hostname": hostname,
+                      "disks": disk, "instance_name": instance_name, "template_id": template_id, "clone": clone,
+                      "template_name": template_name, "template_template_name": template_template_name,
+                      "template_uuid": template_uuid, "system": system, "pool_id": pool_id,
+                      "pool_name": pool_name, "uuid": uuid}
+        return HttpResponse(json.dumps(result))
+
+
+def filecrossnext2(request):
+    if request.user.is_authenticated():
+        result = {}
+        restoreTime = request.POST.get('restoreTime', '')
+        steprunid = request.POST.get('steprunid', '')
+        try:
+            steprunid = int(steprunid)
+        except:
+            raise Http404()
+        steprun = StepRun.objects.filter(id=steprunid)
+        if len(steprun) <= 0:
+            result["res"] = '执行失败，该步骤配置异常。'
+        else:
+            steprun[0].state = "DONE"
+            steprun[0].endtime = datetime.datetime.now()
+            steprun[0].save()
+
+            task = steprun[0].processtask_set.filter(state="0")
+            if len(task) > 0:
+                task[0].endtime = datetime.datetime.now()
+                task[0].state = "1"
+                task[0].operator = request.user.username
+                task[0].save()
+
+            nextstep = steprun[0].step.next.exclude(state="9")
+            if len(nextstep) > 0:
+                mysteprun = StepRun()
+                mysteprun.step = nextstep[0]
+                mysteprun.processrun = steprun[0].processrun
+                mysteprun.starttime = datetime.datetime.now()
+                mysteprun.state = "EDIT"
+                mysteprun.save()
+
+                myscript = nextstep[0].script_set.exclude(state="9")
+                for script in myscript:
+                    myscriptrun = ScriptRun()
+                    myscriptrun.script = script
+                    myscriptrun.steprun = mysteprun
+                    myscriptrun.state = "EDIT"
+                    myscriptrun.save()
+
+                myprocesstask = ProcessTask()
+                myprocesstask.processrun = steprun[0].processrun
+                myprocesstask.steprun = mysteprun
+                myprocesstask.starttime = datetime.datetime.now()
+                myprocesstask.senduser = request.user.username
+                myprocesstask.receiveuser = request.user.username
+                myprocesstask.type = "RUN"
+                myprocesstask.state = "0"
+                myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                    0].processrun.process.name + "流程进行到“" + nextstep[
+                                            0].name + "”，请" + request.user.userinfo.fullname + "处理。"
                 myprocesstask.save()
 
                 result["res"] = "执行成功。"

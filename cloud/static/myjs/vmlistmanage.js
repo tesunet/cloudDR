@@ -250,7 +250,9 @@ $(document).ready(function () {
     $('#sample_1 tbody').on('click', 'button#edit', function () {
         // hide select button
         $("#bt_select").hide();
-        $("#template_name").width(684);
+        $("#templatediv").addClass("input-group")
+
+
         $("#datacenter").empty();
         $("#cluster").empty();
         var table = $('#sample_1').DataTable();
@@ -415,7 +417,7 @@ $(document).ready(function () {
         $("#currentvm").removeAttr("readonly");
         $("#bt_select").removeAttr("readonly");
 
-        $("#template_name").removeAttr("style");
+        $("#templatediv").removeClass("input-group")
 
         $("#id").val("0");
         $("#clone_tag").val("0");
