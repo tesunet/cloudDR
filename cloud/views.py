@@ -256,18 +256,15 @@ def get_dashboard_amchart_1(request):
         conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
         cur = conn.cursor()
         cur.execute(
-            """select startdate,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} group by startdate order by startdate""".format(
+            """select cast(startdate as date),count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} group by cast(startdate as date)""".format(
                 dttime, tuple(hostlist)))
         joblist1 = cur.fetchall()
-
         cur.execute(
-            """select startdate,count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} and jobstatus in {2} group by startdate""".format(
+            """select cast(startdate as date),count(jobid) from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and clientname in {1} and jobstatus in {2} group by cast(startdate as date)""".format(
                 dttime, tuple(hostlist), tuple(fail_status)))
         joblist2 = cur.fetchall()
-
         cur.close()
         conn.close()
-
         # joblist1 = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist).extra(select=select).values("day").annotate(num_day=Count('id')).order_by("day")
         # print("joblist1", joblist1)
         # joblist2 = Joblist.objects.filter(startdate__gte=dttime, clientname__in=hostlist).filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).extra(select=select).values(
@@ -278,34 +275,34 @@ def get_dashboard_amchart_1(request):
                 times = int(job[1])
             except:
                 pass
-            datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
+            datarow = {"date": job[0], "times": times}
             if type == "3" or type == "4":
-                datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
+                datarow = {"date": job[0], "times": times}
             times1.append(datarow)
         # joblist2 = joblist.filter(jobstatus__in=["Failed", "Killed", "Failed to Start"]).extra(select=select).values(
-        #     "day").annotate(num_day=Count('id'))   # 做一次sql查询
+        #     "day").annotate(num_day=Count('id'))
         for job in joblist2:
             times = 0
             try:
                 times = int(job[1])
             except:
                 pass
-            datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
+            datarow = {"date": job[0], "times": times}
             if type == "3" or type == "4":
-                datarow = {"date": job[0].strftime("%y-%m-%d"), "times": times}
+                datarow = {"date": job[0], "times": times}
             times2.append(datarow)
-
         if type == "1":
             for i in range((nowtime - dttime).days + 1):
                 day = dttime + datetime.timedelta(days=i)
+                print("====", day)
                 count1 = 0
                 count2 = 0
                 for time1 in times1:
-                    if time1["date"] == day.strftime("%y-%m-%d"):
+                    if time1["date"] == day.strftime("%Y-%m-%d"):
                         count1 = time1["times"]
                         break
                 for time2 in times2:
-                    if time2["date"] == day.strftime("%y-%m-%d"):
+                    if time2["date"] == day.strftime("%Y-%m-%d"):
                         count2 = time2["times"]
                         break
                 result.append(
@@ -317,11 +314,11 @@ def get_dashboard_amchart_1(request):
             for i in range((nowtime - dttime).days + 1):
                 day = dttime + datetime.timedelta(days=i)
                 for time1 in times1:
-                    if time1["date"] == day.strftime("%y-%m-%d"):
+                    if time1["date"] == day.strftime("%Y-%m-%d"):
                         count1 += time1["times"]
                         break
                 for time2 in times2:
-                    if time2["date"] == day.strftime("%y-%m-%d"):
+                    if time2["date"] == day.strftime("%Y-%m-%d"):
                         count2 += time2["times"]
                         break
                 if day.weekday() == 6 or i == (nowtime - dttime).days:
@@ -337,11 +334,11 @@ def get_dashboard_amchart_1(request):
             for i in range((nowtime - dttime).days + 1):
                 day = dttime + datetime.timedelta(days=i)
                 for time1 in times1:
-                    if time1["date"] == day.strftime("%y-%m-%d"):
+                    if time1["date"] == day.strftime("%Y-%m-%d"):
                         count1 += time1["times"]
                         break
                 for time2 in times2:
-                    if time2["date"] == day.strftime("%y-%m-%d"):
+                    if time2["date"] == day.strftime("%Y-%m-%d"):
                         count2 += time2["times"]
                         break
                 if (day + datetime.timedelta(days=1)).day == 1 or i == (nowtime - dttime).days:

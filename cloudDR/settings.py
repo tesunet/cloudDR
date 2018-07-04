@@ -15,13 +15,7 @@ import djcelery
 
 djcelery.setup_loader()
 BROKER_URL = 'django://'
-# BROKER_HOST = "localhost"
-# BROKER_PORT = 5672
-# BROKER_USER = "guest"
-# BROKER_PASSWORD = "guest"
-# BROKER_VHOST = "/"
 
-#BROKER_URL = 'django://'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
