@@ -6553,7 +6553,11 @@ def filecrossnext(request):
         if len(steprun) <= 0:
             result["res"] = '执行失败，该步骤配置异常。'
         else:
-            steprun[0].state = "DONE"
+            scriptruns = steprun[0].scriptrun_set.exclude(state="9").exclude(state="DONE")
+            if len(scriptruns)>0:
+                steprun[0].state = "RUN"
+            else:
+                steprun[0].state = "DONE"
             if  stepindex=="1":
                 restoreTime = request.POST.get('restoreTime', '')
                 steprun[0].parameter = "<content><restoreTime>" + restoreTime + "</restoreTime></content>"
@@ -6648,22 +6652,39 @@ def filecrossnext(request):
                         myscriptrun.steprun = mysteprun
                         myscriptrun.state = "EDIT"
                         myscriptrun.save()
-
-                myprocesstask = ProcessTask()
-                myprocesstask.processrun = steprun[0].processrun
-                myprocesstask.steprun = mysteprun
-                myprocesstask.starttime = datetime.datetime.now()
-                myprocesstask.senduser = request.user.username
-                myprocesstask.receiveuser = request.user.username
-                myprocesstask.type = "RUN"
-                myprocesstask.state = "0"
-                myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
-                    0].processrun.process.name + "流程进行到“" + nextstep[
-                                            0].name + "”，请" + request.user.userinfo.fullname + "处理。"
-                myprocesstask.save()
+                if len(scriptruns) > 0:
+                    myprocesstask = ProcessTask()
+                    myprocesstask.processrun = steprun[0].processrun
+                    myprocesstask.steprun = steprun[0]
+                    myprocesstask.starttime = datetime.datetime.now()
+                    myprocesstask.senduser = request.user.username
+                    myprocesstask.receiveuser = request.user.username
+                    myprocesstask.type = "RUN"
+                    myprocesstask.state = "0"
+                    myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                        0].processrun.process.name + "流程“" + steprun[0].step.name + "”正在执行脚本，点击查看。"
+                    myprocesstask.save()
+                else:
+                    myprocesstask = ProcessTask()
+                    myprocesstask.processrun = steprun[0].processrun
+                    myprocesstask.steprun = mysteprun
+                    myprocesstask.starttime = datetime.datetime.now()
+                    myprocesstask.senduser = request.user.username
+                    myprocesstask.receiveuser = request.user.username
+                    myprocesstask.type = "RUN"
+                    myprocesstask.state = "0"
+                    myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                        0].processrun.process.name + "流程进行到“" + nextstep[
+                                                0].name + "”，请" + request.user.userinfo.fullname + "处理。"
+                    myprocesstask.save()
 
                 result["res"] = "执行成功。"
-                result["data"] = mysteprun.id
+                if len(scriptruns) > 0:
+                    result["data"] = steprun[0].id
+                else:
+                    result["data"] = mysteprun.id
+                result["nextdata"] = mysteprun.id
+                result["steprunstate"] = steprun[0].state
         return HttpResponse(json.dumps(result))
 
 

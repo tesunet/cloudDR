@@ -32,8 +32,8 @@
         };
         this.next = function (h) {
             if (d.hasClass("last") || b.onNext && "function" === typeof b.onNext && !1 === b.onNext(f, c, a.nextIndex())) return !1;
-            $index = a.nextIndex();
-            $index > a.navigationLength() || c.find('li:has([data-toggle="tab"]):eq(' + $index + ") a").tab("show")
+            // $index = a.nextIndex();
+            // $index > a.navigationLength() || c.find('li:has([data-toggle="tab"]):eq(' + $index + ") a").tab("show")
         };
         this.previous =
             function (h) {
