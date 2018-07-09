@@ -2276,12 +2276,13 @@ class CV_Backupset(CV_Client):
                 child = ET.Element('sourceItem')
                 child.text = '\\'
                 parent[0].append(child)
+            print(restoreTime)
             if "Last" not in restoreTime and restoreTime != None and restoreTime != "":
                 timeRange = root.findall(".//timeRange")
                 for node in timeRange:
                     toTimeValue = ET.Element('toTimeValue')
                     toTimeValue.text = restoreTime
-                    node[0].append(toTimeValue)
+                    node.append(toTimeValue)
         except:
             self.msg = "the file format is wrong"
             return jobId
@@ -2586,7 +2587,7 @@ class CV_Backupset(CV_Client):
             for node in timeRange:
                 toTimeValue = ET.Element('toTimeValue')
                 toTimeValue.text = restoreTime
-                node[0].append(toTimeValue)
+                node.append(toTimeValue)
 
         xmlString = ""
         xmlString = ET.tostring(root, encoding='utf-8', method='xml')
@@ -2888,7 +2889,7 @@ class CV_Backupset(CV_Client):
                 for node in timeRange:
                     toTimeValue = ET.Element('toTimeValue')
                     toTimeValue.text = restoreTime
-                    node[0].append(toTimeValue)
+                    node.append(toTimeValue)
         except:
             self.msg = "the file format is wrong"
             return jobId
@@ -3100,7 +3101,7 @@ class CV_Backupset(CV_Client):
                 for node in timeRange:
                     toTimeValue = ET.Element('toTimeValue')
                     toTimeValue.text = restoreTime
-                    node[0].append(toTimeValue)
+                    node.append(toTimeValue)
         except:
             self.msg = "the file format is wrong"
             return jobId

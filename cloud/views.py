@@ -6044,7 +6044,6 @@ def dofilerecovery(request):
             else:
                 return HttpResponse(u"恢复任务启动失败。" + cvAPI.msg)
 
-            return HttpResponse("开发中...")
         else:
             return HttpResponse("恢复任务启动失败。")
 
@@ -6418,66 +6417,55 @@ def filecross(request, offset):
             id = int(offset)
         except:
             raise Http404()
-        processrun = ProcessRun.objects.filter(id=id, state="RUN")
+        processrun = ProcessRun.objects.filter(id=id)
         if len(processrun):
+            steprunid = 0
+            processrunid = processrun[0].id
             task = processrun[0].processtask_set.filter(state="0")
             if len(task) > 0:
-
-                steprunid = 0
-                datasetid = 0
-                clientID = 0
-                instanceName = ""
-                clientName = ""
-                processrunid = processrun[0].id
                 try:
                     steprunid = task[0].steprun_id
                 except:
                     pass
-                try:
-                    datasetid = task[0].processrun.DataSet.id
-                    instanceName = task[0].processrun.DataSet.instanceName
-                    clientName = task[0].processrun.DataSet.clientName
-                    clientID = task[0].processrun.DataSet.clientID
-                except:
-                    pass
+            datasetid = processrun[0].DataSet.id
+            instanceName = processrun[0].DataSet.instanceName
+            clientName = processrun[0].DataSet.clientName
+            clientID = processrun[0].DataSet.clientID
 
-                dataset = task[0].processrun.DataSet
-                allhost = ClientHost.objects.exclude(status="9").exclude(id=dataset.id).filter(
-                    Q(hostType="physical box") &
-                    (Q(
-                        owernID=request.user.userinfo.userGUID) | Q(
-                        userinfo__id=request.user.userinfo.id))).filter(
-                    agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
-                destClient = []
-                for host in allhost:
-                    destClient.append(host.clientName)
+            dataset = processrun[0].DataSet
+            allhost = ClientHost.objects.exclude(status="9").exclude(id=dataset.id).filter(
+                Q(hostType="physical box") &
+                (Q(
+                    owernID=request.user.userinfo.userGUID) | Q(
+                    userinfo__id=request.user.userinfo.id))).filter(
+                agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
+            destClient = []
+            for host in allhost:
+                destClient.append(host.clientName)
 
-                steps = processrun[0].process.step_set.exclude(state="9")
-                stepinfo = {}
-                for index in range(len(steps)):
-                    step = steps[index]
-                    steprun = StepRun.objects.filter(step=step, processrun=processrun[0]).exclude(state="9")
-                    if len(steprun) > 0:
-                        curstep = {"id": steprun[0].id, "state": steprun[0].state}
-                        try:
-                            doc = parseString(steprun[0].parameter)
-                            for node in doc.childNodes:
-                                curstep[node.nodeName] = node.childNodes[0].nodeValue
-                        except:
-                            pass
+            steps = processrun[0].process.step_set.exclude(state="9")
+            stepinfo = {}
+            for index in range(len(steps)):
+                step = steps[index]
+                steprun = StepRun.objects.filter(step=step, processrun=processrun[0]).exclude(state="9")
+                if len(steprun) > 0:
+                    curstep = {"id": steprun[0].id, "state": steprun[0].state}
+                    try:
+                        doc = parseString(steprun[0].parameter)
+                        for node in doc.getElementsByTagName("content"):
+                            for child in node.childNodes:
+                                curstep[child.nodeName] = child.childNodes[0].nodeValue
+                    except:
+                        pass
 
-                        stepinfo["step" + str(index + 1)] = curstep
-
-                return render(request, 'filecross.html',
-                              {'username': request.user.userinfo.fullname, "taskid": id, "processrunid": processrunid,
-                               "curstepid": task[0].steprun.step_id,
-                               "steprunid": steprunid, "stepinfo": stepinfo,
-                               "datasetid": datasetid,
-                               "instanceName": instanceName,
-                               "clientName": clientName, "clientID": clientID,
-                               "destClient": destClient, "disasterdrillpage": True})
-            else:
-                return HttpResponseRedirect("/index")
+                    stepinfo["step" + str(index + 1)] = curstep
+            return render(request, 'filecross.html',
+                          {'username': request.user.userinfo.fullname, "taskid": id, "processrunid": processrunid,
+                           "steprunid": steprunid, "stepinfo": stepinfo,
+                           "datasetid": datasetid,
+                           "instanceName": instanceName,
+                           "clientName": clientName, "clientID": clientID,
+                           "destClient": destClient, "disasterdrillpage": True})
         else:
             return HttpResponseRedirect("/index")
     else:
@@ -6568,7 +6556,59 @@ def filecrossnext(request):
             steprun[0].state = "DONE"
             if  stepindex=="1":
                 restoreTime = request.POST.get('restoreTime', '')
-                steprun[0].parameter = "<restoreTime>" + restoreTime + "</restoreTime>"
+                steprun[0].parameter = "<content><restoreTime>" + restoreTime + "</restoreTime></content>"
+            if  stepindex=="3":
+                destClient = request.POST.get('destClient', '')
+                steprun[0].parameter = "<content><destClient>" + destClient + "</destClient></content>"
+            if stepindex == "4":
+                iscover = request.POST.get('iscover', '')
+                mypath = request.POST.get('mypath', '')
+                selectedfile = request.POST.get('selectedfile', '')
+                steprun[0].parameter = "<content><iscover>" + iscover + "</iscover><mypath>" + mypath + "</mypath><selectedfile>" + selectedfile + "</selectedfile></content>"
+            if stepindex == "5":
+                sourceClient = request.POST.get('sourceClient', '')
+                destClient = request.POST.get('destClient', '')
+                restoreTime = request.POST.get('restoreTime', '')
+                instanceName = request.POST.get('instanceName', '')
+                iscover = request.POST.get('iscover', '')
+                mypath = request.POST.get('mypath', '')
+                selectedfile = request.POST.get('selectedfile')
+                sourceItemlist = selectedfile.split("*!-!*")
+                client = ClientHost.objects.filter(clientName=sourceClient)
+                if len(client) > 0:
+                    if 'LINUX' in client[0].platform.upper():
+                        for i in range(len(sourceItemlist)):
+                            if sourceItemlist[i] == '\\':
+                                sourceItemlist[i] = '/'
+                            else:
+                                sourceItemlist[i] = sourceItemlist[i][1:-1]
+                inPlace = True
+                if mypath != "same":
+                    inPlace = False
+                else:
+                    mypath = ""
+                overWrite = False
+                if iscover == "TRUE":
+                    overWrite = True
+
+                for sourceItem in sourceItemlist:
+                    if sourceItem == "":
+                        sourceItemlist.remove(sourceItem)
+
+                fileRestoreOperator = {"restoreTime": restoreTime, "overWrite": overWrite, "inPlace": inPlace,
+                                       "destPath": mypath, "sourcePaths": sourceItemlist, "OS Restore": False}
+                cvToken = CV_RestApi_Token()
+                cvToken.login(info)
+                cvAPI = CV_API(cvToken)
+                jobid=cvAPI.restoreFSBackupset(sourceClient, destClient, "defaultBackupSet", fileRestoreOperator)
+                if jobid>0:
+                    steprun[0].parameter = "<content><jobid>" + str(jobid) + "</jobid></content>"
+                else:
+                    result["res"] = '执行失败，恢复任务启动失败。'+ cvAPI.msg
+                    return HttpResponse(json.dumps(result))
+            if  stepindex=="6":
+                checkservice = request.POST.get('checkservice', '')
+                steprun[0].parameter = "<content><checkservice>" + checkservice + "</checkservice></content>"
             steprun[0].endtime = datetime.datetime.now()
             steprun[0].save()
 
@@ -6624,6 +6664,39 @@ def filecrossnext(request):
 
                 result["res"] = "执行成功。"
                 result["data"] = mysteprun.id
+        return HttpResponse(json.dumps(result))
+
+
+def filecrossfinish(request):
+    if request.user.is_authenticated():
+        result = {}
+        steprunid = request.POST.get('steprunid', '')
+        try:
+            steprunid = int(steprunid)
+        except:
+            raise Http404()
+        steprun = StepRun.objects.filter(id=steprunid)
+        if len(steprun) <= 0:
+            result["res"] = '执行失败，该步骤配置异常。'
+        else:
+            steprun[0].state = "DONE"
+            checkapp = request.POST.get('checkapp', '')
+            steprun[0].parameter = "<content><checkapp>" + checkapp + "</checkapp></content>"
+            steprun[0].endtime = datetime.datetime.now()
+            steprun[0].save()
+
+            task = steprun[0].processtask_set.filter(state="0")
+            if len(task) > 0:
+                task[0].endtime = datetime.datetime.now()
+                task[0].state = "1"
+                task[0].operator = request.user.username
+                task[0].save()
+
+            myprocessrun = steprun[0].processrun
+            myprocessrun.endtime = datetime.datetime.now()
+            myprocessrun.state="DONE"
+            myprocessrun.save()
+            result["res"] = "执行成功。"
         return HttpResponse(json.dumps(result))
 
 

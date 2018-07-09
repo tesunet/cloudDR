@@ -170,4 +170,5 @@ urlpatterns = patterns('cloud.views',
                         (r'^filecrossprevious/$', 'filecrossprevious'),
                        (r'^filecrossnext/$', 'filecrossnext'),
                         (r'^getsinglevm/$', 'getsinglevm'),
+                        (r'^filecrossfinish/$', 'filecrossfinish'),
                        )

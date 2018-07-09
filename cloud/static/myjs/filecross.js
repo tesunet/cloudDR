@@ -56,11 +56,21 @@ var FormWizard = function () {
                     if (data["res"] == "执行成功。") {
                         $('#steprunid').val(data["data"]);
                         $('#steprunid2').val(data["data"]);
+                        //原步骤界面
                         $('#divtable').hide();
                         $('#radio1').prop("disabled", "disabled");
                         $('#radio2').prop("disabled", "disabled");
                         $('#datetimepicker').prop("readonly", "readonly");
-
+                        //同步确认界面
+                        if($("input[name='optionsRadios']:checked").val()=="1"){
+                            $("input[name='optionsRadios1'][value='1']").prop("checked",true);
+                            $("input[name='optionsRadios1'][value='2']").prop("checked",false);
+                        }else{
+                             $("input[name='optionsRadios1'][value='1']").prop("checked",false);
+                            $("input[name='optionsRadios1'][value='2']").prop("checked",true);
+                        }
+                        $('#datetimepicker_check').val($('#datetimepicker').val())
+                        //新步骤界面
                         $('#instancename').removeProp("readonly");
                          $('#currentvm').removeProp("readonly");
                          $('#description').removeProp("readonly");
@@ -76,6 +86,115 @@ var FormWizard = function () {
                          $("#bt_shutdown").show();
                          $("#bt_reboot").show();
                          $("#bt_startup").show();
+
+                        if ($("#id").val()=="0"){
+                            $("#div1").show();
+                            $("#div2").hide();
+                            $("#div3").hide();
+                        }
+                        else{
+                            $.ajax({
+                                type: "POST",
+                                url: "../../getsinglevm/",
+                                dataType: 'json',
+                                data: {id: $("#id").val()},
+                                success: function (data) {
+                                    $("#bt_select").hide();
+                                    $("#templatediv").removeClass("input-group")
+                                    $('#instancename').prop("readonly", "readonly");
+                                     $('#currentvm').prop("readonly", "readonly");
+                                     $('#description').prop("readonly", "readonly");
+                                    $("#onstate").hide();
+                                    $("#offstate").hide();
+                                    $("#template_name").val(data["template_template_name"]);
+                                    $("#id").val(data["id"]);
+                                    $("#poolid").val(data["pool_id"]);
+                                    $("#template_id").val(data["template_id"]);
+                                    $("#uuid").val(data["uuid"]);
+                                    $("#cpu_").val(data["cpu"]);
+                                    $("#memory_").val(data["memory"]);
+                                    $("#disk_").val(data["disks"]);
+                                    $("#name").val(data["template_name"]);
+                                    $("#ip").val(data["ip"]);
+                                    $("#hostname").val(data["hostname"]);
+                                    $("#clone_tag").val(data["clone"]);
+                                    $("#datacenter").val(data["datacenter"]);
+                                    $("#cluster").val(data["cluster"]);
+                                    $("#instancename").val(data["instance_name"]);
+                                    $("#currentvm").val(data["name"]);
+                                    var name = data["name"];
+                                    var poolid= data["pool_id"]
+                                    if (data.clone == "0") {
+                                        $("#div1").hide();
+                                        $("#div2").show();
+                                        $("#div3").hide();
+
+                                        $.ajax({
+                                            type: "POST",
+                                            url: "../../get_progress/",
+                                            dataType: 'json',
+                                            data: {poolid: data["pool_id"], name: data["template_name"], id: data["id"]},
+                                            success: function (data) {
+                                                if (data["state"] == "3") {
+                                                    $("#uuid").val(data["uuid"]);
+                                                    $("#div1").hide();
+                                                    $("#div2").hide();
+                                                    $("#div3").show();
+
+                                                    $("#clone_tag").val("1");
+                                                    $.ajax({
+                                                        type: "POST",
+                                                        url: "../../get_vm_state/",
+                                                        dataType: 'json',
+                                                        data: {poolid: poolid, name: name},
+                                                        success: function (data) {
+                                                            if (data['state'] == "poweredOn") {
+                                                                $("#onstate").show();
+                                                                $("#offstate").hide();
+                                                            } else if (data['state'] == "poweredOff") {
+                                                                $("#onstate").hide();
+                                                                $("#offstate").show();
+                                                            } else {
+                                                                $("#onstate").hide();
+                                                                $("#offstate").hide();
+                                                                alert('未定位到当前虚机');
+                                                            }
+                                                        }
+                                                    });
+                                                } else {
+                                                    $("#progress").attr("style", "width: " + data["progress"] + "%;");
+
+                                                }
+                                            },
+                                        })
+                                    }
+                                    else {
+                                        $("#div1").hide();
+                                        $("#div2").hide();
+                                        $("#div3").show();
+                                        $.ajax({
+                                            type: "POST",
+                                            url: "../../get_vm_state/",
+                                            dataType: 'json',
+                                            data: {poolid: poolid, name: name},
+                                            success: function (data) {
+                                                if (data['state'] == "poweredOn") {
+                                                    $("#onstate").show();
+                                                    $("#offstate").hide();
+                                                } else if (data['state'] == "poweredOff") {
+                                                    $("#onstate").hide();
+                                                    $("#offstate").show();
+                                                } else {
+                                                    $("#onstate").hide();
+                                                    $("#offstate").hide();
+                                                    alert('未定位到当前虚机');
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
 
 
                         return true
@@ -104,6 +223,261 @@ var FormWizard = function () {
                     if (data["res"] == "执行成功。") {
                         $('#steprunid').val(data["data"]);
                         $('#steprunid3').val(data["data"]);
+                        //原步骤界面
+                        $('#instancename').prop("readonly", "readonly");
+                         $('#currentvm').prop("readonly", "readonly");
+                         $('#description').prop("readonly", "readonly");
+                         $("#bt_select").hide();
+                         $("#templatediv").removeClass("input-group")
+                         $("#clone").hide();
+                         $("#refresh").hide();
+                         $("#bt_ip").hide();
+                         $("#bt_hostname").hide();
+                         $("#bt_installcv").hide();
+                         $("#bt_registercv").hide();
+                         $("#bt_adddisk").hide();
+                         $("#bt_shutdown").hide();
+                         $("#bt_reboot").hide();
+                         $("#bt_startup").hide();
+                         //新步骤界面
+                         $('#destClient').removeProp("disabled");
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+            var next3 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossnext/",
+                data:
+                    {
+                        destClient:$('#destClient').val(),
+                        steprunid:$('#steprunid').val(),
+                        stepindex:"3"
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        $('#steprunid4').val(data["data"]);
+                         //原步骤界面
+                        $('#destClient').prop("disabled", "disabled");
+                        //同步确认界面
+                        $('#destClient_check').val($('#destClient').val())
+                         //新步骤界面
+                        $('#radio3').removeProp("disabled");
+                        $('#radio4').removeProp("disabled");
+                        $('#radio5').removeProp("disabled");
+                        $('#radio6').removeProp("disabled");
+                        $('#mypath').removeProp("readonly");
+                        $('#fs_se_1').removeProp("disabled");
+                        $('#selectfile').show();
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+                });
+            }
+            var next4 = function() {
+                var iscover = $("input[name='overwrite']:checked").val();
+                var mypath = "same"
+                if($("input[name='path']:checked").val()=="2")
+                    mypath = $('#mypath').val()
+                var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+                var nodes = treeObj.getCheckedNodes(true);
+                var selectedfile = ""
+                $("#fs_se_1 option").each(function (){
+                        var txt = $(this).val();
+                        selectedfile =selectedfile + txt +"*!-!*"
+                    }
+                );
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossnext/",
+                data:
+                    {
+                        iscover:iscover,
+                        mypath:mypath,
+                        selectedfile: selectedfile,
+                        steprunid:$('#steprunid').val(),
+                        stepindex:"4"
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        $('#steprunid5').val(data["data"]);
+                         //原步骤界面
+                        $('#radio3').prop("disabled", "disabled");
+                        $('#radio4').prop("disabled", "disabled");
+                        $('#radio5').prop("disabled", "disabled");
+                        $('#radio6').prop("disabled", "disabled");
+                        $('#mypath').prop("readonly", "readonly")
+                        $('#fs_se_1').prop("disabled", "disabled");
+                        $('#selectfile').hide();
+                        //同步确认界面
+                        if($("input[name='overwrite']:checked").val()=="TRUE"){
+                            $("input[name='overwrite1'][value='TRUE']").prop("checked",true);
+                            $("input[name='overwrite1'][value='FALSE']").prop("checked",false);
+                        }else{
+                             $("input[name='overwrite1'][value='TRUE']").prop("checked",false);
+                            $("input[name='overwrite1'][value='FALSE']").prop("checked",true);
+                        }
+                        if($("input[name='path']:checked").val()=="1"){
+                            $("input[name='path1'][value='1']").prop("checked",true);
+                            $("input[name='path1'][value='2']").prop("checked",false);
+                        }else{
+                             $("input[name='path1'][value='1']").prop("checked",false);
+                            $("input[name='path1'][value='2']").prop("checked",true);
+                        }
+                        $('#mypath_check').val($('#mypath').val())
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+                });
+            }
+            var next5 = function() {
+                if ($("input[name='optionsRadios1']:checked").val()=="2" && $('#datetimepicker_check').val()=="")
+                    alert("请输入时间。");
+                else {
+                    if ($('#destClient_check').val() == "")
+                        alert("请选择目标客户端。");
+                    else {
+                        if ($("input[name='path1']:checked").val() == "2" && $('#mypath_check').val() == "")
+                            alert("请输入指定路径。");
+                        else {
+                            var myrestoreTime = ""
+                            if ($("input[name='optionsRadios1']:checked").val() == "2" && $('#datetimepicker_check').val() != "")
+                                myrestoreTime = $('#datetimepicker_check').val()
+                            var iscover = $("input[name='overwrite1']:checked").val();
+
+                            var mypath = "same"
+                            if ($("input[name='path1']:checked").val() == "2")
+                                mypath = $('#mypath').val()
+                            var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+                            var nodes = treeObj.getCheckedNodes(true);
+                            var selectedfile = ""
+                            $("#fs_se_1 option").each(function () {
+                                    var txt = $(this).val();
+                                    selectedfile = selectedfile + txt + "*!-!*"
+                                }
+                            );
+                            $.ajax({
+                                type: "POST",
+                                dataType: 'json',
+                                url: "../../filecrossnext/",
+                                data:
+                                    {
+                                        instanceName:$('#instanceName').val(),
+                                        sourceClient:$('#sourceClient_check').val(),
+                                        destClient:$('#destClient_check').val(),
+                                        restoreTime:myrestoreTime,
+                                        iscover:iscover,
+                                        mypath:mypath,
+                                        selectedfile: selectedfile,
+                                        steprunid: $('#steprunid').val(),
+                                        stepindex: "5"
+                                    },
+                                success: function (data) {
+                                    if (data["res"] == "执行成功。") {
+                                        $('#steprunid').val(data["data"]);
+                                        $('#steprunid6').val(data["data"]);
+                                        //新步骤界面
+                                        $('#checkservice').removeProp("disabled");
+
+                                        return true
+                                    }
+                                    else
+                                        alert(data["res"]);
+                                    return false
+                                },
+                                error: function (e) {
+                                    alert("执行失败，请于管理员联系。");
+                                    return false
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            var next6 = function() {
+                var checkservice = "FALSE"
+                    if ($('#checkservice').is(':checked'))
+                        checkservice = "TRUE"
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossnext/",
+                data:
+                    {
+                        checkservice:checkservice,
+                        steprunid:$('#steprunid').val(),
+                        stepindex:"6"
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        $('#steprunid7').val(data["data"]);
+                        //原步骤界面
+                        $('#checkservice').prop("disabled","disabled");
+                         //新步骤界面
+                        $('#checkapp').removeProp("disabled");
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+                });
+            }
+
+            var previous2 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                         //新步骤界面
+                        $('#divtable').show();
+                        $('#radio1').removeProp("disabled");
+                        $('#radio2').removeProp("disabled");
+                        $('#datetimepicker').removeProp("readonly");
+                        //原步骤界面
                         $('#instancename').prop("readonly", "readonly");
                          $('#currentvm').prop("readonly", "readonly");
                          $('#description').prop("readonly", "readonly");
@@ -133,36 +507,6 @@ var FormWizard = function () {
             });
             }
 
-            var previous2 = function() {
-                $.ajax({
-                type: "POST",
-                dataType: 'json',
-                url: "../../filecrossprevious/",
-                data:
-                    {
-                        steprunid:$('#steprunid').val(),
-                    },
-                success: function (data) {
-                    if (data["res"] == "执行成功。") {
-                        $('#steprunid').val(data["data"]);
-                        $('#divtable').show();
-                        $('#radio1').removeProp("disabled");
-                        $('#radio2').removeProp("disabled");
-                        $('#datetimepicker').removeProp("readonly");
-
-                        return true
-                    }
-                    else
-                        alert(data["res"]);
-                        return false
-                },
-                error: function (e) {
-                    alert("执行失败，请于管理员联系。");
-                    return false
-                }
-            });
-            }
-
            var previous3 = function() {
                 $.ajax({
                 type: "POST",
@@ -175,7 +519,7 @@ var FormWizard = function () {
                 success: function (data) {
                     if (data["res"] == "执行成功。") {
                         $('#steprunid').val(data["data"]);
-
+                         //新步骤界面
                         $('#instancename').removeProp("readonly");
                          $('#currentvm').removeProp("readonly");
                          $('#description').removeProp("readonly");
@@ -191,6 +535,244 @@ var FormWizard = function () {
                          $("#bt_shutdown").show();
                          $("#bt_reboot").show();
                          $("#bt_startup").show();
+                        if ($("#id").val()=="0"){
+                            $("#div1").show();
+                            $("#div2").hide();
+                            $("#div3").hide();
+                        }
+                        else{
+                            $.ajax({
+                                type: "POST",
+                                url: "../../getsinglevm/",
+                                dataType: 'json',
+                                data: {id: $("#id").val()},
+                                success: function (data) {
+                                    $("#bt_select").hide();
+                                    $("#templatediv").removeClass("input-group")
+                                    $('#instancename').prop("readonly", "readonly");
+                                     $('#currentvm').prop("readonly", "readonly");
+                                     $('#description').prop("readonly", "readonly");
+                                    $("#onstate").hide();
+                                    $("#offstate").hide();
+                                    $("#template_name").val(data["template_template_name"]);
+                                    $("#id").val(data["id"]);
+                                    $("#poolid").val(data["pool_id"]);
+                                    $("#template_id").val(data["template_id"]);
+                                    $("#uuid").val(data["uuid"]);
+                                    $("#cpu_").val(data["cpu"]);
+                                    $("#memory_").val(data["memory"]);
+                                    $("#disk_").val(data["disks"]);
+                                    $("#name").val(data["template_name"]);
+                                    $("#ip").val(data["ip"]);
+                                    $("#hostname").val(data["hostname"]);
+                                    $("#clone_tag").val(data["clone"]);
+                                    $("#datacenter").val(data["datacenter"]);
+                                    $("#cluster").val(data["cluster"]);
+                                    $("#instancename").val(data["instance_name"]);
+                                    $("#currentvm").val(data["name"]);
+                                    var name = data["name"];
+                                    var poolid= data["pool_id"]
+                                    if (data.clone == "0") {
+                                        $("#div1").hide();
+                                        $("#div2").show();
+                                        $("#div3").hide();
+
+                                        $.ajax({
+                                            type: "POST",
+                                            url: "../../get_progress/",
+                                            dataType: 'json',
+                                            data: {poolid: data["pool_id"], name: data["template_name"], id: data["id"]},
+                                            success: function (data) {
+                                                if (data["state"] == "3") {
+                                                    $("#uuid").val(data["uuid"]);
+                                                    $("#div1").hide();
+                                                    $("#div2").hide();
+                                                    $("#div3").show();
+
+                                                    $("#clone_tag").val("1");
+                                                    $.ajax({
+                                                        type: "POST",
+                                                        url: "../../get_vm_state/",
+                                                        dataType: 'json',
+                                                        data: {poolid: poolid, name: name},
+                                                        success: function (data) {
+                                                            if (data['state'] == "poweredOn") {
+                                                                $("#onstate").show();
+                                                                $("#offstate").hide();
+                                                            } else if (data['state'] == "poweredOff") {
+                                                                $("#onstate").hide();
+                                                                $("#offstate").show();
+                                                            } else {
+                                                                $("#onstate").hide();
+                                                                $("#offstate").hide();
+                                                                alert('未定位到当前虚机');
+                                                            }
+                                                        }
+                                                    });
+                                                } else {
+                                                    $("#progress").attr("style", "width: " + data["progress"] + "%;");
+
+                                                }
+                                            },
+                                        })
+                                    }
+                                    else {
+                                        $("#div1").hide();
+                                        $("#div2").hide();
+                                        $("#div3").show();
+                                        $.ajax({
+                                            type: "POST",
+                                            url: "../../get_vm_state/",
+                                            dataType: 'json',
+                                            data: {poolid: poolid, name: name},
+                                            success: function (data) {
+                                                if (data['state'] == "poweredOn") {
+                                                    $("#onstate").show();
+                                                    $("#offstate").hide();
+                                                } else if (data['state'] == "poweredOff") {
+                                                    $("#onstate").hide();
+                                                    $("#offstate").show();
+                                                } else {
+                                                    $("#onstate").hide();
+                                                    $("#offstate").hide();
+                                                    alert('未定位到当前虚机');
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                        //原步骤界面
+                        $('#destClient').prop("disabled", "disabled");
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+
+           var previous4 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                         //新步骤界面
+                        $('#destClient').removeProp("disabled");
+                        //原步骤界面
+                        $('#radio3').prop("disabled", "disabled");
+                        $('#radio4').prop("disabled", "disabled");
+                        $('#radio5').prop("disabled", "disabled");
+                        $('#radio6').prop("disabled", "disabled");
+                        $('#mypath').prop("readonly", "readonly")
+                        $('#fs_se_1').prop("disabled", "disabled");
+                        $('#selectfile').hide();
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+
+            var previous5 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        //新步骤界面
+                        $('#radio3').removeProp("disabled");
+                        $('#radio4').removeProp("disabled");
+                        $('#radio5').removeProp("disabled");
+                        $('#radio6').removeProp("disabled");
+                        $('#mypath').removeProp("readonly");
+                        $('#fs_se_1').removeProp("disabled");
+                        $('#selectfile').show();
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+
+            var previous6 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        //原步骤界面
+                        $('#checkservice').prop("disabled","disabled");
+
+                        return true
+                    }
+                    else
+                        alert(data["res"]);
+                        return false
+                },
+                error: function (e) {
+                    alert("执行失败，请于管理员联系。");
+                    return false
+                }
+            });
+            }
+
+            var previous7 = function() {
+                $.ajax({
+                type: "POST",
+                dataType: 'json',
+                url: "../../filecrossprevious/",
+                data:
+                    {
+                        steprunid:$('#steprunid').val(),
+                    },
+                success: function (data) {
+                    if (data["res"] == "执行成功。") {
+                        $('#steprunid').val(data["data"]);
+                        //新步骤界面
+                        $('#checkservice').removeProp("disabled");
+                        //原步骤界面
+                        $('#checkapp').prop("disabled","disabled");
 
 
                         return true
@@ -205,6 +787,7 @@ var FormWizard = function () {
                 }
             });
             }
+
 
             // default form wizard
             $('#form_wizard_1').bootstrapWizard({
@@ -243,6 +826,18 @@ var FormWizard = function () {
                     if(index==2){
                         next2()
                     }
+                    if(index==3){
+                        next3()
+                    }
+                    if(index==4){
+                        next4()
+                    }
+                    if(index==5){
+                        next5()
+                    }
+                    if(index==6){
+                        next6()
+                    }
 
 
                     if (form.valid() == false) {
@@ -257,6 +852,18 @@ var FormWizard = function () {
                     }
                     if(index==1){
                         previous3()
+                    }
+                    if(index==2){
+                        previous4()
+                    }
+                    if(index==3){
+                        previous5()
+                    }
+                    if(index==4){
+                        previous6()
+                    }
+                    if(index==5){
+                        previous7()
                     }
                     handleTitle(tab, navigation, index);
                 },
@@ -273,8 +880,42 @@ var FormWizard = function () {
                 $('#form_wizard_1').find('.button-previous').hide();
             }
             $('#form_wizard_1 .button-submit').click(function () {
-                alert('Finished! Hope you like it :)');
+                var checkapp = "FALSE"
+                    if ($('#checkapp').is(':checked'))
+                        checkapp = "TRUE"
+                $.ajax({
+                    type: "POST",
+                    dataType: 'json',
+                    url: "../../filecrossfinish/",
+                    data:
+                        {
+                            checkapp:checkapp,
+                            steprunid:$('#steprunid').val(),
+                        },
+                    success: function (data) {
+                        if (data["res"] == "执行成功。") {
+                            $('#steprunid').val("0");
+                            //原步骤界面
+                            $('#checkapp').prop("disabled","disabled");
+                            $('#form_wizard_1').find('.button-previous').hide();
+                            $('#form_wizard_1').find('.button-submit').hide();
+                            alert("流程结束。");
+                            return true
+                        }
+                        else
+                            alert(data["res"]);
+                            return false
+                    },
+                    error: function (e) {
+                        alert("执行失败，请于管理员联系。");
+                        return false
+                    }
+                });
             }).hide();
+            if($('#steprunid').val()==$('#steprunid7').val()){
+                $('#form_wizard_1').find('.button-submit').show();
+                $('#form_wizard_1').find('.button-next').hide();
+            }
 
         }
 
@@ -824,6 +1465,7 @@ jQuery(document).ready(function() {
     });
 
     //第三步，选择恢复资源
+    $("#destClient").val($("#destClientvalue").val());
     if($('#steprunid').val()!=$('#steprunid3').val()){
         $('#destClient').prop("disabled", "disabled");
 
@@ -838,48 +1480,147 @@ jQuery(document).ready(function() {
 
     $.fn.zTree.init($("#treeDemo"), setting);
 
+
+    //第四步，输入参数
     $('#selectpath').click(function(){
             $('#fs_se_1').empty();
+            $('#fs_se_1_check').empty();
             var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
             var nodes = treeObj.getCheckedNodes(true);
             for (var k = 0, length = nodes.length; k < length; k++) {
                 var halfCheck = nodes[k].getCheckStatus();
                 if (!halfCheck.half){
                     $("#fs_se_1").append("<option value='\\" + nodes[k].id + "\\'>\\" + nodes[k].id + "\\</option>");
+                    $("#fs_se_1_check").append("<option value='\\" + nodes[k].id + "\\'>\\" + nodes[k].id + "\\</option>");
                 }
             }
-            if (nodes.length==0)
+            if (nodes.length==0) {
                 $("#fs_se_1").append("<option value='\\'>\\</option>");
+                $("#fs_se_1_check").append("<option value='\\'>\\</option>");
+            }
          })
+    if($('#overwritevalue').val()=="TRUE"){
+        $("input[name='overwrite'][value='TRUE']").prop("checked",true);
+        $("input[name='overwrite'][value='FALSE']").prop("checked",false);
+    }else{
+         $("input[name='overwrite'][value='TRUE']").prop("checked",false);
+        $("input[name='overwrite'][value='FALSE']").prop("checked",true);
+    }
+    if($('#pathvalue').val()=="same"){
+        $("input[name='path'][value='1']").prop("checked",true);
+        $("input[name='path'][value='2']").prop("checked",false);
+        $('#mypath').val("")
+    }else{
+         $("input[name='path'][value='1']").prop("checked",false);
+        $("input[name='path'][value='2']").prop("checked",true);
+        $('#mypath').val($('#pathvalue').val())
+    }
+    $('#fs_se_1_check').empty();
+    $('#fs_se_1').empty();
+    var selectedfile = $('#fs_se_1value').val();
+    var files = selectedfile.split("*!-!*");
+    var index=0
+    for (var i=0;i<files.length;i++)
+    {
+        if (files[i] != ""){
+            index=index+1
+            $("#fs_se_1").append("<option value='" +files[i] + "'>" +files[i] + "</option>");
+            $("#fs_se_1_check").append("<option value='" + files[i] + "'>" +files[i] + "</option>");
+        }
+    }
+    if (index==0) {
+        $("#fs_se_1").append("<option value='\\'>\\</option>");
+        $("#fs_se_1_check").append("<option value='\\'>\\</option>");
+    }
+
+    if($('#steprunid').val()!=$('#steprunid4').val()){
+        $('#radio3').prop("disabled", "disabled");
+        $('#radio4').prop("disabled", "disabled");
+        $('#radio5').prop("disabled", "disabled");
+        $('#radio6').prop("disabled", "disabled");
+        $('#mypath').prop("readonly", "readonly");
+        $('#fs_se_1').prop("disabled", "disabled");
+        $('#selectfile').hide();
+
+
+    }else{
+         $('#li4').addClass("active");
+         $('#tab4').addClass("active");
+    }
+    if($('#steprunstate4').val()=="DONE"){
+         $('#li4').addClass("done");
+    }
+
+    //第五步，提交任务
+    if($('#datetimepicker_check').val()==""){
+        $("input[name='optionsRadios1'][value='1']").prop("checked",true);
+        $("input[name='optionsRadios1'][value='2']").prop("checked",false);
+    }else{
+         $("input[name='optionsRadios1'][value='1']").prop("checked",false);
+        $("input[name='optionsRadios1'][value='2']").prop("checked",true);
+    }
+    $("#destClient_check").val($("#destClientvalue").val());
+        if($('#overwritevalue').val()=="TRUE"){
+        $("input[name='overwrite1'][value='TRUE']").prop("checked",true);
+        $("input[name='overwrite1'][value='FALSE']").prop("checked",false);
+    }else{
+         $("input[name='overwrite1'][value='TRUE']").prop("checked",false);
+        $("input[name='overwrite1'][value='FALSE']").prop("checked",true);
+    }
+    if($('#pathvalue').val()=="same"){
+        $("input[name='path1'][value='1']").prop("checked",true);
+        $("input[name='path1'][value='2']").prop("checked",false);
+        $('#mypath_check').val("")
+    }else{
+         $("input[name='path1'][value='1']").prop("checked",false);
+        $("input[name='path1'][value='2']").prop("checked",true);
+        $('#mypath_check').val($('#pathvalue').val())
+    }
+    if($('#steprunid').val()!=$('#steprunid5').val()){
+        ;
+    }else{
+         $('#li5').addClass("active");
+         $('#tab5').addClass("active");
+    }
+    if($('#steprunstate5').val()=="DONE"){
+         $('#li5').addClass("done");
+    }
+
+    //第六步，启用灾备环境
+    $('#checkservice').prop("checked",false);
+    if($('#checkservicevalue').val()=="TRUE")
+        $('#checkservice').prop("checked",true);
+    if($('#steprunid').val()!=$('#steprunid6').val()){
+        $('#checkservice').prop("disabled", "disabled");
+    }else{
+         $('#li6').addClass("active");
+         $('#tab6').addClass("active");
+    }
+    if($('#steprunstate6').val()=="DONE"){
+         $('#li6').addClass("done");
+    }
+
+    //第七步，业务验证确认
+    $('#checkapp').prop("checked",false);
+    if($('#checkappvalue').val()=="TRUE")
+        $('#checkapp').prop("checked",true);
+    if($('#steprunid').val()!=$('#steprunid7').val()){
+        $('#checkapp').prop("disabled", "disabled");
+    }else{
+         $('#li7').addClass("active");
+         $('#tab7').addClass("active");
+    }
+    if($('#steprunstate7').val()=="DONE"){
+         $('#li7').addClass("done");
+    }
+
+    //完成
+    if($('#steprunid').val()=="0"){
+        $('#li7').addClass("active");
+         $('#tab7').addClass("active");
+        $('#form_wizard_1').find('.button-next').hide();
+        $('#form_wizard_1').find('.button-submit').hide();
+        $('#form_wizard_1').find('.button-previous').hide();
+    }
     FormWizard.init();
-    // $.ajax({
-    //     type: "POST",
-    //     dataType: 'json',
-    //     url: "../filecrossin/",
-    //     data:
-    //         {
-    //             id: $("#id").val(),
-    //             name: $("#name").val(),
-    //             remark: $("#remark").val(),
-    //         },
-    //     success: function (data) {
-    //         var myres = data["res"];
-    //         var mydata = data["data"];
-    //         if (myres == "新增成功。") {
-    //             $("#id").val(data["data"])
-    //             $("#se_1").append("<option selected id='" + mydata + "' remark='" + $("#remark").val() + "'>" + $("#name").val() + "</option>");
-    //             $("#title").text($("#name").val())
-    //         }
-    //         if (myres == "修改成功。") {
-    //             $("#" + $("#id").val()).text($("#name").val())
-    //             $("#" + $("#id").val()).attr('remark', $("#remark").val())
-    //             $("#user").show()
-    //
-    //         }
-    //         alert(myres);
-    //     },
-    //     error: function (e) {
-    //         alert("页面出现错误，请于管理员联系。");
-    //     }
-    // });
 });

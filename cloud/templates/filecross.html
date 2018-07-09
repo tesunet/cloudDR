@@ -60,7 +60,7 @@
                                                         <i class="fa fa-check"></i> 提交任务 </span>
                                                 </a>
                                             </li>
-                                            <li  id="li5">
+                                            <li  id="li6">
                                                 <a href="#tab6" data-toggle="tab" class="step">
                                                     <span class="number"> 6 </span>
                                                     <span class="desc">
@@ -104,7 +104,6 @@
                                                         <input hidden  id="taskid" type="text" name="taskid"   value="{{taskid}}">
                                                         <input hidden id="processrunid" type="text" name="processrunid"   value="{{processrunid}}">
                                                         <input hidden id="steprunid" type="text" name="steprunid"   value="{{steprunid}}">
-                                                        <input hidden id="stepid" type="text" name="curstepid"   value="{{curstepid}}">
                                                         <input hidden id="datasetid" type="text" name="datasetid"   value="{{datasetid}}">
                                                         <input hidden id="instanceName" type="text" name="instanceName"   value="{{instanceName}}">
                                                         <input hidden id="clientID" type="text" name="clientID"   value="{{clientID}}">
@@ -325,7 +324,8 @@
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label" >目标客户端</label>
                                                     <div class="col-md-10">
-                                                        <select class="form-control" id="destClient" name="destClient">
+                                                        <input hidden id="destClientvalue" type="text" name="destClientvalue"   value="{{stepinfo.step3.destClient}}">
+                                                        <select class="form-control" id="destClient" name="destClient"  value="{{stepinfo.step3.destClient}}>
                                                             {% for host in destClient %}
                                                                     <option selected value="{{host}}">{{host}} </option>
                                                                 {% endfor %}
@@ -334,13 +334,18 @@
                                                 </div>
                                             </div>
                                             <div class="tab-pane" id="tab4">
+                                                <input hidden id="steprunid4" type="text" name="steprunid3"   value="{{stepinfo.step4.id}}">
+                                                <input hidden id="steprunstate4" type="text" name="steprunstate3"   value="{{stepinfo.step4.state}}">
+                                                <input hidden id="overwritevalue" type="text" name="overwritevalue"   value="{{stepinfo.step4.iscover}}">
+                                                <input hidden id="pathvalue" type="text" name="pathvalue"   value="{{stepinfo.step4.mypath}}">
+                                                <input hidden id="fs_se_1value" type="text" name="fs_se_1value"   value="{{stepinfo.step4.selectedfile}}">
                                                 <div class="form-group   ">
                                                     <label class="col-md-2 control-label" >文件改写</label>
                                                     <div class="col-md-10" style="padding-top:6px">
                                                         <div class="input-group">
                                                         <span >
-                                                            <input type="radio" name="overwrite" value="FALSE" checked> 如果介质上文件较新则改写
-                                                            <input type="radio" name="overwrite" value="TRUE">无条件改写
+                                                            <input id="radio3" type="radio" name="overwrite" value="FALSE" checked> 如果介质上文件较新则改写
+                                                            <input id="radio4" type="radio" name="overwrite" value="TRUE">无条件改写
                                                         </span>
                                                     </div>
                                                     </div>
@@ -350,8 +355,8 @@
                                                     <div class="col-md-10">
                                                         <div class="input-group">
                                                         <span class="input-group-addon">
-                                                            <input type="radio" name="path" value="1" checked> 相同文件夹
-                                                            <input type="radio" name="path" value="2">指定路径
+                                                            <input id="radio5" type="radio" name="path" value="1" checked> 相同文件夹
+                                                            <input id="radio6" type="radio" name="path" value="2">指定路径
                                                         </span>
                                                         <input id="mypath" autocomplete="off" type="path" name="path" class="form-control" >
                                                     </div>
@@ -375,17 +380,19 @@
 
                                             </div>
                                             <div class="tab-pane" id="tab5">
+                                                <input hidden id="steprunid5" type="text" name="steprunid5"   value="{{stepinfo.step5.id}}">
+                                                <input hidden id="steprunstate5" type="text" name="steprunstate5"   value="{{stepinfo.step5.state}}">
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label" >源客户端</label>
                                                     <div class="col-md-10">
-                                                        <input readonly id="sourceClient1" autocomplete="off" type="text" name="sourceClient" class="form-control"  value="{{clientName}}">
+                                                        <input readonly id="sourceClient_check" autocomplete="off" type="text" name="sourceClient_check" class="form-control"  value="{{clientName}}">
                                                         <div class="form-control-focus"> </div>
                                                     </div>
                                                 </div>
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label" >目标客户端</label>
                                                     <div class="col-md-10">
-                                                        <select disabled class="form-control" id="destClient1" name="destClient">
+                                                        <select disabled class="form-control" id="destClient_check" name="destClient_check">
                                                             {% for host in destClient %}
                                                                     <option selected value="{{host}}">{{host}} </option>
                                                                 {% endfor %}
@@ -397,10 +404,10 @@
                                                     <div class="col-md-10">
                                                         <div class="input-group">
                                                         <span class="input-group-addon">
-                                                            <input disabled type="radio" name="optionsRadios1" value="1" checked> 最新时间点
-                                                            <input disabled type="radio" name="optionsRadios1" value="2">选择时间
+                                                            <input id="radio1_check"  disabled type="radio" name="optionsRadios1" value="1" checked> 最新时间点
+                                                            <input id="radio2_check"  disabled type="radio" name="optionsRadios1" value="2">选择时间
                                                         </span>
-                                                        <input readonly id="datetimepicker1" autocomplete="off" type="datetime" name="optionsRadios" class="form-control" >
+                                                        <input readonly id="datetimepicker_check" autocomplete="off" type="datetime" name="optionsRadios" class="form-control" value="{{stepinfo.step1.restoreTime}}">
                                                     </div>
                                                     </div>
                                                 </div>
@@ -409,8 +416,8 @@
                                                     <div class="col-md-10" style="padding-top:6px">
                                                         <div class="input-group">
                                                             <span >
-                                                                <input readonly type="radio" name="overwrite1" value="FALSE" checked> 如果介质上文件较新则改写
-                                                                <input readonly type="radio" name="overwrite1" value="TRUE">无条件改写
+                                                                <input disabled type="radio" name="overwrite1" value="FALSE" checked> 如果介质上文件较新则改写
+                                                                <input disabled type="radio" name="overwrite1" value="TRUE">无条件改写
                                                             </span>
                                                         </div>
                                                     </div>
@@ -420,29 +427,32 @@
                                                     <div class="col-md-10">
                                                         <div class="input-group">
                                                         <span class="input-group-addon">
-                                                            <input readonly type="radio" name="path1" value="1" checked> 相同文件夹
-                                                            <input readonly type="radio" name="path1" value="2">指定路径
+                                                            <input disabled type="radio" name="path1" value="1" checked> 相同文件夹
+                                                            <input disabled type="radio" name="path1" value="2">指定路径
                                                         </span>
-                                                        <input readonly id="mypath1" autocomplete="off" type="path" name="path" class="form-control" >
+                                                        <input readonly id="mypath_check" autocomplete="off" type="path" name="path" class="form-control" >
                                                     </div>
                                                     </div>
                                                 </div>
                                                 <div class="form-group  " style="padding-top:20px">
                                                     <label class="col-md-2 control-label" >恢复目录</label>
                                                     <div class="col-md-10">
-                                                        <select disabled multiple="multiple" id="fs_se_1_1" size="10"  class="form-control" style="overflow-y:auto;">
+                                                        <select disabled multiple="multiple" id="fs_se_1_check" size="10"  class="form-control" style="overflow-y:auto;">
                                                             <option value='\'>\</option>
                                                         </select>
                                                      </div>
                                                 </div>
                                             </div>
                                             <div class="tab-pane" id="tab6">
+                                                <input hidden id="steprunid6" type="text" name="steprunid7"   value="{{stepinfo.step6.id}}">
+                                                <input hidden id="steprunstate6" type="text" name="steprunstate7"   value="{{stepinfo.step6.state}}">
+                                                <input hidden id="checkservicevalue" type="text" name="checkservicevalue"   value="{{stepinfo.step6.checkservice}}">
                                                 <div class="form-group  " style="padding-top:20px">
                                                     <label class="col-md-2 control-label" >服务已启动</label>
                                                     <div class="col-md-10" style="padding-top:4px">
                                                         <div class="input-group">
                                                             <span >
-                                                                <input readonly type="checkbox" name="overwrite1"  style="zoom:150%;">
+                                                                <input id="checkservice" readonly type="checkbox" name="checkservice"  style="zoom:150%;">
                                                             </span>
                                                         </div>
                                                     </div>
@@ -450,12 +460,15 @@
                                                 </div>
                                             </div>
                                             <div class="tab-pane" id="tab7">
+                                                <input hidden id="steprunid7" type="text" name="steprunid7"   value="{{stepinfo.step7.id}}">
+                                                <input hidden id="steprunstate7" type="text" name="steprunstate7"   value="{{stepinfo.step7.state}}">
+                                                <input hidden id="checkappvalue" type="text" name="checkappvalue"   value="{{stepinfo.step7.checkapp}}">
                                                 <div class="form-group  " style="padding-top:20px">
                                                     <label class="col-md-2 control-label" >业务已检查</label>
                                                     <div class="col-md-10" style="padding-top:4px">
                                                         <div class="input-group">
                                                             <span >
-                                                                <input readonly type="checkbox" name="overwrite1"  style="zoom:150%;">
+                                                                <input id="checkapp"  readonly type="checkbox" name="checkapp"  style="zoom:150%;">
                                                             </span>
                                                         </div>
                                                     </div>
