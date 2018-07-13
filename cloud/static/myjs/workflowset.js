@@ -351,23 +351,28 @@ function myFunction(ob) {
     }
     else
         $("#group").removeProp("disabled");
-    $.ajax({
-        type: "POST",
-        url: "../get_scripts/",
-        data:
-            {
-                step_id: $("#id").val()
+    if(ob.classList.contains("last")>0)
+        $("#scriptsdiv").hide();
+    else {
+        $("#scriptsdiv").show();
+        $.ajax({
+            type: "POST",
+            url: "../get_scripts/",
+            data:
+                {
+                    step_id: $("#id").val()
+                },
+            dataType: "json",
+            success: function (data) {
+                for (var i = 0; i < data.data.length; i++) {
+                    $("#se_1").append('<option value="' + data.data[i]["script_id"] + '">' + data.data[i]["script_code"] + '</option>')
+                }
             },
-        dataType: "json",
-        success: function (data) {
-            for (var i = 0; i < data.data.length; i++) {
-                $("#se_1").append('<option value="' + data.data[i]["script_id"] + '">' + data.data[i]["script_code"] + '</option>')
+            error: function (e) {
+                alert("数据读取失败，请于客服联系。");
             }
-        },
-        error: function (e) {
-            alert("数据读取失败，请于客服联系。");
-        }
-    });
+        });
+    }
 
 
 }
