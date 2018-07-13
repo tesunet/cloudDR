@@ -5,6 +5,8 @@ from cloud.CVApi import *
 from cloud.models import *
 from django.db import connection
 from xml.dom.minidom import parse, parseString
+from . import remote
+from .models import *
 
 
 def is_connection_usable():
@@ -108,3 +110,22 @@ def just_save():
             newjob.diskcapacity = sizeOfMediaOnDisk
             newjob.result = ""
             newjob.save()
+
+
+@task
+def exec_script(steprunid):
+    steprun = StepRun.objects.filter(id=steprunid)
+    steprun = steprun[0]
+    scriptruns = steprun.scriptrun_set.exclude(state="9").exclude(state="DONE")
+    for script in scriptruns:
+        cmd = r"{0}".format(script.script.scriptpath + script.script.filename)
+        ip = script.script.ip
+        username = script.script.username
+        password = script.script.password
+        rm_obj = remote.ServerByPara(cmd, ip, username, password, "Linux")
+        result = rm_obj.run()
+        script.result = result["exec_tag"]
+        script.state = "DONE"
+        script.save()
+    steprun.state = "DONE"
+    steprun.save()

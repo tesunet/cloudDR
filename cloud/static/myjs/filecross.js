@@ -225,6 +225,9 @@ var FormWizard = function () {
                         {
                             handleTitle(0,"RUN");
                         }
+                        for (var i = 0; i < data["scriptrunslist"].length; i++) {
+                            $("#se_2").append('<option value="' + data["scriptrunslist"][i]["script_id"] + '">' + data["scriptrunslist"][i]["script_code"] + '</option>')
+                        }
                     }
                     else
                         alert(data["res"]);
@@ -274,6 +277,9 @@ var FormWizard = function () {
                         {
                             handleTitle(1,"RUN");
                         }
+                        for (var i = 0; i < data["scriptrunslist"].length; i++) {
+                            $("#se_3").append('<option value="' + data["scriptrunslist"][i]["script_id"] + '">' + data["scriptrunslist"][i]["script_code"] + '</option>')
+                        }
                     }
                     else
                         alert(data["res"]);
@@ -317,6 +323,9 @@ var FormWizard = function () {
                         else
                         {
                             handleTitle(2,"RUN");
+                        }
+                        for (var i = 0; i < data["scriptrunslist"].length; i++) {
+                            $("#se_4").append('<option value="' + data["scriptrunslist"][i]["script_id"] + '">' + data["scriptrunslist"][i]["script_code"] + '</option>')
                         }
                     }
                     else
@@ -388,6 +397,9 @@ var FormWizard = function () {
                         {
                             handleTitle(3,"RUN");
                         }
+                        for (var i = 0; i < data["scriptrunslist"].length; i++) {
+                            $("#se_5").append('<option value="' + data["scriptrunslist"][i]["script_id"] + '">' + data["scriptrunslist"][i]["script_code"] + '</option>')
+                        }
                     }
                     else
                         alert(data["res"]);
@@ -452,6 +464,9 @@ var FormWizard = function () {
                                         else
                                         {
                                             handleTitle(4,"RUN");
+                                        }
+                                        for (var i = 0; i < data["scriptrunslist"].length; i++) {
+                                            $("#se_6").append('<option value="' + data["scriptrunslist"][i]["script_id"] + '">' + data["scriptrunslist"][i]["script_code"] + '</option>')
                                         }
                                     }
                                     else
@@ -1623,5 +1638,21 @@ jQuery(document).ready(function() {
     if($('#steprunid').val()!=$('#steprunid7').val()||$('#steprunstate1').val()=="RUN"){
         $('#checkapp').prop("disabled", "disabled");
     }
+    //脚本窗口
+    $('#se_2').dblclick(function() {
+              if ($("#se_2").find('option:selected').length==0)
+                alert("请选择要查看的脚本。");
+                else
+                {
+                    if ($("#se_2").find('option:selected').length>1)
+                         alert("请不要选择多条记录。");
+                    else
+                    {
+                        alert("弹出脚本。");
+                    }
+                }
+
+             });
+
     FormWizard.init();
 });

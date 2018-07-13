@@ -20,6 +20,7 @@ import uuid
 import xml.dom.minidom
 from xml.dom.minidom import parse, parseString
 from cloud.CVApi import *
+from cloud.tasks import *
 from django.db.models import Count
 from django.db.models import Sum
 from django.db import connection
@@ -6457,7 +6458,8 @@ def filecross(request, offset):
                                 curstep[child.nodeName] = child.childNodes[0].nodeValue
                     except:
                         pass
-
+                    scriptruns = steprun[0].scriptrun_set.exclude(state="9")
+                    curstep["scripts"] = scriptruns
                     stepinfo["step" + str(index + 1)] = curstep
             return render(request, 'filecross.html',
                           {'username': request.user.userinfo.fullname, "taskid": id, "processrunid": processrunid,
@@ -6556,6 +6558,8 @@ def filecrossnext(request):
             scriptruns = steprun[0].scriptrun_set.exclude(state="9").exclude(state="DONE")
             if len(scriptruns)>0:
                 steprun[0].state = "RUN"
+                # 视图中调用，执行脚本
+                exec_script.delay(steprunid)
             else:
                 steprun[0].state = "DONE"
             if  stepindex=="1":
@@ -6626,6 +6630,7 @@ def filecrossnext(request):
             nextstep = steprun[0].step.next.exclude(state="9")
             if len(nextstep) > 0:
                 mysteprun=None
+                scriptrunslist=[]
                 nextsteprun = nextstep[0].steprun_set.exclude(state="9").filter(processrun=steprun[0].processrun)
                 if len(nextsteprun)>0:
                     mysteprun=nextsteprun[0]
@@ -6652,6 +6657,7 @@ def filecrossnext(request):
                         myscriptrun.steprun = mysteprun
                         myscriptrun.state = "EDIT"
                         myscriptrun.save()
+                        scriptrunslist.append({"script_id":myscriptrun.id,"script_code":myscriptrun.script.code})
                 if len(scriptruns) > 0:
                     myprocesstask = ProcessTask()
                     myprocesstask.processrun = steprun[0].processrun
@@ -6684,6 +6690,7 @@ def filecrossnext(request):
                 else:
                     result["data"] = mysteprun.id
                 result["nextdata"] = mysteprun.id
+                result["scriptrunslist"]=scriptrunslist
                 result["steprunstate"] = steprun[0].state
         return HttpResponse(json.dumps(result))
 
