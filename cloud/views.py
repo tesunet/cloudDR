@@ -29,6 +29,7 @@ import xlrd, xlwt
 import pythoncom
 import pymssql
 from lxml import etree
+from django.forms.models import model_to_dict
 
 pythoncom.CoInitialize()
 import wmi
@@ -143,7 +144,8 @@ def index(request):
         if not is_connection_usable():
             connection.close()
         try:
-            conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+            conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX',
+                                   database='CommServ')
             cur = conn.cursor()
             cur.execute(
                 """SELECT *  FROM [commserv].[dbo].[RunningBackups]""")
@@ -6511,7 +6513,7 @@ def filecrossprevious(request):
 
                 myscriptruns = mysteprun.scriptrun_set.exclude(state="9")
                 for myscriptrun in myscriptruns:
-                    #myscriptrun.state = "EDIT"
+                    # myscriptrun.state = "EDIT"
                     myscriptrun.save()
 
             else:
@@ -6566,7 +6568,7 @@ def filecrossnext(request):
                 steprun[0].state = "RUN"
                 steprun[0].operator = ""
                 # 异步执行当前步骤的所有脚本
-                exec_script.delay(steprunid,request.user.username,request.user.userinfo.fullname)
+                exec_script.delay(steprunid, request.user.username, request.user.userinfo.fullname)
             else:
                 steprun[0].state = "DONE"
                 # # 查看当前步骤是否有备份/恢复任务，若任务完成，写入DONE
@@ -6686,7 +6688,7 @@ def filecrossnext(request):
                         myscriptrun.state = "EDIT"
                         myscriptrun.save()
                         scriptrunslist.append({"script_id": myscriptrun.id, "script_code": myscriptrun.script.code})
-                if len(scriptruns) > 0 :
+                if len(scriptruns) > 0:
                     myprocesstask = ProcessTask()
                     myprocesstask.processrun = steprun[0].processrun
                     myprocesstask.steprun = steprun[0]
@@ -6828,3 +6830,92 @@ def getsinglevm(request):
                       "template_uuid": template_uuid, "system": system, "pool_id": pool_id,
                       "pool_name": pool_name, "uuid": uuid}
         return HttpResponse(json.dumps(result))
+
+
+def get_current_scriptinfo(request):
+    if request.user.is_authenticated():
+        current_step_id = request.POST.get('steprunid', '')
+        selected_script_id = request.POST.get('scriptid', '')
+        try:
+            scriptrun_obj = ScriptRun.objects.filter(id=selected_script_id)[0]
+        except:
+            scriptrun_obj = None
+        script_id = scriptrun_obj.script_id
+        try:
+            script_obj = Script.objects.filter(id=script_id)[0]
+        except:
+            script_obj = None
+        if script_obj:
+            step_id_from_script = scriptrun_obj.steprun_id
+            show_button = ""
+            if step_id_from_script == current_step_id:
+                # 显示button
+                show_button = 1
+            state_dict = {
+                "DONE": "已完成",
+                "EDIT": "未执行",
+                "RUN": "执行中",
+                "ERROR": "执行失败",
+                "IGNORE":"忽略",
+                "": "",
+            }
+            script_info = {
+                "code": script_obj.code,
+                "ip": script_obj.ip,
+                "port": script_obj.port,
+                "filename": script_obj.filename,
+                "scriptpath": script_obj.scriptpath,
+                "state": state_dict["{0}".format(scriptrun_obj.state)],
+                "starttime": scriptrun_obj.starttime,
+                "endtime": scriptrun_obj.starttime,
+                "operator": scriptrun_obj.operator,
+                "show_button": show_button,
+            }
+            return JsonResponse({"data": script_info})
+
+
+def exec_script_by_hand(request):
+    if request.user.is_authenticated():
+        current_step_id = request.POST.get('steprunid', '')
+        selected_script_id = request.POST.get('scriptid', '')
+        scriptruns = ScriptRun.objects.filter(id=selected_script_id)[0]
+        steprun = StepRun.objects.filter(id=current_step_id)
+        steprun = steprun[0]
+        cmd = r"{0}".format(scriptruns.script.scriptpath + scriptruns.script.filename)
+        ip = scriptruns.script.ip
+        username = scriptruns.script.username
+        password = scriptruns.script.password
+        script_type = scriptruns.script.type
+        system_tag = ""
+        if script_type == "SSH":
+            system_tag = "Linux"
+        if script_type == "BAT":
+            system_tag = "Windows"
+        print("cmd, ip, username, password, system_tag", cmd, ip, username, password, system_tag)
+        rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
+        script.starttime = datetime.datetime.now()
+        result = rm_obj.run()
+        script.result = result["exec_tag"]
+        # 处理脚本执行失败问题
+        if result["exec_tag"] == 1:
+            print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
+            scriptruns.operator = result['data']
+            scriptruns.save()
+            steprun.state = "ERROR"
+            steprun.save()
+        scriptruns.endtime = datetime.datetime.now()
+        scriptruns.operator = ""
+        scriptruns.state = "DONE"
+        scriptruns.save()
+        print("result,type(result)",result,type(result))
+        return JsonResponse({"data": result})
+
+
+def ignore_current_script(request):
+    if request.user.is_authenticated():
+        selected_script_id = request.POST.get('scriptid', '')
+        scriptruns = ScriptRun.objects.filter(id=selected_script_id)[0]
+        scriptruns.state = "IGNORE"
+        scriptruns.save()
+        return JsonResponse({"data": "成功忽略当前脚本"})
+

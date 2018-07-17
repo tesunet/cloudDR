@@ -8,6 +8,7 @@ from xml.dom.minidom import parse, parseString
 from . import remote
 from .models import *
 import datetime
+from django.db.models import Q
 
 
 def is_connection_usable():
@@ -132,10 +133,6 @@ def handle_func(jobid, steprunid):
             restore_task_list = cur.fetchall()
         except:
             print("任务不存在!")  # 1.修改当前步骤状态为DONE
-            steprun = StepRun.objects.filter(id=steprunid)
-            steprun = steprun[0]
-            steprun.state = "DONE"
-            steprun.save()
         else:
             # 查询备份/恢复是否报错，将报错信息写入当前Step的operator字段中，并结束当前任务
             if backup_task_list:
@@ -185,6 +182,10 @@ def handle_func(jobid, steprunid):
                         handle_func(jobid, steprunid)
             else:
                 print("当前没有在执行的任务!")
+                steprun = StepRun.objects.filter(id=steprunid)
+                steprun = steprun[0]
+                steprun.state = "DONE"
+                steprun.save()
 
 
 @task
@@ -196,14 +197,15 @@ def handle_job(jobid, steprunid):
 
 
 @task
-def exec_script(steprunid,username,fullname):
+def exec_script(steprunid, username, fullname):
     """
     执行当前步骤在指定系统下的所有脚本
     """
     end_step_tag = True
     steprun = StepRun.objects.filter(id=steprunid)
     steprun = steprun[0]
-    scriptruns = steprun.scriptrun_set.exclude(state="9").exclude(state="DONE").exclude(result=0)  # 查询失败或者未执行的脚本
+    # scriptruns = steprun.scriptrun_set.exclude(state="9").exclude(state="DONE").exclude(result=0)  # 查询失败或者未执行的脚本
+    scriptruns = steprun.scriptrun_set.exclude(Q(state__in=("9", "DONE", "IGNORE")) | Q(result=0))
     for script in scriptruns:
         cmd = r"{0}".format(script.script.scriptpath + script.script.filename)
         ip = script.script.ip
@@ -216,18 +218,21 @@ def exec_script(steprunid,username,fullname):
         if script_type == "BAT":
             system_tag = "Windows"
         rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
+        script.starttime = datetime.datetime.now()
         result = rm_obj.run()
+
         script.result = result["exec_tag"]
         # 处理脚本执行失败问题
-        if result == 1:
+        if result["exec_tag"] == 1:
             print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
             script.operator = result['data']
             script.save()
             end_step_tag = False
-            steprun.state = "EDIT"
+            steprun.state = "ERROR"
             steprun.save()
             break
-        script.operator =""
+        script.endtime = datetime.datetime.now()
+        script.operator = ""
         script.state = "DONE"
         script.save()
     if end_step_tag:
@@ -254,6 +259,7 @@ def exec_script(steprunid,username,fullname):
                     myprocesstask.receiveuser = username
                     myprocesstask.type = "RUN"
                     myprocesstask.state = "0"
-                    myprocesstask.content = steprun.processrun.DataSet.clientName + "的" + steprun.processrun.process.name + "流程进行到“" + nextstep[
+                    myprocesstask.content = steprun.processrun.DataSet.clientName + "的" + steprun.processrun.process.name + "流程进行到“" + \
+                                            nextstep[
                                                 0].name + "”，请" + fullname + "处理。"
                     myprocesstask.save()
