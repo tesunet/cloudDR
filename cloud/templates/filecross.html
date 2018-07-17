@@ -143,7 +143,7 @@
                                                                 data-target="#static01"></button>
                                                         <select id="se_1" size="7" class="form-control" style="overflow-y:auto;">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                <option value="{{script.id}}">{{script.script.code}} </option>
+                                                                <option {% if script.operator %} style="color:#ff0000" {% endif %} value="{{script.id}}">{{script.script.code}}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -352,7 +352,7 @@
                                                                         data-target="#static01"></button>
                                                                 <select id="se_2" size="7" class="form-control" style="overflow-y:auto;">
                                                                     {% for script in stepinfo.step2.scripts %}
-                                                                        <option value="{{script.id}}">{{script.script.code}} </option>
+                                                                        <option {% if script.operator %} style="color:#ff0000" {% endif %} value="{{script.id}}">{{script.script.code}} </option>
                                                                     {% endfor %}
 
                                                                 </select>
@@ -393,7 +393,7 @@
                                                                 data-target="#static01"></button>
                                                         <select id="se_3" size="7" class="form-control" style="overflow-y:auto;">
                                                             {% for script in stepinfo.step3.scripts %}
-                                                                <option value="{{script.id}}">{{script.script.code}} </option>
+                                                                <option {% if script.operator %} style="color:#ff0000" {% endif %} value="{{script.id}}">{{script.script.code}}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -460,7 +460,7 @@
                                                                 data-target="#static01"></button>
                                                         <select id="se_4" size="7" class="form-control" style="overflow-y:auto;">
                                                             {% for script in stepinfo.step4.scripts %}
-                                                                <option value="{{script.id}}">{{script.script.code}} </option>
+                                                               <option {% if script.operator %} style="color:#ff0000" {% endif %} value="{{script.id}}">{{script.script.code}}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -531,28 +531,6 @@
                                                         </select>
                                                      </div>
                                                 </div>
-                                                <div class="form-group ">
-                                                        <label class="col-md-2 control-label">脚本</label>
-                                                        <div class="col-md-10">
-                                                            <div id="context-menu2">
-                                                                <ul class="dropdown-menu" role="menu">
-                                                                    <li><a tabindex="-1" data-toggle="modal"
-                                                                           data-target="#static01">新增</a></li>
-                                                                    <li><a tabindex="-1" data-toggle="modal"
-                                                                           data-target="#static01">修改</a></li>
-                                                                    <li><a tabindex="-1">删除</a></li>
-                                                                </ul>
-                                                            </div>
-                                                            <button hidden id="edit" tabindex="-1" data-toggle="modal"
-                                                                    data-target="#static01"></button>
-                                                            <select id="se_5" size="7" class="form-control" style="overflow-y:auto;">
-                                                                {% for script in stepinfo.step5.scripts %}
-                                                                    <option value="{{script.id}}">{{script.script.code}} </option>
-                                                                {% endfor %}
-
-                                                            </select>
-                                                        </div>
-                                                    </div>
                                             </div>
                                             <div class="tab-pane" id="tab6">
                                                 <input hidden id="steprunid6" type="text" name="steprunid7"   value="{{stepinfo.step6.id}}">
@@ -585,7 +563,7 @@
                                                                 data-target="#static01"></button>
                                                         <select id="se_6" size="7" class="form-control" style="overflow-y:auto;">
                                                             {% for script in stepinfo.step6.scripts %}
-                                                                <option value="{{script.id}}">{{script.script.code}} </option>
+                                                                <option {% if script.operator %} style="color:#ff0000" {% endif %} value="{{script.id}}">{{script.script.code}}</option>
                                                             {% endfor %}
 
                                                         </select>

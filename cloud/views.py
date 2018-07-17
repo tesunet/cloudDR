@@ -6564,6 +6564,7 @@ def filecrossnext(request):
             scriptruns = steprun[0].scriptrun_set.exclude(state="9").exclude(state="DONE")
             if len(scriptruns) > 0:
                 steprun[0].state = "RUN"
+                steprun[0].operator = ""
                 # 异步执行当前步骤的所有脚本
                 exec_script.delay(steprunid,request.user.username,request.user.userinfo.fullname)
             else:
@@ -6632,6 +6633,7 @@ def filecrossnext(request):
                     if jobid > 0:
                         steprun[0].parameter = "<content><jobid>" + str(jobid) + "</jobid></content>"
                         steprun[0].state = "RUN"
+                        steprun[0].operator = ""
                         handle_job.delay(jobid, steprunid)
                     else:
                         result["res"] = '执行失败，恢复任务启动失败。' + cvAPI.msg
@@ -6707,7 +6709,7 @@ def filecrossnext(request):
                         myprocesstask.type = "RUN"
                         myprocesstask.state = "0"
                         myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
-                            0].processrun.process.name + "流程“" + steprun[0].step.name + "”正在执行恢复任务，点击查看。"
+                            0].processrun.process.name + "流程“" + steprun[0].step.name + "”正在执行，点击查看。"
                         myprocesstask.save()
                     else:
                         myprocesstask = ProcessTask()

@@ -1525,7 +1525,7 @@ jQuery(document).ready(function() {
 
     //第三步，选择恢复资源
     $("#destClient").val($("#destClientvalue").val());
-    if($('#steprunid').val()!=$('#steprunid3').val()||$('#steprunstate1').val()=="RUN"){
+    if($('#steprunid').val()!=$('#steprunid3').val()||$('#steprunstate3').val()=="RUN"){
         $('#destClient').prop("disabled", "disabled");
 
     }
@@ -1585,7 +1585,7 @@ jQuery(document).ready(function() {
         $("#fs_se_1_check").append("<option value='\\'>\\</option>");
     }
 
-    if($('#steprunid').val()!=$('#steprunid4').val()||$('#steprunstate1').val()=="RUN"){
+    if($('#steprunid').val()!=$('#steprunid4').val()||$('#steprunstate4').val()=="RUN"){
         $('#radio3').prop("disabled", "disabled");
         $('#radio4').prop("disabled", "disabled");
         $('#radio5').prop("disabled", "disabled");
@@ -1627,7 +1627,7 @@ jQuery(document).ready(function() {
     $('#checkservice').prop("checked",false);
     if($('#checkservicevalue').val()=="TRUE")
         $('#checkservice').prop("checked",true);
-    if($('#steprunid').val()!=$('#steprunid6').val()||$('#steprunstate1').val()=="RUN"){
+    if($('#steprunid').val()!=$('#steprunid6').val()||$('#steprunstate6').val()=="RUN"){
         $('#checkservice').prop("disabled", "disabled");
     }
 
@@ -1635,7 +1635,7 @@ jQuery(document).ready(function() {
     $('#checkapp').prop("checked",false);
     if($('#checkappvalue').val()=="TRUE")
         $('#checkapp').prop("checked",true);
-    if($('#steprunid').val()!=$('#steprunid7').val()||$('#steprunstate1').val()=="RUN"){
+    if($('#steprunid').val()!=$('#steprunid7').val()||$('#steprunstate7').val()=="RUN"){
         $('#checkapp').prop("disabled", "disabled");
     }
     //脚本窗口

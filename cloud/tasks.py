@@ -146,10 +146,11 @@ def handle_func(jobid, steprunid):
                         steprun = steprun[0]
                         if backup_job["DelayReason"]:
                             steprun.operator = backup_job["DelayReason"]
+                            steprun.state = "EDIT"
                             steprun.save()
                             cur.close()
                             conn.close()
-                            exit(1)
+                            return
                         else:
                             steprun.state = "DONE"
                             steprun.save()
@@ -171,7 +172,7 @@ def handle_func(jobid, steprunid):
                             steprun.save()
                             cur.close()
                             conn.close()
-                            exit(1)
+                            return
                         else:
                             steprun.state = "DONE"
                             steprun.save()
@@ -226,6 +227,7 @@ def exec_script(steprunid,username,fullname):
             steprun.state = "EDIT"
             steprun.save()
             break
+        script.operator =""
         script.state = "DONE"
         script.save()
     if end_step_tag:
