@@ -7,6 +7,7 @@ from django.db import connection
 from xml.dom.minidom import parse, parseString
 from . import remote
 from .models import *
+import datetime
 
 
 def is_connection_usable():
@@ -148,6 +149,7 @@ def handle_func(jobid, steprunid):
                         handle_func(jobid, steprunid)
             elif restore_task_list:
                 for restore_job in restore_task_list:
+                    print(restore_job[35])
                     if restore_job[35] == 100:
                         steprun = StepRun.objects.filter(id=steprunid)
                         steprun = steprun[0]
@@ -173,7 +175,7 @@ def handle_job(jobid, steprunid):
 
 
 @task
-def exec_script(steprunid):
+def exec_script(steprunid,username,fullname):
     """
     执行当前步骤在指定系统下的所有脚本
     """
@@ -207,3 +209,27 @@ def exec_script(steprunid):
     if end_step_tag:
         steprun.state = "DONE"
         steprun.save()
+
+        task = steprun.processtask_set.filter(state="0")
+        if len(task) > 0:
+            task[0].endtime = datetime.datetime.now()
+            task[0].state = "1"
+            task[0].operator = username
+            task[0].save()
+
+            nextstep = steprun.step.next.exclude(state="9")
+            if len(nextstep) > 0:
+                nextsteprun = nextstep[0].steprun_set.exclude(state="9").filter(processrun=steprun.processrun)
+                if len(nextsteprun) > 0:
+                    mysteprun = nextsteprun[0]
+                    myprocesstask = ProcessTask()
+                    myprocesstask.processrun = steprun.processrun
+                    myprocesstask.steprun = mysteprun
+                    myprocesstask.starttime = datetime.datetime.now()
+                    myprocesstask.senduser = username
+                    myprocesstask.receiveuser = username
+                    myprocesstask.type = "RUN"
+                    myprocesstask.state = "0"
+                    myprocesstask.content = steprun.processrun.DataSet.clientName + "的" + steprun.processrun.process.name + "流程进行到“" + nextstep[
+                                                0].name + "”，请" + fullname + "处理。"
+                    myprocesstask.save()

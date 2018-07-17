@@ -6511,7 +6511,7 @@ def filecrossprevious(request):
 
                 myscriptruns = mysteprun.scriptrun_set.exclude(state="9")
                 for myscriptrun in myscriptruns:
-                    myscriptrun.state = "EDIT"
+                    #myscriptrun.state = "EDIT"
                     myscriptrun.save()
 
             else:
@@ -6565,20 +6565,20 @@ def filecrossnext(request):
             if len(scriptruns) > 0:
                 steprun[0].state = "RUN"
                 # 异步执行当前步骤的所有脚本
-                exec_script.delay(steprunid)
+                exec_script.delay(steprunid,request.user.username,request.user.userinfo.fullname)
             else:
                 steprun[0].state = "DONE"
-                # 查看当前步骤是否有备份/恢复任务，若任务完成，写入DONE
-                jobid_from_xml = steprun[0].parameter
-                if jobid_from_xml:
-                    el = etree.XML(jobid_from_xml)
-                    jobid = ""
-                    try:
-                        jobid = el.xpath("//jobid/text()")
-                    except:
-                        pass
-                    if jobid:
-                        handle_job.delay(jobid, steprunid)
+                # # 查看当前步骤是否有备份/恢复任务，若任务完成，写入DONE
+                # jobid_from_xml = steprun[0].parameter
+                # if jobid_from_xml:
+                #     el = etree.XML(jobid_from_xml)
+                #     jobid = ""
+                #     try:
+                #         jobid = el.xpath("//jobid/text()")
+                #     except:
+                #         pass
+                #     if jobid:
+                #         handle_job.delay(jobid, steprunid)
 
             if stepindex == "1":
                 restoreTime = request.POST.get('restoreTime', '')
@@ -6628,11 +6628,18 @@ def filecrossnext(request):
                 cvToken.login(info)
                 cvAPI = CV_API(cvToken)
                 jobid = cvAPI.restoreFSBackupset(sourceClient, destClient, "defaultBackupSet", fileRestoreOperator)
-                if jobid > 0:
-                    steprun[0].parameter = "<content><jobid>" + str(jobid) + "</jobid></content>"
+                if jobid:
+                    if jobid > 0:
+                        steprun[0].parameter = "<content><jobid>" + str(jobid) + "</jobid></content>"
+                        steprun[0].state = "RUN"
+                        handle_job.delay(jobid, steprunid)
+                    else:
+                        result["res"] = '执行失败，恢复任务启动失败。' + cvAPI.msg
+                        return HttpResponse(json.dumps(result))
                 else:
                     result["res"] = '执行失败，恢复任务启动失败。' + cvAPI.msg
                     return HttpResponse(json.dumps(result))
+
             if stepindex == "6":
                 checkservice = request.POST.get('checkservice', '')
                 steprun[0].parameter = "<content><checkservice>" + checkservice + "</checkservice></content>"
@@ -6677,7 +6684,7 @@ def filecrossnext(request):
                         myscriptrun.state = "EDIT"
                         myscriptrun.save()
                         scriptrunslist.append({"script_id": myscriptrun.id, "script_code": myscriptrun.script.code})
-                if len(scriptruns) > 0:
+                if len(scriptruns) > 0 :
                     myprocesstask = ProcessTask()
                     myprocesstask.processrun = steprun[0].processrun
                     myprocesstask.steprun = steprun[0]
@@ -6690,18 +6697,31 @@ def filecrossnext(request):
                         0].processrun.process.name + "流程“" + steprun[0].step.name + "”正在执行脚本，点击查看。"
                     myprocesstask.save()
                 else:
-                    myprocesstask = ProcessTask()
-                    myprocesstask.processrun = steprun[0].processrun
-                    myprocesstask.steprun = mysteprun
-                    myprocesstask.starttime = datetime.datetime.now()
-                    myprocesstask.senduser = request.user.username
-                    myprocesstask.receiveuser = request.user.username
-                    myprocesstask.type = "RUN"
-                    myprocesstask.state = "0"
-                    myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
-                        0].processrun.process.name + "流程进行到“" + nextstep[
-                                                0].name + "”，请" + request.user.userinfo.fullname + "处理。"
-                    myprocesstask.save()
+                    if stepindex == "5":
+                        myprocesstask = ProcessTask()
+                        myprocesstask.processrun = steprun[0].processrun
+                        myprocesstask.steprun = mysteprun
+                        myprocesstask.starttime = datetime.datetime.now()
+                        myprocesstask.senduser = request.user.username
+                        myprocesstask.receiveuser = request.user.username
+                        myprocesstask.type = "RUN"
+                        myprocesstask.state = "0"
+                        myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                            0].processrun.process.name + "流程“" + steprun[0].step.name + "”正在执行恢复任务，点击查看。"
+                        myprocesstask.save()
+                    else:
+                        myprocesstask = ProcessTask()
+                        myprocesstask.processrun = steprun[0].processrun
+                        myprocesstask.steprun = mysteprun
+                        myprocesstask.starttime = datetime.datetime.now()
+                        myprocesstask.senduser = request.user.username
+                        myprocesstask.receiveuser = request.user.username
+                        myprocesstask.type = "RUN"
+                        myprocesstask.state = "0"
+                        myprocesstask.content = steprun[0].processrun.DataSet.clientName + "的" + steprun[
+                            0].processrun.process.name + "流程进行到“" + nextstep[
+                                                    0].name + "”，请" + request.user.userinfo.fullname + "处理。"
+                        myprocesstask.save()
 
                 result["res"] = "执行成功。"
                 if len(scriptruns) > 0:
