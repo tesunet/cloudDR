@@ -112,20 +112,98 @@ def just_save():
             newjob.save()
 
 
+def handle_func(jobid, steprunid):
+    if not is_connection_usable():
+        connection.close()
+    try:
+        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+        cur = conn.cursor()
+    except:
+        print("链接失败!")
+    else:
+        try:
+            cur.execute(
+                """SELECT *  FROM [commserv].[dbo].[RunningBackups] where jobid={0}""".format(jobid))
+            backup_task_list = cur.fetchall()
+
+            cur.execute(
+                """SELECT *  FROM [commserv].[dbo].[RunningRestores] where jobid={0}""".format(jobid))
+            restore_task_list = cur.fetchall()
+        except:
+            print("任务不存在!")
+        else:
+            if backup_task_list:
+                for backup_job in backup_task_list:
+                    if backup_job[42] == 100:
+                        steprun = StepRun.objects.filter(id=steprunid)
+                        steprun = steprun[0]
+                        steprun.state = "DONE"
+                        steprun.save()
+                        cur.close()
+                        conn.close()
+                    else:
+                        cur.close()
+                        conn.close()
+                        time.sleep(30)
+                        handle_func(jobid, steprunid)
+            elif restore_task_list:
+                for restore_job in restore_task_list:
+                    if restore_job[35] == 100:
+                        steprun = StepRun.objects.filter(id=steprunid)
+                        steprun = steprun[0]
+                        steprun.state = "DONE"
+                        steprun.save()
+                        cur.close()
+                        conn.close()
+                    else:
+                        cur.close()
+                        conn.close()
+                        time.sleep(30)
+                        handle_func(jobid, steprunid)
+            else:
+                print("当前没有在执行的任务!")
+
+
+@task
+def handle_job(jobid, steprunid):
+    """
+    根据jobid查询任务状态，每半分钟查询一次，如果完成就在steprun中写入DONE
+    """
+    handle_func(jobid, steprunid)
+
+
 @task
 def exec_script(steprunid):
+    """
+    执行当前步骤在指定系统下的所有脚本
+    """
+    end_step_tag = True
     steprun = StepRun.objects.filter(id=steprunid)
     steprun = steprun[0]
-    scriptruns = steprun.scriptrun_set.exclude(state="9").exclude(state="DONE")
+    scriptruns = steprun.scriptrun_set.exclude(state="9").exclude(state="DONE").exclude(result=0)  # 查询失败或者未执行的脚本
     for script in scriptruns:
         cmd = r"{0}".format(script.script.scriptpath + script.script.filename)
         ip = script.script.ip
         username = script.script.username
         password = script.script.password
-        rm_obj = remote.ServerByPara(cmd, ip, username, password, "Linux")
+        script_type = script.script.type
+        system_tag = ""
+        if script_type == "SSH":
+            system_tag = "Linux"
+        if script_type == "BAT":
+            system_tag = "Windows"
+        rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
         result = rm_obj.run()
         script.result = result["exec_tag"]
+        # 处理脚本执行失败问题
+        if result == 1:
+            print("当前脚本执行失败,结束任务!")
+            end_step_tag = False
+            steprun.state = "EDIT"
+            steprun.save()
+            break
         script.state = "DONE"
         script.save()
-    steprun.state = "DONE"
-    steprun.save()
+    if end_step_tag:
+        steprun.state = "DONE"
+        steprun.save()

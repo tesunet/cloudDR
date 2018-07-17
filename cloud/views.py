@@ -28,6 +28,7 @@ from cloud.vmApi import *
 import xlrd, xlwt
 import pythoncom
 import pymssql
+from lxml import etree
 
 pythoncom.CoInitialize()
 import wmi
@@ -138,74 +139,78 @@ def index(request):
         # print uuid.uuid1()
         # print clientInfo
         # print cvAPI.getClientList()
-
         # 进度
         if not is_connection_usable():
             connection.close()
-        conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
-        cur = conn.cursor()
-        cur.execute(
-            """SELECT *  FROM [commserv].[dbo].[RunningBackups]""")
-        backup_task_list = cur.fetchall()
+        try:
+            conn = pymssql.connect(host='cv-server\COMMVAULT', user='sa_cloud', password='1qaz@WSX', database='CommServ')
+            cur = conn.cursor()
+            cur.execute(
+                """SELECT *  FROM [commserv].[dbo].[RunningBackups]""")
+            backup_task_list = cur.fetchall()
 
-        cur.execute(
-            """SELECT *  FROM [commserv].[dbo].[RunningRestores]""")
-        restore_task_list = cur.fetchall()
+            cur.execute(
+                """SELECT *  FROM [commserv].[dbo].[RunningRestores]""")
+            restore_task_list = cur.fetchall()
 
-        # 告警
-        nowtime = datetime.datetime.now()
-        dttime = datetime.datetime.strptime(
-            ((nowtime - datetime.timedelta(days=28 + nowtime.weekday())).strftime("%Y-%m-%d")), '%Y-%m-%d')
-        jobid_list = []
-        display_error_joblist = []
-        joblist = Joblist.objects.values_list("jobid")
-        for job in joblist:
-            jobid_list.append(job[0])
-        cur.execute(
-            """select * from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and jobstatus!='Success'""".format(
-                dttime))
-        error_joblist = cur.fetchall()
-        for error_job in error_joblist:
-            if error_job[0] not in jobid_list:
-                display_error_joblist.append({
-                    "jobid": error_job[0],
-                    "appid": error_job[1],
-                    "jobinitfrom": error_job[2],
-                    "clientname": error_job[3],
-                    "idataagent": error_job[4],
-                    "instance": error_job[5],
-                    "backupset": error_job[6],
-                    "subclient": error_job[7],
-                    "data_sp": error_job[8],
-                    "backuplevelInt": error_job[9],
-                    "backuplevel": error_job[10],
-                    "incrlevel": error_job[11],
-                    "jobstatusInt": error_job[12],
-                    "jobstatus": error_job[13],
-                    "jobfailedreason": error_job[14],
-                    "transferTime": error_job[15],
-                    "startdateunixsec": error_job[16],
-                    "enddateunixsec": error_job[17],
-                    "startdate": error_job[18],
-                    "enddate": error_job[19],
-                    "durationunixsec": error_job[20],
-                    "duration": error_job[21],
-                    "numstreams": error_job[22],
-                    "numbytesuncomp": error_job[23],
-                    "numbytescomp": error_job[24],
-                    "numobjects": error_job[25],
-                    "isAged": error_job[26],
-                    "isAgedStr": error_job[27],
-                    "xmlJobOptions": error_job[28],
-                    "retentionDays": error_job[29],
-                    "systemStateBackup": error_job[30],
-                    "inPrimaryCopy": error_job[31],
-                    "failedobjects": error_job[32],
-                    "totalBackupSize": error_job[33],
-                    "encrypted": error_job[34],
-                })
-        cur.close()
-        conn.close()
+            # 告警
+            nowtime = datetime.datetime.now()
+            dttime = datetime.datetime.strptime(
+                ((nowtime - datetime.timedelta(days=28 + nowtime.weekday())).strftime("%Y-%m-%d")), '%Y-%m-%d')
+            jobid_list = []
+            display_error_joblist = []
+            joblist = Joblist.objects.values_list("jobid")
+            for job in joblist:
+                jobid_list.append(job[0])
+            cur.execute(
+                """select * from [commserv].[dbo].[CommCellBackupInfo] where startdate>='{0}' and jobstatus!='Success'""".format(
+                    dttime))
+            error_joblist = cur.fetchall()
+            for error_job in error_joblist:
+                if error_job[0] not in jobid_list:
+                    display_error_joblist.append({
+                        "jobid": error_job[0],
+                        "appid": error_job[1],
+                        "jobinitfrom": error_job[2],
+                        "clientname": error_job[3],
+                        "idataagent": error_job[4],
+                        "instance": error_job[5],
+                        "backupset": error_job[6],
+                        "subclient": error_job[7],
+                        "data_sp": error_job[8],
+                        "backuplevelInt": error_job[9],
+                        "backuplevel": error_job[10],
+                        "incrlevel": error_job[11],
+                        "jobstatusInt": error_job[12],
+                        "jobstatus": error_job[13],
+                        "jobfailedreason": error_job[14],
+                        "transferTime": error_job[15],
+                        "startdateunixsec": error_job[16],
+                        "enddateunixsec": error_job[17],
+                        "startdate": error_job[18],
+                        "enddate": error_job[19],
+                        "durationunixsec": error_job[20],
+                        "duration": error_job[21],
+                        "numstreams": error_job[22],
+                        "numbytesuncomp": error_job[23],
+                        "numbytescomp": error_job[24],
+                        "numobjects": error_job[25],
+                        "isAged": error_job[26],
+                        "isAgedStr": error_job[27],
+                        "xmlJobOptions": error_job[28],
+                        "retentionDays": error_job[29],
+                        "systemStateBackup": error_job[30],
+                        "inPrimaryCopy": error_job[31],
+                        "failedobjects": error_job[32],
+                        "totalBackupSize": error_job[33],
+                        "encrypted": error_job[34],
+                    })
+            cur.close()
+            conn.close()
+        except:
+            backup_task_list = []
+            restore_task_list = []
+            display_error_joblist = []
         return render(request, "index.html",
                       {'username': request.user.userinfo.fullname, "alltask": alltask, "homepage": True,
                        "backup_task_list": backup_task_list, "restore_task_list": restore_task_list,
@@ -6497,10 +6502,10 @@ def filecrossprevious(request):
                 task[0].save()
 
             laststep = steprun[0].step.last
-            mysteprun=None
+            mysteprun = None
             laststeprun = laststep.steprun_set.exclude(state="9").filter(processrun=steprun[0].processrun)
-            if len(laststeprun)>0:
-                mysteprun=laststeprun[0]
+            if len(laststeprun) > 0:
+                mysteprun = laststeprun[0]
                 mysteprun.state = "EDIT"
                 mysteprun.save()
 
@@ -6546,7 +6551,8 @@ def filecrossnext(request):
     if request.user.is_authenticated():
         result = {}
         steprunid = request.POST.get('steprunid', '')
-        stepindex= request.POST.get('stepindex', '')
+        stepindex = request.POST.get('stepindex', '')
+        print("steprunid", steprunid)
         try:
             steprunid = int(steprunid)
         except:
@@ -6556,23 +6562,36 @@ def filecrossnext(request):
             result["res"] = '执行失败，该步骤配置异常。'
         else:
             scriptruns = steprun[0].scriptrun_set.exclude(state="9").exclude(state="DONE")
-            if len(scriptruns)>0:
+            if len(scriptruns) > 0:
                 steprun[0].state = "RUN"
-                # 视图中调用，执行脚本
+                # 异步执行当前步骤的所有脚本
                 exec_script.delay(steprunid)
             else:
                 steprun[0].state = "DONE"
-            if  stepindex=="1":
+                # 查看当前步骤是否有备份/恢复任务，若任务完成，写入DONE
+                jobid_from_xml = steprun[0].parameter
+                if jobid_from_xml:
+                    el = etree.XML(jobid_from_xml)
+                    jobid = ""
+                    try:
+                        jobid = el.xpath("//jobid/text()")
+                    except:
+                        pass
+                    if jobid:
+                        handle_job.delay(jobid, steprunid)
+
+            if stepindex == "1":
                 restoreTime = request.POST.get('restoreTime', '')
                 steprun[0].parameter = "<content><restoreTime>" + restoreTime + "</restoreTime></content>"
-            if  stepindex=="3":
+            if stepindex == "3":
                 destClient = request.POST.get('destClient', '')
                 steprun[0].parameter = "<content><destClient>" + destClient + "</destClient></content>"
             if stepindex == "4":
                 iscover = request.POST.get('iscover', '')
                 mypath = request.POST.get('mypath', '')
                 selectedfile = request.POST.get('selectedfile', '')
-                steprun[0].parameter = "<content><iscover>" + iscover + "</iscover><mypath>" + mypath + "</mypath><selectedfile>" + selectedfile + "</selectedfile></content>"
+                steprun[
+                    0].parameter = "<content><iscover>" + iscover + "</iscover><mypath>" + mypath + "</mypath><selectedfile>" + selectedfile + "</selectedfile></content>"
             if stepindex == "5":
                 sourceClient = request.POST.get('sourceClient', '')
                 destClient = request.POST.get('destClient', '')
@@ -6608,13 +6627,13 @@ def filecrossnext(request):
                 cvToken = CV_RestApi_Token()
                 cvToken.login(info)
                 cvAPI = CV_API(cvToken)
-                jobid=cvAPI.restoreFSBackupset(sourceClient, destClient, "defaultBackupSet", fileRestoreOperator)
-                if jobid>0:
+                jobid = cvAPI.restoreFSBackupset(sourceClient, destClient, "defaultBackupSet", fileRestoreOperator)
+                if jobid > 0:
                     steprun[0].parameter = "<content><jobid>" + str(jobid) + "</jobid></content>"
                 else:
-                    result["res"] = '执行失败，恢复任务启动失败。'+ cvAPI.msg
+                    result["res"] = '执行失败，恢复任务启动失败。' + cvAPI.msg
                     return HttpResponse(json.dumps(result))
-            if  stepindex=="6":
+            if stepindex == "6":
                 checkservice = request.POST.get('checkservice', '')
                 steprun[0].parameter = "<content><checkservice>" + checkservice + "</checkservice></content>"
             steprun[0].endtime = datetime.datetime.now()
@@ -6629,11 +6648,11 @@ def filecrossnext(request):
 
             nextstep = steprun[0].step.next.exclude(state="9")
             if len(nextstep) > 0:
-                mysteprun=None
-                scriptrunslist=[]
+                mysteprun = None
+                scriptrunslist = []
                 nextsteprun = nextstep[0].steprun_set.exclude(state="9").filter(processrun=steprun[0].processrun)
-                if len(nextsteprun)>0:
-                    mysteprun=nextsteprun[0]
+                if len(nextsteprun) > 0:
+                    mysteprun = nextsteprun[0]
                     mysteprun.state = "EDIT"
                     mysteprun.save()
 
@@ -6657,7 +6676,7 @@ def filecrossnext(request):
                         myscriptrun.steprun = mysteprun
                         myscriptrun.state = "EDIT"
                         myscriptrun.save()
-                        scriptrunslist.append({"script_id":myscriptrun.id,"script_code":myscriptrun.script.code})
+                        scriptrunslist.append({"script_id": myscriptrun.id, "script_code": myscriptrun.script.code})
                 if len(scriptruns) > 0:
                     myprocesstask = ProcessTask()
                     myprocesstask.processrun = steprun[0].processrun
@@ -6690,7 +6709,7 @@ def filecrossnext(request):
                 else:
                     result["data"] = mysteprun.id
                 result["nextdata"] = mysteprun.id
-                result["scriptrunslist"]=scriptrunslist
+                result["scriptrunslist"] = scriptrunslist
                 result["steprunstate"] = steprun[0].state
         return HttpResponse(json.dumps(result))
 
@@ -6722,7 +6741,7 @@ def filecrossfinish(request):
 
             myprocessrun = steprun[0].processrun
             myprocessrun.endtime = datetime.datetime.now()
-            myprocessrun.state="DONE"
+            myprocessrun.state = "DONE"
             myprocessrun.save()
             result["res"] = "执行成功。"
         return HttpResponse(json.dumps(result))
