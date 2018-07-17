@@ -135,6 +135,7 @@ def handle_func(jobid, steprunid):
             steprun = StepRun.objects.filter(id=steprunid)
             steprun = steprun[0]
             steprun.state = "DONE"
+            steprun.save()
         else:
             # 查询备份/恢复是否报错，将报错信息写入当前Step的operator字段中，并结束当前任务
             if backup_task_list:
