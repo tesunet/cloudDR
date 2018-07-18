@@ -1632,6 +1632,43 @@ jQuery(document).ready(function () {
         $('#checkapp').prop("disabled", "disabled");
     }
     //脚本窗口
+    $('#se_1').click(function () {
+        if ($("#se_1").find('option:selected').length == 0) {
+            alert("请选择要查看的脚本。");
+        } else {
+            if ($("#se_1").find('option:selected').length > 1) {
+                alert("请不要选择多条记录。");
+            } else {
+                // 获取当前步骤脚本信息
+                var steprunid = $("#steprunid").val();
+                var scriptid = $("#se_1").find('option:selected').val();
+                $.ajax({
+                    url: "/get_current_scriptinfo/",
+                    type: "post",
+                    data: {"steprunid": steprunid, "scriptid": scriptid},
+                    success: function (data) {
+                        $("#code").val(data.data["code"]);
+                        $("#script_ip").val(data.data["ip"]);
+                        $("#script_port").val(data.data["port"]);
+                        $("#filename").val(data.data["filename"]);
+                        $("#scriptpath").val(data.data["scriptpath"]);
+                        $("#scriptstate").val(data.data["state"]);
+                        $("#starttime").val(data.data["starttime"]);
+                        $("#endtime").val(data.data["endtime"]);
+                        $("#operator").val(data.data["operator"]);
+                        if (data.data["show_button"] == 0) {
+                            $("#exec").show();
+                            $("#ignore").show();
+                        } else {
+                            $("#exec").hide();
+                            $("#ignore").hide();
+                        }
+                    }
+                });
+            }
+        }
+
+    });
     $('#se_2').click(function () {
         if ($("#se_2").find('option:selected').length == 0) {
             alert("请选择要查看的脚本。");
@@ -1669,11 +1706,122 @@ jQuery(document).ready(function () {
         }
 
     });
+    $('#se_3').click(function () {
+        if ($("#se_3").find('option:selected').length == 0) {
+            alert("请选择要查看的脚本。");
+        } else {
+            if ($("#se_3").find('option:selected').length > 1) {
+                alert("请不要选择多条记录。");
+            } else {
+                // 获取当前步骤脚本信息
+                var steprunid = $("#steprunid").val();
+                var scriptid = $("#se_3").find('option:selected').val();
+                $.ajax({
+                    url: "/get_current_scriptinfo/",
+                    type: "post",
+                    data: {"steprunid": steprunid, "scriptid": scriptid},
+                    success: function (data) {
+                        $("#code").val(data.data["code"]);
+                        $("#script_ip").val(data.data["ip"]);
+                        $("#script_port").val(data.data["port"]);
+                        $("#filename").val(data.data["filename"]);
+                        $("#scriptpath").val(data.data["scriptpath"]);
+                        $("#scriptstate").val(data.data["state"]);
+                        $("#starttime").val(data.data["starttime"]);
+                        $("#endtime").val(data.data["endtime"]);
+                        $("#operator").val(data.data["operator"]);
+                        if (data.data["show_button"] == 0) {
+                            $("#exec").show();
+                            $("#ignore").show();
+                        } else {
+                            $("#exec").hide();
+                            $("#ignore").hide();
+                        }
+                    }
+                });
+            }
+        }
+
+    });
+    $('#se_4').click(function () {
+        if ($("#se_4").find('option:selected').length == 0) {
+            alert("请选择要查看的脚本。");
+        } else {
+            if ($("#se_4").find('option:selected').length > 1) {
+                alert("请不要选择多条记录。");
+            } else {
+                // 获取当前步骤脚本信息
+                var steprunid = $("#steprunid").val();
+                var scriptid = $("#se_4").find('option:selected').val();
+                $.ajax({
+                    url: "/get_current_scriptinfo/",
+                    type: "post",
+                    data: {"steprunid": steprunid, "scriptid": scriptid},
+                    success: function (data) {
+                        $("#code").val(data.data["code"]);
+                        $("#script_ip").val(data.data["ip"]);
+                        $("#script_port").val(data.data["port"]);
+                        $("#filename").val(data.data["filename"]);
+                        $("#scriptpath").val(data.data["scriptpath"]);
+                        $("#scriptstate").val(data.data["state"]);
+                        $("#starttime").val(data.data["starttime"]);
+                        $("#endtime").val(data.data["endtime"]);
+                        $("#operator").val(data.data["operator"]);
+                        if (data.data["show_button"] == 0) {
+                            $("#exec").show();
+                            $("#ignore").show();
+                        } else {
+                            $("#exec").hide();
+                            $("#ignore").hide();
+                        }
+                    }
+                });
+            }
+        }
+
+    });
+    $('#se_6').click(function () {
+        if ($("#se_6").find('option:selected').length == 0) {
+            alert("请选择要查看的脚本。");
+        } else {
+            if ($("#se_6").find('option:selected').length > 1) {
+                alert("请不要选择多条记录。");
+            } else {
+                // 获取当前步骤脚本信息
+                var steprunid = $("#steprunid").val();
+                var scriptid = $("#se_6").find('option:selected').val();
+                $.ajax({
+                    url: "/get_current_scriptinfo/",
+                    type: "post",
+                    data: {"steprunid": steprunid, "scriptid": scriptid},
+                    success: function (data) {
+                        $("#code").val(data.data["code"]);
+                        $("#script_ip").val(data.data["ip"]);
+                        $("#script_port").val(data.data["port"]);
+                        $("#filename").val(data.data["filename"]);
+                        $("#scriptpath").val(data.data["scriptpath"]);
+                        $("#scriptstate").val(data.data["state"]);
+                        $("#starttime").val(data.data["starttime"]);
+                        $("#endtime").val(data.data["endtime"]);
+                        $("#operator").val(data.data["operator"]);
+                        if (data.data["show_button"] == 0) {
+                            $("#exec").show();
+                            $("#ignore").show();
+                        } else {
+                            $("#exec").hide();
+                            $("#ignore").hide();
+                        }
+                    }
+                });
+            }
+        }
+
+    });
 
     // 手动执行脚本
     $("#exec").click(function () {
         var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_2").find('option:selected').val();
+        var scriptid = $("#se_num".replace("num", steprunid)).find('option:selected').val();
         $.ajax({
             url: "/exec_script_by_hand/",
             type: "post",
@@ -1687,15 +1835,15 @@ jQuery(document).ready(function () {
 
             }
         });
-        // $('#static').modal('hide');
     });
     // 跳过脚本
     $("#ignore").click(function () {
-        var scriptid = $("#se_2").find('option:selected').val();
+        var steprunid = $("#steprunid").val();
+        var scriptid = $("#se_num".replace("num", steprunid)).find('option:selected').val();
         $.ajax({
             url: "/ignore_current_script/",
             type: "post",
-            data: { "scriptid": scriptid},
+            data: {"scriptid": scriptid},
             success: function (data) {
                 alert(data.data);
                 $('#static').modal('hide');
