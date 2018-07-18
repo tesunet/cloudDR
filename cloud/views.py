@@ -6891,7 +6891,6 @@ def exec_script_by_hand(request):
             system_tag = "Linux"
         if script_type == "BAT":
             system_tag = "Windows"
-        print("cmd, ip, username, password, system_tag", cmd, ip, username, password, system_tag)
         rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
         script.starttime = datetime.datetime.now()
         result = rm_obj.run()
@@ -6907,7 +6906,6 @@ def exec_script_by_hand(request):
         scriptruns.operator = ""
         scriptruns.state = "DONE"
         scriptruns.save()
-        print("result,type(result)", result, type(result))
         return JsonResponse({"data": result})
 
 

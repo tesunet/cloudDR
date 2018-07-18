@@ -1653,8 +1653,8 @@ jQuery(document).ready(function () {
                         $("#filename").val(data.data["filename"]);
                         $("#scriptpath").val(data.data["scriptpath"]);
                         $("#scriptstate").val(data.data["state"]);
-                        $("#starttime").val(data.data["starttime"]);
-                        $("#endtime").val(data.data["endtime"]);
+                        $("#ontime").val(data.data["starttime"]);
+                        $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 0) {
                             $("#exec").show();

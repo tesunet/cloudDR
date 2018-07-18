@@ -161,9 +161,9 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                <option {% if script.operator %}
-                                                                    style="color:#ff0000" {% endif %}
-                                                                    value="{{ script.id }}">{{ script.script.code }}</option>
+                                                                    <option {% if script.operator %}
+                                                                        style="color:#ff0000" {% endif %}
+                                                                        value="{{ script.id }}">{{ script.script.code }}{{ forloop.count }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -1033,90 +1033,93 @@
 
                                             <div class="form-body">
                                                 <div class="form-group">
-                                                    <label class="col-md-3 control-label"><span
+                                                    <label class="col-md-2 control-label"><span
                                                             style="color:red; ">*</span>脚本编号</label>
-                                                    <div class="col-md-9">
+                                                    <div class="col-md-10">
                                                         <input id="code" type="text" name="code" class="form-control "
-                                                               placeholder="" disabled>
+                                                               placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
 
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label class="col-md-3 control-label"><span
+                                                    <label class="col-md-2 control-label"><span
                                                             style="color:red; ">*</span>主机IP</label>
-                                                    <div class="col-md-3">
-                                                        <input id="script_ip" type="text" name="script_ip" class="form-control"
-                                                               placeholder="" disabled>
+                                                    <div class="col-md-2">
+                                                        <input id="script_ip" type="text" name="script_ip"
+                                                               class="form-control"
+                                                               placeholder="" style="width:180px;" readonly>
                                                         <div class="form-control-focus"></div>
 
                                                     </div>
-                                                    <label class="col-md-3 control-label"><span
+                                                    <label class="col-md-4 control-label"><span
                                                             style="color:red; ">*</span>端口号</label>
-                                                    <div class="col-md-3">
-                                                        <input id="script_port" type="number" name="script_port" class="form-control"
-                                                               placeholder="" disabled>
+                                                    <div class="col-md-4">
+                                                        <input id="script_port" type="number" name="script_port"
+                                                               class="form-control"
+                                                               placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
 
                                                     </div>
                                                 </div>
 
                                                 <div class="form-group">
-                                                    <label class="col-md-3 control-label"><span
-                                                            style="color:red; ">*</span>脚本文件名</label>
-                                                    <div class="col-md-9">
+                                                    <label class="col-md-2 control-label"><span
+                                                            style="color:red; ">*</span>脚本名</label>
+                                                    <div class="col-md-10">
                                                         <input id="filename" type="text" name="filename"
                                                                class="form-control"
-                                                               placeholder="" disabled>
+                                                               placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label class="col-md-3 control-label"><span
-                                                            style="color:red; ">*</span>脚本文件路径</label>
-                                                    <div class="col-md-9">
+                                                    <label class="col-md-2 control-label"><span
+                                                            style="color:red; ">*</span>脚本路径</label>
+                                                    <div class="col-md-10">
                                                         <input id="scriptpath" type="text" name="scriptpath"
                                                                class="form-control"
-                                                               placeholder="" disabled>
+                                                               placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label class="col-md-3 control-label"><span
+                                                    <label class="col-md-2 control-label"><span
                                                             style="color:red; ">*</span>脚本状态</label>
-                                                    <div class="col-md-9">
+                                                    <div class="col-md-10">
                                                         <input id="scriptstate" type="text" name="scriptstate"
                                                                class="form-control"
-                                                               placeholder="" disabled>
+                                                               placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
-                                                    <label class="col-md-3 control-label"><span
+                                                    <label class="col-md-2 control-label"><span
                                                             style="color:red; ">*</span>开始时间</label>
-                                                    <div class="col-md-3">
-                                                        <input id="starttime" type="number" name="starttime"
+                                                    <div class="col-md-2">
+                                                        <input id="ontime" type="text" name="ontime"
                                                                class="form-control"
-                                                               placeholder="" disabled>
+                                                               placeholder="" readonly style="width:180px;">
                                                         <div class="form-control-focus"></div>
                                                     </div>
-                                                    <label class="col-md-3 control-label"><span
+                                                    <label class="col-md-4 control-label"><span
                                                             style="color:red; ">*</span>结束时间</label>
-                                                    <div class="col-md-3">
-                                                        <input id="endtime" type="number" name="endtime" class="form-control"
-                                                               placeholder="" disabled>
+                                                    <div class="col-md-4">
+                                                        <input id="offtime" type="text" name="offtime"
+                                                               class="form-control"
+                                                               placeholder="" value="" readonly>
                                                         <div class="form-control-focus"></div>
                                                     </div>
                                                 </div>
 
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label"><span
+                                                <label class="col-md-2 control-label"><span
                                                         style="color:red; ">*</span>脚本信息</label>
-                                                <div class="col-md-9">
+                                                <div class="col-md-10">
                                                     <textarea name="errorinfo" id="errorinfo" cols="50" rows="10"
                                                               style="resize:none;" autocomplete="off"
-                                                              class="form-control" disabled></textarea>
+                                                              class="form-control" readonly></textarea>
                                                     <div class="form-control-focus"></div>
                                                 </div>
                                             </div>
@@ -1125,7 +1128,8 @@
                                                     <button type="button" data-dismiss="modal" id="exec" name="exec"
                                                             class="btn green" hidden>执行
                                                     </button>
-                                                    <button type="button" id="ignore" name="ignore" class="btn green" hidden>跳过
+                                                    <button type="button" id="ignore" name="ignore" class="btn green"
+                                                            hidden>跳过
                                                     </button>
                                                 </div>
                                             </div>
