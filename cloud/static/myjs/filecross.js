@@ -1633,6 +1633,11 @@ jQuery(document).ready(function () {
     }
     //脚本窗口
     $('#se_1').click(function () {
+        $("#b1").hide();
+        $("#b2").hide();
+        $("#b3").hide();
+        $("#b4").hide();
+        $("#b6").hide();
         if ($("#se_1").find('option:selected').length == 0) {
             alert("请选择要查看的脚本。");
         } else {
@@ -1656,12 +1661,11 @@ jQuery(document).ready(function () {
                         $("#ontime").val(data.data["starttime"]);
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
+
                         if (data.data["show_button"] == 0) {
-                            $("#exec").show();
-                            $("#ignore").show();
+                            $("#b1").show();
                         } else {
-                            $("#exec").hide();
-                            $("#ignore").hide();
+                            $("#b1").hide();
                         }
                     }
                 });
@@ -1670,6 +1674,11 @@ jQuery(document).ready(function () {
 
     });
     $('#se_2').click(function () {
+        $("#b1").hide();
+        $("#b2").hide();
+        $("#b3").hide();
+        $("#b4").hide();
+        $("#b6").hide();
         if ($("#se_2").find('option:selected').length == 0) {
             alert("请选择要查看的脚本。");
         } else {
@@ -1690,15 +1699,13 @@ jQuery(document).ready(function () {
                         $("#filename").val(data.data["filename"]);
                         $("#scriptpath").val(data.data["scriptpath"]);
                         $("#scriptstate").val(data.data["state"]);
-                        $("#starttime").val(data.data["starttime"]);
-                        $("#endtime").val(data.data["endtime"]);
+                        $("#ontime").val(data.data["starttime"]);
+                        $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 0) {
-                            $("#exec").show();
-                            $("#ignore").show();
+                            $("#b2").show();
                         } else {
-                            $("#exec").hide();
-                            $("#ignore").hide();
+                            $("#b2").hide();
                         }
                     }
                 });
@@ -1707,6 +1714,11 @@ jQuery(document).ready(function () {
 
     });
     $('#se_3').click(function () {
+        $("#b1").hide();
+        $("#b2").hide();
+        $("#b3").hide();
+        $("#b4").hide();
+        $("#b6").hide();
         if ($("#se_3").find('option:selected').length == 0) {
             alert("请选择要查看的脚本。");
         } else {
@@ -1727,15 +1739,13 @@ jQuery(document).ready(function () {
                         $("#filename").val(data.data["filename"]);
                         $("#scriptpath").val(data.data["scriptpath"]);
                         $("#scriptstate").val(data.data["state"]);
-                        $("#starttime").val(data.data["starttime"]);
-                        $("#endtime").val(data.data["endtime"]);
+                        $("#ontime").val(data.data["starttime"]);
+                        $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 0) {
-                            $("#exec").show();
-                            $("#ignore").show();
+                            $("#b3").show();
                         } else {
-                            $("#exec").hide();
-                            $("#ignore").hide();
+                            $("#b3").hide();
                         }
                     }
                 });
@@ -1744,6 +1754,11 @@ jQuery(document).ready(function () {
 
     });
     $('#se_4').click(function () {
+        $("#b1").hide();
+        $("#b2").hide();
+        $("#b3").hide();
+        $("#b4").hide();
+        $("#b6").hide();
         if ($("#se_4").find('option:selected').length == 0) {
             alert("请选择要查看的脚本。");
         } else {
@@ -1764,15 +1779,14 @@ jQuery(document).ready(function () {
                         $("#filename").val(data.data["filename"]);
                         $("#scriptpath").val(data.data["scriptpath"]);
                         $("#scriptstate").val(data.data["state"]);
-                        $("#starttime").val(data.data["starttime"]);
-                        $("#endtime").val(data.data["endtime"]);
+                        $("#ontime").val(data.data["starttime"]);
+                        $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
+
                         if (data.data["show_button"] == 0) {
-                            $("#exec").show();
-                            $("#ignore").show();
+                            $("#b4").show();
                         } else {
-                            $("#exec").hide();
-                            $("#ignore").hide();
+                            $("#b4").hide();
                         }
                     }
                 });
@@ -1781,6 +1795,12 @@ jQuery(document).ready(function () {
 
     });
     $('#se_6').click(function () {
+        $("#b1").hide();
+        $("#b2").hide();
+        $("#b3").hide();
+        $("#b4").hide();
+        $("#b6").hide();
+
         if ($("#se_6").find('option:selected').length == 0) {
             alert("请选择要查看的脚本。");
         } else {
@@ -1801,15 +1821,13 @@ jQuery(document).ready(function () {
                         $("#filename").val(data.data["filename"]);
                         $("#scriptpath").val(data.data["scriptpath"]);
                         $("#scriptstate").val(data.data["state"]);
-                        $("#starttime").val(data.data["starttime"]);
-                        $("#endtime").val(data.data["endtime"]);
+                        $("#ontime").val(data.data["starttime"]);
+                        $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 0) {
-                            $("#exec").show();
-                            $("#ignore").show();
+                            $("#b6").show();
                         } else {
-                            $("#exec").hide();
-                            $("#ignore").hide();
+                            $("#b6").hide();
                         }
                     }
                 });
@@ -1819,9 +1837,9 @@ jQuery(document).ready(function () {
     });
 
     // 手动执行脚本
-    $("#exec").click(function () {
+    $("#exec_1").click(function () {
         var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_num".replace("num", steprunid)).find('option:selected').val();
+        var scriptid = $("#se_1").find('option:selected').val();
         $.ajax({
             url: "/exec_script_by_hand/",
             type: "post",
@@ -1832,14 +1850,77 @@ jQuery(document).ready(function () {
                 } else {
                     alert("脚本执行失败！");
                 }
-
             }
         });
     });
-    // 跳过脚本
-    $("#ignore").click(function () {
+    $("#exec_2").click(function () {
         var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_num".replace("num", steprunid)).find('option:selected').val();
+        var scriptid = $("#se_2").find('option:selected').val();
+        $.ajax({
+            url: "/exec_script_by_hand/",
+            type: "post",
+            data: {"steprunid": steprunid, "scriptid": scriptid},
+            success: function (data) {
+                if (data.data["exec_tag"] == 0) {
+                    alert("脚本执行成功！");
+                } else {
+                    alert("脚本执行失败！");
+                }
+            }
+        });
+    });
+    $("#exec_3").click(function () {
+        var steprunid = $("#steprunid").val();
+        var scriptid = $("#se_3").find('option:selected').val();
+        $.ajax({
+            url: "/exec_script_by_hand/",
+            type: "post",
+            data: {"steprunid": steprunid, "scriptid": scriptid},
+            success: function (data) {
+                if (data.data["exec_tag"] == 0) {
+                    alert("脚本执行成功！");
+                } else {
+                    alert("脚本执行失败！");
+                }
+            }
+        });
+    });
+    $("#exec_4").click(function () {
+        var steprunid = $("#steprunid").val();
+        var scriptid = $("#se_4").find('option:selected').val();
+        $.ajax({
+            url: "/exec_script_by_hand/",
+            type: "post",
+            data: {"steprunid": steprunid, "scriptid": scriptid},
+            success: function (data) {
+                if (data.data["exec_tag"] == 0) {
+                    alert("脚本执行成功！");
+                } else {
+                    alert("脚本执行失败！");
+                }
+            }
+        });
+    });
+    $("#exec_6").click(function () {
+        var steprunid = $("#steprunid").val();
+        var scriptid = $("#se_6").find('option:selected').val();
+        $.ajax({
+            url: "/exec_script_by_hand/",
+            type: "post",
+            data: {"steprunid": steprunid, "scriptid": scriptid},
+            success: function (data) {
+                if (data.data["exec_tag"] == 0) {
+                    alert("脚本执行成功！");
+                } else {
+                    alert("脚本执行失败！");
+                }
+            }
+        });
+    });
+
+    // 跳过脚本
+    $("#ignore_1").click(function () {
+        var scriptid = $("#se_1").find('option:selected').val();
         $.ajax({
             url: "/ignore_current_script/",
             type: "post",
@@ -1850,5 +1931,54 @@ jQuery(document).ready(function () {
             }
         });
     });
+    $("#ignore_2").click(function () {
+        var scriptid = $("#se_2").find('option:selected').val();
+        $.ajax({
+            url: "/ignore_current_script/",
+            type: "post",
+            data: {"scriptid": scriptid},
+            success: function (data) {
+                alert(data.data);
+                $('#static').modal('hide');
+            }
+        });
+    });
+    $("#ignore_3").click(function () {
+        var scriptid = $("#se_3").find('option:selected').val();
+        $.ajax({
+            url: "/ignore_current_script/",
+            type: "post",
+            data: {"scriptid": scriptid},
+            success: function (data) {
+                alert(data.data);
+                $('#static').modal('hide');
+            }
+        });
+    });
+    $("#ignore_4").click(function () {
+        var scriptid = $("#se_4").find('option:selected').val();
+        $.ajax({
+            url: "/ignore_current_script/",
+            type: "post",
+            data: {"scriptid": scriptid},
+            success: function (data) {
+                alert(data.data);
+                $('#static').modal('hide');
+            }
+        });
+    });
+    $("#ignore_6").click(function () {
+        var scriptid = $("#se_6").find('option:selected').val();
+        $.ajax({
+            url: "/ignore_current_script/",
+            type: "post",
+            data: {"scriptid": scriptid},
+            success: function (data) {
+                alert(data.data);
+                $('#static').modal('hide');
+            }
+        });
+    });
+
     FormWizard.init();
 });

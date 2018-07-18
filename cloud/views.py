@@ -6846,7 +6846,7 @@ def get_current_scriptinfo(request):
         except:
             script_obj = None
         if script_obj:
-            step_id_from_script = scriptrun_obj.steprun_id
+            step_id_from_script = scriptrun_obj.steprun.step_id
             show_button = ""
             if step_id_from_script == current_step_id:
                 # 显示button
@@ -6871,6 +6871,7 @@ def get_current_scriptinfo(request):
                 "operator": scriptrun_obj.operator,
                 "show_button": show_button,
             }
+
             return JsonResponse({"data": script_info})
 
 
@@ -6892,7 +6893,7 @@ def exec_script_by_hand(request):
         if script_type == "BAT":
             system_tag = "Windows"
         rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
-        script.starttime = datetime.datetime.now()
+        scriptruns.starttime = datetime.datetime.now()
         result = rm_obj.run()
         script.result = result["exec_tag"]
         # 处理脚本执行失败问题

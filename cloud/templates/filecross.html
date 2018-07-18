@@ -161,9 +161,10 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                    <option {% if script.operator %}
-                                                                        style="color:#ff0000" {% endif %}
-                                                                        value="{{ script.id }}">{{ script.script.code }}{{ forloop.count }}</option>
+                                                                <option {% if script.operator %}
+                                                                    style="color:#ff0000" {% endif %}
+                                                                    value="{{ script.id }}">
+                                                                    {{ script.script.code }}{{ forloop.count }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -1124,11 +1125,30 @@
                                                 </div>
                                             </div>
                                             <div class="form-actions ">
-                                                <div class="modal-footer">
-                                                    <button type="button" data-dismiss="modal" id="exec" name="exec"
+                                                <div class="modal-footer" id="b1" hidden>
+                                                    <button type="button" data-dismiss="modal" id="exec_1" name="exec_1"
                                                             class="btn green" hidden>执行
                                                     </button>
-                                                    <button type="button" id="ignore" name="ignore" class="btn green"
+                                                    <button type="button" id="ignore_1" name="ignore_1"
+                                                            class="btn green"
+                                                            hidden>跳过
+                                                    </button>
+                                                </div>
+                                                <div class="modal-footer" id="b2" hidden>
+                                                    <button type="button" data-dismiss="modal" id="exec_2" name="exec_2"
+                                                            class="btn green" hidden>执行
+                                                    </button>
+                                                    <button type="button" id="ignore_2" name="ignore_2"
+                                                            class="btn green"
+                                                            hidden>跳过
+                                                    </button>
+                                                </div>
+                                                <div class="modal-footer" id="b3" hidden>
+                                                    <button type="button" data-dismiss="modal" id="exec_3" name="exec_3"
+                                                            class="btn green" hidden>执行
+                                                    </button>
+                                                    <button type="button" id="ignore_3" name="ignore_3"
+                                                            class="btn green"
                                                             hidden>跳过
                                                     </button>
                                                 </div>
