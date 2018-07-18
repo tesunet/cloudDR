@@ -1684,9 +1684,10 @@ jQuery(document).ready(function () {
                 } else {
                     alert("脚本执行失败！");
                 }
-                $('#static').modal('hide');
+
             }
         });
+        // $('#static').modal('hide');
     });
     // 跳过脚本
     $("#ignore").click(function () {

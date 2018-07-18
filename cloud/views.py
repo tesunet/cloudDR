@@ -6856,7 +6856,7 @@ def get_current_scriptinfo(request):
                 "EDIT": "未执行",
                 "RUN": "执行中",
                 "ERROR": "执行失败",
-                "IGNORE":"忽略",
+                "IGNORE": "忽略",
                 "": "",
             }
             script_info = {
@@ -6907,7 +6907,7 @@ def exec_script_by_hand(request):
         scriptruns.operator = ""
         scriptruns.state = "DONE"
         scriptruns.save()
-        print("result,type(result)",result,type(result))
+        print("result,type(result)", result, type(result))
         return JsonResponse({"data": result})
 
 
@@ -6918,4 +6918,3 @@ def ignore_current_script(request):
         scriptruns.state = "IGNORE"
         scriptruns.save()
         return JsonResponse({"data": "成功忽略当前脚本"})
-
