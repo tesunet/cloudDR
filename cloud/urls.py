@@ -5,6 +5,7 @@ from django.conf import settings
 
 urlpatterns = patterns('cloud.views',
                        (r'^$', 'index'),
+                        (r'^test/$', 'test'),
                        (r'^index/$', 'index'),
                        (r'^get_dashboard_amchart_1/$', 'get_dashboard_amchart_1'),
                        (r'^get_dashboard_amchart_2/$', 'get_dashboard_amchart_2'),

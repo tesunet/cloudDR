@@ -38,6 +38,15 @@ info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Ad
         "lastlogin": 0}
 
 
+def test(request):
+    if request.user.is_authenticated() and request.session['isadmin']:
+        errors = []
+        return render(request, 'test.html',
+                      {'username': request.user.userinfo.fullname,  "errors": errors})
+    else:
+        return HttpResponseRedirect("/login")
+
+
 def index(request):
     # pythoncom.CoInitialize()
     # conn = wmi.WMI(computer="192.168.100.151", user="administrator", password="tesunet@2017")

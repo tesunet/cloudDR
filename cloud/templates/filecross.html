@@ -149,9 +149,8 @@
                                                         <select id="se_1" size="7" class="form-control"
                                                                 style="overflow-y:auto;">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                        value="{{ script.id }}"
-                                                                        {% if forloop.counter == 1 %}selected{% endif %}>
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#26C281" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#32c5d2" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
+                                                                        value="{{ script.id }}">
                                                                     {{ script.script.code }}</option>
                                                             {% endfor %}
 
@@ -368,9 +367,8 @@
                                                             <select id="se_2" size="7" class="form-control"
                                                                     style="overflow-y:auto;">
                                                                 {% for script in stepinfo.step2.scripts %}
-                                                                    <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                            value="{{ script.id }}"
-                                                                            {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }} </option>
+                                                                    <option {% ifequal script.state 'DONE' %}style="color:#26C281" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#32c5d2" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
+                                                                            value="{{ script.id }}">{{ script.script.code }} </option>
                                                                 {% endfor %}
 
                                                             </select>
@@ -406,9 +404,8 @@
                                                         <select id="se_3" size="7" class="form-control"
                                                                 style="overflow-y:auto;">
                                                             {% for script in stepinfo.step3.scripts %}
-                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                        value="{{ script.id }}"
-                                                                        {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#26C281" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#32c5d2" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
+                                                                        value="{{ script.id }}">{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -478,9 +475,8 @@
                                                         <select id="se_4" size="7" class="form-control"
                                                                 style="overflow-y:auto;">
                                                             {% for script in stepinfo.step4.scripts %}
-                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                        value="{{ script.id }}"
-                                                                        {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#26C281" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#32c5d2" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
+                                                                        value="{{ script.id }}">{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -592,9 +588,8 @@
                                                         <select id="se_6" size="7" class="form-control"
                                                                 style="overflow-y:auto;">
                                                             {% for script in stepinfo.step6.scripts %}
-                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                        value="{{ script.id }}"
-                                                                        {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#26C281" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#32c5d2" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
+                                                                        value="{{ script.id }}">{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -978,7 +973,7 @@
                                             <div class="form-body">
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
-                                                            style="color:red; ">*</span>脚本编号</label>
+                                                            style="color:red; "></span>脚本编号</label>
                                                     <div class="col-md-10">
                                                         <input id="code" type="text" name="code"
                                                                class="form-control "
@@ -989,7 +984,7 @@
                                                 </div>
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
-                                                            style="color:red; ">*</span>主机IP</label>
+                                                            style="color:red; "></span>主机IP</label>
                                                     <div class="col-md-10">
                                                         <input id="script_ip" type="text" name="script_ip"
                                                                class="form-control"
@@ -1002,7 +997,7 @@
 
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
-                                                            style="color:red; ">*</span>脚本名</label>
+                                                            style="color:red; "></span>脚本名</label>
                                                     <div class="col-md-10">
                                                         <input id="filename" type="text" name="filename"
                                                                class="form-control"
@@ -1012,7 +1007,7 @@
                                                 </div>
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
-                                                            style="color:red; ">*</span>脚本路径</label>
+                                                            style="color:red; "></span>脚本路径</label>
                                                     <div class="col-md-10">
                                                         <input id="scriptpath" type="text" name="scriptpath"
                                                                class="form-control"
@@ -1022,7 +1017,7 @@
                                                 </div>
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
-                                                            style="color:red; ">*</span>脚本状态</label>
+                                                            style="color:red; "></span>脚本状态</label>
                                                     <div class="col-md-10">
                                                         <input id="scriptstate" type="text" name="scriptstate"
                                                                class="form-control"
@@ -1032,7 +1027,7 @@
                                                 </div>
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
-                                                            style="color:red; ">*</span>开始时间</label>
+                                                            style="color:red; "></span>开始时间</label>
                                                     <div class="col-md-2">
                                                         <input id="ontime" type="text" name="ontime"
                                                                class="form-control"
@@ -1040,7 +1035,7 @@
                                                         <div class="form-control-focus"></div>
                                                     </div>
                                                     <label class="col-md-4 control-label"><span
-                                                            style="color:red; ">*</span>结束时间</label>
+                                                            style="color:red; "></span>结束时间</label>
                                                     <div class="col-md-4">
                                                         <input id="offtime" type="text" name="offtime"
                                                                class="form-control"
@@ -1052,7 +1047,7 @@
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-2 control-label"><span
-                                                        style="color:red; ">*</span>脚本信息</label>
+                                                        style="color:red; "></span>脚本信息</label>
                                                 <div class="col-md-10">
                                                     <textarea name="errorinfo" id="errorinfo" cols="50" rows="10"
                                                               style="resize:none;" autocomplete="off"
