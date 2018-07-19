@@ -1662,7 +1662,7 @@ jQuery(document).ready(function () {
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
 
-                        if (data.data["show_button"] == 0) {
+                        if (data.data["show_button"] == 1) {
                             $("#b1").show();
                         } else {
                             $("#b1").hide();
@@ -1702,7 +1702,7 @@ jQuery(document).ready(function () {
                         $("#ontime").val(data.data["starttime"]);
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
-                        if (data.data["show_button"] == 0) {
+                        if (data.data["show_button"] == 1) {
                             $("#b2").show();
                         } else {
                             $("#b2").hide();
@@ -1742,7 +1742,7 @@ jQuery(document).ready(function () {
                         $("#ontime").val(data.data["starttime"]);
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
-                        if (data.data["show_button"] == 0) {
+                        if (data.data["show_button"] == 1) {
                             $("#b3").show();
                         } else {
                             $("#b3").hide();
@@ -1783,7 +1783,7 @@ jQuery(document).ready(function () {
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
 
-                        if (data.data["show_button"] == 0) {
+                        if (data.data["show_button"] == 1) {
                             $("#b4").show();
                         } else {
                             $("#b4").hide();
@@ -1824,7 +1824,7 @@ jQuery(document).ready(function () {
                         $("#ontime").val(data.data["starttime"]);
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
-                        if (data.data["show_button"] == 0) {
+                        if (data.data["show_button"] == 1) {
                             $("#b6").show();
                         } else {
                             $("#b6").hide();

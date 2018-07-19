@@ -161,15 +161,9 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                    <div>{{ forloop.counter }}</div>
-                                                                    <option {% if script.operator %}
-                                                                        style="color:#ff0000" {% endif %}
+                                                                    <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
                                                                         value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>
-                                                                        {{ script.script.code }}{{ forloop.count }}</option>
-                                                                    <option {% if script.operator %}
-                                                                        style="color:#ff0000" {% endif %}
-                                                                        value="{{ script.id }}">
-                                                                        {{ script.script.code }}{{ forloop.count }}</option>
+                                                                        {{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -397,8 +391,7 @@
                                                                     style="overflow-y:auto;" data-toggle="modal"
                                                                     data-target="#static">
                                                                 {% for script in stepinfo.step2.scripts %}
-                                                                    <option {% if script.operator %}
-                                                                        style="color:#ff0000" {% endif %}
+                                                                    <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
                                                                         value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }} </option>
                                                                 {% endfor %}
 
@@ -447,8 +440,7 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step3.scripts %}
-                                                                <option {% if script.operator %}
-                                                                    style="color:#ff0000" {% endif %}
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
                                                                     value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
@@ -531,8 +523,7 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step4.scripts %}
-                                                                <option {% if script.operator %}
-                                                                    style="color:#ff0000" {% endif %}
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
                                                                     value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
@@ -657,8 +648,7 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step6.scripts %}
-                                                                <option {% if script.operator %}
-                                                                    style="color:#ff0000" {% endif %}
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
                                                                     value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
