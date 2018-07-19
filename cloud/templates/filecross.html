@@ -161,10 +161,15 @@
                                                                 style="overflow-y:auto;" data-toggle="modal"
                                                                 data-target="#static">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                <option {% if script.operator %}
-                                                                    style="color:#ff0000" {% endif %}
-                                                                    value="{{ script.id }}">
-                                                                    {{ script.script.code }}{{ forloop.count }}</option>
+                                                                    <div>{{ forloop.counter }}</div>
+                                                                    <option {% if script.operator %}
+                                                                        style="color:#ff0000" {% endif %}
+                                                                        value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>
+                                                                        {{ script.script.code }}{{ forloop.count }}</option>
+                                                                    <option {% if script.operator %}
+                                                                        style="color:#ff0000" {% endif %}
+                                                                        value="{{ script.id }}">
+                                                                        {{ script.script.code }}{{ forloop.count }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -394,7 +399,7 @@
                                                                 {% for script in stepinfo.step2.scripts %}
                                                                     <option {% if script.operator %}
                                                                         style="color:#ff0000" {% endif %}
-                                                                        value="{{ script.id }}">{{ script.script.code }} </option>
+                                                                        value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }} </option>
                                                                 {% endfor %}
 
                                                             </select>
@@ -444,7 +449,7 @@
                                                             {% for script in stepinfo.step3.scripts %}
                                                                 <option {% if script.operator %}
                                                                     style="color:#ff0000" {% endif %}
-                                                                    value="{{ script.id }}">{{ script.script.code }}</option>
+                                                                    value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -528,7 +533,7 @@
                                                             {% for script in stepinfo.step4.scripts %}
                                                                 <option {% if script.operator %}
                                                                     style="color:#ff0000" {% endif %}
-                                                                    value="{{ script.id }}">{{ script.script.code }}</option>
+                                                                    value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -654,7 +659,7 @@
                                                             {% for script in stepinfo.step6.scripts %}
                                                                 <option {% if script.operator %}
                                                                     style="color:#ff0000" {% endif %}
-                                                                    value="{{ script.id }}">{{ script.script.code }}</option>
+                                                                    value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
