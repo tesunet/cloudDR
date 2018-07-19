@@ -146,24 +146,13 @@
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label">脚本</label>
                                                     <div class="col-md-10">
-                                                        <div id="context-menu2">
-                                                            <ul class="dropdown-menu" role="menu">
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">新增</a></li>
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">修改</a></li>
-                                                                <li><a tabindex="-1">删除</a></li>
-                                                            </ul>
-                                                        </div>
-                                                        <button hidden id="edit" tabindex="-1" data-toggle="modal"
-                                                                data-target="#static01"></button>
                                                         <select id="se_1" size="7" class="form-control"
-                                                                style="overflow-y:auto;" data-toggle="modal"
-                                                                data-target="#static">
+                                                                style="overflow-y:auto;">
                                                             {% for script in stepinfo.step1.scripts %}
-                                                                    <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                        value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>
-                                                                        {{ script.script.code }}</option>
+                                                                <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
+                                                                        value="{{ script.id }}"
+                                                                        {% if forloop.counter == 1 %}selected{% endif %}>
+                                                                    {{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -376,23 +365,12 @@
                                                     <div class="form-group " style="padding-top: 15px">
                                                         <label class="col-md-2 control-label">脚本</label>
                                                         <div class="col-md-10">
-                                                            <div id="context-menu2">
-                                                                <ul class="dropdown-menu" role="menu">
-                                                                    <li><a tabindex="-1" data-toggle="modal"
-                                                                           data-target="#static01">新增</a></li>
-                                                                    <li><a tabindex="-1" data-toggle="modal"
-                                                                           data-target="#static01">修改</a></li>
-                                                                    <li><a tabindex="-1">删除</a></li>
-                                                                </ul>
-                                                            </div>
-                                                            <button hidden id="edit" tabindex="-1" data-toggle="modal"
-                                                                    data-target="#static01"></button>
                                                             <select id="se_2" size="7" class="form-control"
-                                                                    style="overflow-y:auto;" data-toggle="modal"
-                                                                    data-target="#static">
+                                                                    style="overflow-y:auto;">
                                                                 {% for script in stepinfo.step2.scripts %}
                                                                     <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                        value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }} </option>
+                                                                            value="{{ script.id }}"
+                                                                            {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }} </option>
                                                                 {% endfor %}
 
                                                             </select>
@@ -425,23 +403,12 @@
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label">脚本</label>
                                                     <div class="col-md-10">
-                                                        <div id="context-menu2">
-                                                            <ul class="dropdown-menu" role="menu">
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">新增</a></li>
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">修改</a></li>
-                                                                <li><a tabindex="-1">删除</a></li>
-                                                            </ul>
-                                                        </div>
-                                                        <button hidden id="edit" tabindex="-1" data-toggle="modal"
-                                                                data-target="#static01"></button>
                                                         <select id="se_3" size="7" class="form-control"
-                                                                style="overflow-y:auto;" data-toggle="modal"
-                                                                data-target="#static">
+                                                                style="overflow-y:auto;">
                                                             {% for script in stepinfo.step3.scripts %}
                                                                 <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                    value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
+                                                                        value="{{ script.id }}"
+                                                                        {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -508,23 +475,12 @@
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label">脚本</label>
                                                     <div class="col-md-10">
-                                                        <div id="context-menu2">
-                                                            <ul class="dropdown-menu" role="menu">
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">新增</a></li>
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">修改</a></li>
-                                                                <li><a tabindex="-1">删除</a></li>
-                                                            </ul>
-                                                        </div>
-                                                        <button hidden id="edit" tabindex="-1" data-toggle="modal"
-                                                                data-target="#static01"></button>
                                                         <select id="se_4" size="7" class="form-control"
-                                                                style="overflow-y:auto;" data-toggle="modal"
-                                                                data-target="#static">
+                                                                style="overflow-y:auto;">
                                                             {% for script in stepinfo.step4.scripts %}
                                                                 <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                    value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
+                                                                        value="{{ script.id }}"
+                                                                        {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -633,23 +589,12 @@
                                                 <div class="form-group ">
                                                     <label class="col-md-2 control-label">脚本</label>
                                                     <div class="col-md-10">
-                                                        <div id="context-menu2">
-                                                            <ul class="dropdown-menu" role="menu">
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">新增</a></li>
-                                                                <li><a tabindex="-1" data-toggle="modal"
-                                                                       data-target="#static01">修改</a></li>
-                                                                <li><a tabindex="-1">删除</a></li>
-                                                            </ul>
-                                                        </div>
-                                                        <button hidden id="edit" tabindex="-1" data-toggle="modal"
-                                                                data-target="#static01"></button>
                                                         <select id="se_6" size="7" class="form-control"
-                                                                style="overflow-y:auto;" data-toggle="modal"
-                                                                data-target="#static">
+                                                                style="overflow-y:auto;">
                                                             {% for script in stepinfo.step6.scripts %}
                                                                 <option {% ifequal script.state 'DONE' %}style="color:#C1DCFC" {% endifequal %}{% ifequal script.state 'RUN' %}style="color:#7fcc5d" {% endifequal %}{% ifequal script.state 'IGNORE' %}style="color:#ffd966" {% endifequal %}{% ifequal script.state 'ERROR' %}style="color:#ff0000" {% endifequal %}
-                                                                    value="{{ script.id }}" {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
+                                                                        value="{{ script.id }}"
+                                                                        {% if forloop.counter == 1 %}selected{% endif %}>{{ script.script.code }}</option>
                                                             {% endfor %}
 
                                                         </select>
@@ -981,13 +926,14 @@
                                                         class="btn btn-primary center-block btn-lg">确定
                                                 </button>
                                             </div>
-                                    </div>
 
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div id="static7" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+                        <div id="static7" class="modal fade" tabindex="-1" data-backdrop="static"
+                             data-keyboard="false">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -1014,7 +960,8 @@
                             </div>
                         </div>
 
-                        <div id="static" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+                        <div id="static" class="modal fade" tabindex="-1" data-backdrop="static"
+                             data-keyboard="false">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -1022,6 +969,7 @@
                                                 aria-hidden="true"></button>
                                         <h4 class="modal-title">脚本信息</h4>
                                         <input hidden id="id" type="text" name="id">
+                                        <input hidden id="script_button" type="text" name="script_button">
                                     </div>
                                     <div class="panel-body">
 
@@ -1032,7 +980,8 @@
                                                     <label class="col-md-2 control-label"><span
                                                             style="color:red; ">*</span>脚本编号</label>
                                                     <div class="col-md-10">
-                                                        <input id="code" type="text" name="code" class="form-control "
+                                                        <input id="code" type="text" name="code"
+                                                               class="form-control "
                                                                placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
 
@@ -1041,22 +990,14 @@
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label"><span
                                                             style="color:red; ">*</span>主机IP</label>
-                                                    <div class="col-md-2">
+                                                    <div class="col-md-10">
                                                         <input id="script_ip" type="text" name="script_ip"
-                                                               class="form-control"
-                                                               placeholder="" style="width:180px;" readonly>
-                                                        <div class="form-control-focus"></div>
-
-                                                    </div>
-                                                    <label class="col-md-4 control-label"><span
-                                                            style="color:red; ">*</span>端口号</label>
-                                                    <div class="col-md-4">
-                                                        <input id="script_port" type="number" name="script_port"
                                                                class="form-control"
                                                                placeholder="" readonly>
                                                         <div class="form-control-focus"></div>
 
                                                     </div>
+
                                                 </div>
 
                                                 <div class="form-group">
@@ -1121,28 +1062,11 @@
                                             </div>
                                             <div class="form-actions ">
                                                 <div class="modal-footer" id="b1" hidden>
-                                                    <button type="button" data-dismiss="modal" id="exec_1" name="exec_1"
+                                                    <button type="button" data-dismiss="modal" id="exec"
+                                                            name="exec"
                                                             class="btn green" hidden>执行
                                                     </button>
-                                                    <button type="button" id="ignore_1" name="ignore_1"
-                                                            class="btn green"
-                                                            hidden>跳过
-                                                    </button>
-                                                </div>
-                                                <div class="modal-footer" id="b2" hidden>
-                                                    <button type="button" data-dismiss="modal" id="exec_2" name="exec_2"
-                                                            class="btn green" hidden>执行
-                                                    </button>
-                                                    <button type="button" id="ignore_2" name="ignore_2"
-                                                            class="btn green"
-                                                            hidden>跳过
-                                                    </button>
-                                                </div>
-                                                <div class="modal-footer" id="b3" hidden>
-                                                    <button type="button" data-dismiss="modal" id="exec_3" name="exec_3"
-                                                            class="btn green" hidden>执行
-                                                    </button>
-                                                    <button type="button" id="ignore_3" name="ignore_3"
+                                                    <button type="button" id="ignore" name="ignore"
                                                             class="btn green"
                                                             hidden>跳过
                                                     </button>
@@ -1155,12 +1079,15 @@
                             </div>
                         </div>
 
+
                     </div>
                 </div>
             </div>
 
 
         </section>
+
+
     </section>
 {% endblock %}
 
@@ -1174,7 +1101,7 @@
     <link href="/static/assets/global/plugins/datatables/datatables.min.css" rel="stylesheet" type="text/css"/>
     <link href="/static/assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" rel="stylesheet"
           type="text/css"/>
-    <link href="/static/assets/global/css/plugins.min.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/assets/global/css/plugins.css" rel="stylesheet" type="text/css"/>
     <link href="/static/assets/global/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css"
           rel="stylesheet" type="text/css"/>
     <link href="/static/assets/global/plugins/jstree/dist/themes/default/style.min.css" rel="stylesheet"

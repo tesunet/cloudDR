@@ -6866,10 +6866,11 @@ def get_current_scriptinfo(request):
                 "filename": script_obj.filename,
                 "scriptpath": script_obj.scriptpath,
                 "state": state_dict["{0}".format(scriptrun_obj.state)],
-                "starttime": scriptrun_obj.starttime,
-                "endtime": scriptrun_obj.starttime,
+                "starttime": scriptrun_obj.starttime.strftime("%Y-%m-%d %H:%M:%S"),
+                "endtime": scriptrun_obj.starttime.strftime("%Y-%m-%d %H:%M:%S"),
                 "operator": scriptrun_obj.operator,
                 "show_button": show_button,
+                "step_id_from_script": step_id_from_script
             }
 
             return JsonResponse({"data": script_info})

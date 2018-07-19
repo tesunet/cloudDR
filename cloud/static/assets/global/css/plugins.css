@@ -503,7 +503,7 @@ Bootstrap Wizard
   .form-wizard .steps > li.active > a.step .desc {
     color: #333; }
   .form-wizard .steps > li.done > a.step .number {
-    background-color: #F1C40F;
+    background-color: #26C281;
     color: #fff; }
   .form-wizard .steps > li.done > a.step .desc {
     color: #333; }

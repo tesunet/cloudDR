@@ -1174,7 +1174,7 @@ jQuery(document).ready(function () {
             data: {id: $("#id").val()},
             success: function (data) {
                 $("#bt_select").hide();
-                $("#templatediv").removeClass("input-group")
+                $("#templatediv").removeClass("input-group");
                 $('#instancename').prop("readonly", "readonly");
                 $('#currentvm').prop("readonly", "readonly");
                 $('#description').prop("readonly", "readonly");
@@ -1632,19 +1632,18 @@ jQuery(document).ready(function () {
         $('#checkapp').prop("disabled", "disabled");
     }
     //脚本窗口
-    $('#se_1').click(function () {
+    $('#se_1').dblclick(function () {
         $("#b1").hide();
-        $("#b2").hide();
-        $("#b3").hide();
-        $("#b4").hide();
-        $("#b6").hide();
         if ($("#se_1").find('option:selected').length == 0) {
-            alert("请选择要查看的脚本。");
+            alert("请至少选中一个脚本。")
         } else {
             if ($("#se_1").find('option:selected').length > 1) {
                 alert("请不要选择多条记录。");
             } else {
                 // 获取当前步骤脚本信息
+                $("#static").modal({backdrop: "static"});
+                $("#script_button").val($("#se_1").find('option:selected').val());
+
                 var steprunid = $("#steprunid").val();
                 var scriptid = $("#se_1").find('option:selected').val();
                 $.ajax({
@@ -1661,7 +1660,6 @@ jQuery(document).ready(function () {
                         $("#ontime").val(data.data["starttime"]);
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
-
                         if (data.data["show_button"] == 1) {
                             $("#b1").show();
                         } else {
@@ -1673,18 +1671,16 @@ jQuery(document).ready(function () {
         }
 
     });
-    $('#se_2').click(function () {
+    $('#se_2').dblclick(function () {
         $("#b1").hide();
-        $("#b2").hide();
-        $("#b3").hide();
-        $("#b4").hide();
-        $("#b6").hide();
         if ($("#se_2").find('option:selected').length == 0) {
-            alert("请选择要查看的脚本。");
+            alert("请至少选中一个脚本。")
         } else {
             if ($("#se_2").find('option:selected').length > 1) {
                 alert("请不要选择多条记录。");
             } else {
+                $("#static").modal({backdrop: "static"});
+                $("#script_button").val($("#se_2").find('option:selected').val());
                 // 获取当前步骤脚本信息
                 var steprunid = $("#steprunid").val();
                 var scriptid = $("#se_2").find('option:selected').val();
@@ -1703,9 +1699,9 @@ jQuery(document).ready(function () {
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 1) {
-                            $("#b2").show();
+                            $("#b1").show();
                         } else {
-                            $("#b2").hide();
+                            $("#b1").hide();
                         }
                     }
                 });
@@ -1713,18 +1709,16 @@ jQuery(document).ready(function () {
         }
 
     });
-    $('#se_3').click(function () {
+    $('#se_3').dblclick(function () {
         $("#b1").hide();
-        $("#b2").hide();
-        $("#b3").hide();
-        $("#b4").hide();
-        $("#b6").hide();
         if ($("#se_3").find('option:selected').length == 0) {
-            alert("请选择要查看的脚本。");
+            alert("请至少选中一个脚本。")
         } else {
             if ($("#se_3").find('option:selected').length > 1) {
                 alert("请不要选择多条记录。");
             } else {
+                $("#static").modal({backdrop: "static"});
+                $("#script_button").val($("#se_3").find('option:selected').val());
                 // 获取当前步骤脚本信息
                 var steprunid = $("#steprunid").val();
                 var scriptid = $("#se_3").find('option:selected').val();
@@ -1743,9 +1737,9 @@ jQuery(document).ready(function () {
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 1) {
-                            $("#b3").show();
+                            $("#b1").show();
                         } else {
-                            $("#b3").hide();
+                            $("#b1").hide();
                         }
                     }
                 });
@@ -1753,18 +1747,17 @@ jQuery(document).ready(function () {
         }
 
     });
-    $('#se_4').click(function () {
+    $('#se_4').dblclick(function () {
         $("#b1").hide();
-        $("#b2").hide();
-        $("#b3").hide();
-        $("#b4").hide();
-        $("#b6").hide();
         if ($("#se_4").find('option:selected').length == 0) {
-            alert("请选择要查看的脚本。");
+            alert("请至少选中一个脚本。")
+
         } else {
             if ($("#se_4").find('option:selected').length > 1) {
                 alert("请不要选择多条记录。");
             } else {
+                $("#static").modal({backdrop: "static"});
+                $("#script_button").val($("#se_4").find('option:selected').val());
                 // 获取当前步骤脚本信息
                 var steprunid = $("#steprunid").val();
                 var scriptid = $("#se_4").find('option:selected').val();
@@ -1782,11 +1775,10 @@ jQuery(document).ready(function () {
                         $("#ontime").val(data.data["starttime"]);
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
-
                         if (data.data["show_button"] == 1) {
-                            $("#b4").show();
+                            $("#b1").show();
                         } else {
-                            $("#b4").hide();
+                            $("#b1").hide();
                         }
                     }
                 });
@@ -1794,19 +1786,19 @@ jQuery(document).ready(function () {
         }
 
     });
-    $('#se_6').click(function () {
+    $('#se_6').dblclick(function () {
+        $("#static").modal({backdrop: "static"});
         $("#b1").hide();
-        $("#b2").hide();
-        $("#b3").hide();
-        $("#b4").hide();
-        $("#b6").hide();
 
         if ($("#se_6").find('option:selected').length == 0) {
-            alert("请选择要查看的脚本。");
+            alert("请至少选中一个脚本。")
+
         } else {
             if ($("#se_6").find('option:selected').length > 1) {
                 alert("请不要选择多条记录。");
             } else {
+                $("#static").modal({backdrop: "static"});
+                $("#script_button").val($("#se_6").find('option:selected').val());
                 // 获取当前步骤脚本信息
                 var steprunid = $("#steprunid").val();
                 var scriptid = $("#se_6").find('option:selected').val();
@@ -1825,9 +1817,9 @@ jQuery(document).ready(function () {
                         $("#offtime").val(data.data["endtime"]);
                         $("#operator").val(data.data["operator"]);
                         if (data.data["show_button"] == 1) {
-                            $("#b6").show();
+                            $("#b1").show();
                         } else {
-                            $("#b6").hide();
+                            $("#b1").hide();
                         }
                     }
                 });
@@ -1837,73 +1829,9 @@ jQuery(document).ready(function () {
     });
 
     // 手动执行脚本
-    $("#exec_1").click(function () {
+    $("#exec").click(function () {
         var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_1").find('option:selected').val();
-        $.ajax({
-            url: "/exec_script_by_hand/",
-            type: "post",
-            data: {"steprunid": steprunid, "scriptid": scriptid},
-            success: function (data) {
-                if (data.data["exec_tag"] == 0) {
-                    alert("脚本执行成功！");
-                } else {
-                    alert("脚本执行失败！");
-                }
-            }
-        });
-    });
-    $("#exec_2").click(function () {
-        var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_2").find('option:selected').val();
-        $.ajax({
-            url: "/exec_script_by_hand/",
-            type: "post",
-            data: {"steprunid": steprunid, "scriptid": scriptid},
-            success: function (data) {
-                if (data.data["exec_tag"] == 0) {
-                    alert("脚本执行成功！");
-                } else {
-                    alert("脚本执行失败！");
-                }
-            }
-        });
-    });
-    $("#exec_3").click(function () {
-        var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_3").find('option:selected').val();
-        $.ajax({
-            url: "/exec_script_by_hand/",
-            type: "post",
-            data: {"steprunid": steprunid, "scriptid": scriptid},
-            success: function (data) {
-                if (data.data["exec_tag"] == 0) {
-                    alert("脚本执行成功！");
-                } else {
-                    alert("脚本执行失败！");
-                }
-            }
-        });
-    });
-    $("#exec_4").click(function () {
-        var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_4").find('option:selected').val();
-        $.ajax({
-            url: "/exec_script_by_hand/",
-            type: "post",
-            data: {"steprunid": steprunid, "scriptid": scriptid},
-            success: function (data) {
-                if (data.data["exec_tag"] == 0) {
-                    alert("脚本执行成功！");
-                } else {
-                    alert("脚本执行失败！");
-                }
-            }
-        });
-    });
-    $("#exec_6").click(function () {
-        var steprunid = $("#steprunid").val();
-        var scriptid = $("#se_6").find('option:selected').val();
+        var scriptid = $("#script_button").val();
         $.ajax({
             url: "/exec_script_by_hand/",
             type: "post",
@@ -1919,8 +1847,8 @@ jQuery(document).ready(function () {
     });
 
     // 跳过脚本
-    $("#ignore_1").click(function () {
-        var scriptid = $("#se_1").find('option:selected').val();
+    $("#ignore").click(function () {
+        var scriptid = $("#script_button").val();
         $.ajax({
             url: "/ignore_current_script/",
             type: "post",
@@ -1931,54 +1859,7 @@ jQuery(document).ready(function () {
             }
         });
     });
-    $("#ignore_2").click(function () {
-        var scriptid = $("#se_2").find('option:selected').val();
-        $.ajax({
-            url: "/ignore_current_script/",
-            type: "post",
-            data: {"scriptid": scriptid},
-            success: function (data) {
-                alert(data.data);
-                $('#static').modal('hide');
-            }
-        });
-    });
-    $("#ignore_3").click(function () {
-        var scriptid = $("#se_3").find('option:selected').val();
-        $.ajax({
-            url: "/ignore_current_script/",
-            type: "post",
-            data: {"scriptid": scriptid},
-            success: function (data) {
-                alert(data.data);
-                $('#static').modal('hide');
-            }
-        });
-    });
-    $("#ignore_4").click(function () {
-        var scriptid = $("#se_4").find('option:selected').val();
-        $.ajax({
-            url: "/ignore_current_script/",
-            type: "post",
-            data: {"scriptid": scriptid},
-            success: function (data) {
-                alert(data.data);
-                $('#static').modal('hide');
-            }
-        });
-    });
-    $("#ignore_6").click(function () {
-        var scriptid = $("#se_6").find('option:selected').val();
-        $.ajax({
-            url: "/ignore_current_script/",
-            type: "post",
-            data: {"scriptid": scriptid},
-            success: function (data) {
-                alert(data.data);
-                $('#static').modal('hide');
-            }
-        });
-    });
+
 
     FormWizard.init();
 });
