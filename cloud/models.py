@@ -42,6 +42,7 @@ class Process(models.Model):
 class Step(models.Model):
     process = models.ForeignKey(Process)
     last = models.ForeignKey('self', blank=True, null=True, related_name='next', verbose_name='上一步')
+    pnode = models.ForeignKey('self', blank=True, null=True, related_name='children', verbose_name='父节点')
     code = models.CharField(u"步骤编号", blank=True, null=True, max_length=50)
     name = models.CharField(u"步骤名称", blank=True, null=True, max_length=50)
     approval = models.CharField(u"是否审批", blank=True, null=True, max_length=10)
@@ -55,6 +56,7 @@ class Step(models.Model):
 class Script(models.Model):
     step = models.ForeignKey(Step, blank=True, null=True)
     code = models.CharField(u"脚本编号", blank=True, max_length=50)
+    name = models.CharField(u"脚本名称", blank=True, max_length=500)
     ip = models.CharField(u"主机IP", blank=True, null=True, max_length=50)
     port = models.CharField(u"端口号", blank=True, null=True, max_length=10)
     type = models.CharField(u"连接类型", blank=True, null=True, max_length=20)
