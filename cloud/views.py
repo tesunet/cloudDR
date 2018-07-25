@@ -42,7 +42,7 @@ def test(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         errors = []
         return render(request, 'test.html',
-                      {'username': request.user.userinfo.fullname,  "errors": errors})
+                      {'username': request.user.userinfo.fullname, "errors": errors})
     else:
         return HttpResponseRedirect("/login")
 
@@ -54,7 +54,6 @@ def index(request):
     # cmd_callbat = r"cmd /c call %s" % filename
     # conn.Win32_Process.Create(CommandLine=cmd_callbat)  # 执行bat文件
     # print("执行成功!")
-
     if request.user.is_authenticated():
         cvvendor = Vendor.objects.filter(name='CommVault')
         if (len(cvvendor) > 0):
@@ -5685,6 +5684,7 @@ def setpsave(request):
         name = request.POST.get('name', '')
         time = request.POST.get('time', '')
         skip = request.POST.get('skip', '')
+        print("skip", skip)
         approval = request.POST.get('approval', '')
         group = request.POST.get('group', '')
         step = Step.objects.filter(id=id)
@@ -6927,3 +6927,214 @@ def ignore_current_script(request):
         scriptruns.state = "IGNORE"
         scriptruns.save()
         return JsonResponse({"data": "成功忽略当前脚本"})
+
+
+def get_step_tree(parent, selectid):
+    nodes = []
+    children = parent.children.order_by("sort").all()
+    for child in children:
+        node = {}
+        node["text"] = child.name
+        node["id"] = child.id
+        node["children"] = get_step_tree(child, selectid)
+
+        scripts = child.script_set.exclude(state=9)
+        script_string = ""
+        for script in scripts:
+            id_code_plus = str(script.id) + "+" + str(script.code) + "&"
+            script_string += id_code_plus
+        node["data"] = {"time": child.time, "approval": child.approval, "skip": child.skip,
+                        "group": child.group, "scripts": script_string}
+
+        try:
+            if int(selectid) == child.id:
+                node["state"] = {"selected": True}
+        except:
+            pass
+        nodes.append(node)
+    return nodes
+
+
+def custom_step_tree(request):
+    if request.user.is_authenticated():
+        errors = []
+        id = request.POST.get('id', "")
+        p_step = ""
+        pid = request.POST.get('pid', "")
+        name = request.POST.get('name', "")
+        process_id = request.POST.get("process", "")
+        # try:
+        #     id = int(id)
+        # except:
+        #     raise Http404()
+        # try:
+        #     pstep_id = int(pid)
+        # except:
+        #     raise Http404()
+        if id == 0:
+            selectid = pid
+            title = "新建"
+        else:
+            selectid = id
+            title = name
+
+        if name.strip() == '':
+            errors.append('功能名称不能为空。')
+        else:
+            try:
+                p_step = Step.objects.get(id=pid)
+            except:
+                raise Http404()
+
+        try:
+            if id == 0:  # 新增
+                sort = 1
+                try:
+                    maxstep = Step.objects.filter(pnode=p_step).latest('sort')
+                    sort = maxstep.sort + 1
+                except:
+                    pass
+                funsave = Step()
+                funsave.pnode = p_step
+                funsave.name = name
+                funsave.sort = sort
+                funsave.save()
+                title = name
+                id = funsave.id
+                selectid = id
+            else:
+                funsave = Step.objects.get(id=id)
+                funsave.name = name
+                funsave.save()
+                title = name
+        except:
+            errors.append('保存失败。')
+        treedata = []
+        rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None)
+        if len(rootnodes) > 0:
+            for rootnode in rootnodes:
+                root = {}
+                scripts = rootnode.script_set.exclude(state=9)
+                script_string = ""
+                for script in scripts:
+                    id_code_plus = str(script.id) + "+" + str(script.code) + "&"
+                    script_string += id_code_plus
+                root["text"] = rootnode.name
+                root["id"] = rootnode.id
+                root["data"] = {"time": rootnode.time, "approval": rootnode.approval, "skip": rootnode.skip,
+                                "group": rootnode.group, "scripts": script_string, "errors": errors, "title": title}
+
+                # try:
+                #     if int(selectid) == rootnode.id:
+                #         root["state"] = {"opened": True, "selected": True}
+                #     else:
+                #         root["state"] = {"opened": True}
+                # except:
+                #     root["state"] = {"opened": True}
+                root["children"] = get_step_tree(rootnode, selectid)
+                treedata.append(root)
+
+        return JsonResponse({"treedata": treedata})
+    else:
+        return HttpResponseRedirect("/login")
+
+
+def step_tree_index(request):
+    if request.user.is_authenticated():
+        processes = Process.objects.exclude(state="9").order_by("sort")
+        processlist = []
+        for process in processes:
+            processlist.append({"id": process.id, "code": process.code, "name": process.name})
+        return render(request, 'function.html', {'username': request.user.userinfo.fullname, "functionpage": True,
+                                                 "processlist": processlist})
+
+
+def del_step(request):
+    if request.user.is_authenticated():
+        if 'id' in request.POST:
+            id = request.POST.get('id', '')
+            print("id", id)
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+            all_steps = Step.objects.filter(id=id)
+            if (len(all_steps) > 0):
+                sort = all_steps[0].sort
+                p_step = all_steps[0].pnode
+                all_steps[0].delete()
+                sort_steps = Step.objects.filter(pnode=p_step).filter(sort__gt=sort)
+                if len(sort_steps) > 0:
+                    for sort_step in sort_steps:
+                        try:
+                            sort_step.sort = sort_step.sort - 1
+                            sort_step.save()
+                        except:
+                            pass
+                return HttpResponse(1)
+            else:
+                return HttpResponse(0)
+
+
+def move_step(request):
+    if request.user.is_authenticated():
+        if 'id' in request.POST:
+            id = request.POST.get('id', '')
+            parent = request.POST.get('parent', '')
+            old_parent = request.POST.get('old_parent', '')
+            position = request.POST.get('position', '')
+            old_position = request.POST.get('old_position', '')
+            try:
+                id = int(id)
+            except:
+                raise Http404()
+            try:
+                parent = int(parent)
+            except:
+                raise Http404()
+            try:
+                position = int(position)
+            except:
+                raise Http404()
+            try:
+                parent = int(parent)
+            except:
+                raise Http404()
+            try:
+                old_position = int(old_position)
+            except:
+                raise Http404()
+            old_parent_step = Step.objects.get(id=old_parent)
+            oldsort = old_position + 1
+            oldsteps = Step.objects.filter(pnode=old_parent_step).filter(sort__gt=oldsort)
+
+            parent_step = Step.objects.get(id=parent)
+            sort = position + 1
+            steps = Step.objects.filter(pnode=parent_step).filter(sort__gte=sort).exclude(id=id)
+
+            if (len(oldsteps) > 0):
+                for oldstep in oldsteps:
+                    try:
+                        oldstep.sort = oldstep.sort - 1
+                        oldstep.save()
+                    except:
+                        pass
+
+            if (len(steps) > 0):
+                for fun in steps:
+                    try:
+                        fun.sort = fun.sort + 1
+                        fun.save()
+                    except:
+                        pass
+            mystep = Step.objects.get(id=id)
+            try:
+                mystep.pnode = parent_step
+                mystep.sort = sort
+                mystep.save()
+            except:
+                pass
+            if parent != old_parent:
+                return HttpResponse(parent_step.name + "^" + str(parent_step.id))
+            else:
+                return HttpResponse("0")

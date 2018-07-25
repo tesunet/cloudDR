@@ -51,6 +51,7 @@ class Step(models.Model):
     time = models.IntegerField(u"预计耗时", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=10)
     sort = models.IntegerField(u"排序", blank=True, null=True)
+    pnode = models.ForeignKey('self', blank=True, null=True, related_name='children', verbose_name='父节点')
 
 
 class Script(models.Model):
@@ -65,7 +66,7 @@ class Script(models.Model):
     password = models.CharField(u"密码", blank=True, null=True, max_length=50)
     filename = models.CharField(u"脚本文件名", blank=True, null=True, max_length=50)
     paramtype = models.CharField(u"参数类型", blank=True, null=True, max_length=20)
-    param= models.CharField(u"脚本参数", blank=True, null=True, max_length=100)
+    param = models.CharField(u"脚本参数", blank=True, null=True, max_length=100)
     scriptpath = models.CharField(u"脚本文件路径", blank=True, null=True, max_length=100)
     runpath = models.CharField(u"执行路径", blank=True, null=True, max_length=100)
     command = models.CharField(u"生产命令行", blank=True, null=True, max_length=500)
@@ -73,6 +74,7 @@ class Script(models.Model):
     time = models.IntegerField(u"预计耗时", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
+
 
 class ResourcePool(models.Model):
     name = models.CharField("名称", blank=True, max_length=50)
@@ -208,6 +210,7 @@ class ProcessRun(models.Model):
     creatuser = models.CharField(u"发起人", blank=True, max_length=50)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
 
+
 class StepRun(models.Model):
     step = models.ForeignKey(Step, blank=True, null=True)
     processrun = models.ForeignKey(ProcessRun, blank=True, null=True)
@@ -219,6 +222,7 @@ class StepRun(models.Model):
     explain = models.CharField(u"运行说明", blank=True, null=True, max_length=5000)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
 
+
 class ScriptRun(models.Model):
     script = models.ForeignKey(Script, blank=True, null=True)
     steprun = models.ForeignKey(StepRun, blank=True, null=True)
@@ -229,6 +233,7 @@ class ScriptRun(models.Model):
     explain = models.CharField(u"运行说明", blank=True, null=True, max_length=5000)
     runlog = models.CharField(u"运行日志", blank=True, null=True, max_length=5000)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+
 
 class ProcessTask(models.Model):
     processrun = models.ForeignKey(ProcessRun, blank=True, null=True)

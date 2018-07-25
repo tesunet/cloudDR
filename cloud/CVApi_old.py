@@ -2616,13 +2616,13 @@ if __name__ == "__main__":
         
     cvAPI = CV_API(cvToken)
     list = cvAPI.browse(12, "Virtual Server", 'app1', None, False)
-    print list
+    # print list
     #print cvAPI.setVMWareBackupset('vc3.Paulwen', 'app1',
                        #{'proxyList': ['TEST3'], 'vmList': ['AD-192.168.101.1', 'CommVault'], 'SPName': 'SP-30DAYS',
         #                'Schdule': 'VM SLIVE'})
     #print cvAPI.restoreOracleBackupset("TEST2.Paulwen", "TEST3.Paulwen", "ORCL", {'restorePath': None, 'restoreTime': 'lastest Time'})
 
-    print cvAPI.msg
+    # print cvAPI.msg
     
     #print(cvAPI.getClientList())
     #print(cvAPI.getClientInfo("win2012-cs11"))

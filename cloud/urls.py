@@ -175,4 +175,10 @@ urlpatterns = patterns('cloud.views',
                        (r'^get_current_scriptinfo/$', 'get_current_scriptinfo'),
                        (r'^exec_script_by_hand/$', 'exec_script_by_hand'),
                        (r'^ignore_current_script/$', 'ignore_current_script'),
+
+                       (r'^custom_step_tree/$', 'custom_step_tree'),
+                       (r'^step_tree_index/$', 'step_tree_index'),
+                       (r'^del_step/$', 'del_step'),
+                       (r'^move_step/$', 'move_step'),
+
                        )
