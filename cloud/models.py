@@ -37,6 +37,7 @@ class Process(models.Model):
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
     url = models.CharField(u"页面链接", blank=True, max_length=100)
+    type = models.CharField(u"预案类型", blank=True, max_length=100, null=True)
 
 
 class Step(models.Model):
@@ -51,7 +52,6 @@ class Step(models.Model):
     time = models.IntegerField(u"预计耗时", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=10)
     sort = models.IntegerField(u"排序", blank=True, null=True)
-    pnode = models.ForeignKey('self', blank=True, null=True, related_name='children', verbose_name='父节点')
 
 
 class Script(models.Model):
@@ -204,7 +204,7 @@ class Joblist(models.Model):
 
 class ProcessRun(models.Model):
     process = models.ForeignKey(Process)
-    DataSet = models.ForeignKey(DataSet)
+    DataSet = models.ForeignKey(DataSet, blank=True, null=True)
     starttime = models.DateTimeField(u"开始时间", blank=True, null=True)
     endtime = models.DateTimeField(u"结束时间", blank=True, null=True)
     creatuser = models.CharField(u"发起人", blank=True, max_length=50)

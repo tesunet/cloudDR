@@ -22,7 +22,7 @@ from xml.dom.minidom import parse, parseString
 from cloud.CVApi import *
 from cloud.tasks import *
 from django.db.models import Count
-from django.db.models import Sum
+from django.db.models import Sum, Max
 from django.db import connection
 from cloud.vmApi import *
 import xlrd, xlwt
@@ -5660,7 +5660,7 @@ def getsetps(request):
                 raise Http404()
             processes = Process.objects.exclude(state="9").filter(id=process)
             if len(processes) > 0:
-                steplist = Step.objects.exclude(state="9").filter(process=processes[0])
+                steplist = Step.objects.exclude(state="9").filter(process=processes[0]).order_by("sort")
                 for step in steplist:
                     curstring = ""
                     if step.approval == "1":
@@ -5677,42 +5677,69 @@ def setpsave(request):
     if request.method == 'POST':
         result = ""
         id = request.POST.get('id', '')
+        pid = request.POST.get('pid', '')
+        name = request.POST.get('name', '')
+        time = request.POST.get('time', '')
+        skip = request.POST.get('skip', '')
+        approval = request.POST.get('approval', '')
+        group = request.POST.get('group', '')
         try:
             id = int(id)
         except:
             raise Http404()
-        name = request.POST.get('name', '')
-        time = request.POST.get('time', '')
-        skip = request.POST.get('skip', '')
-        print("skip", skip)
-        approval = request.POST.get('approval', '')
-        group = request.POST.get('group', '')
-        step = Step.objects.filter(id=id)
-        if (len(step) > 0):
-            step[0].name = name
-            try:
-                time = int(time)
-                step[0].time = time
-            except:
-                pass
-            step[0].skip = skip
-            step[0].approval = approval
-            step[0].group = group
-            step[0].save()
-            result = "保存成功。"
-        else:
+        # 新增步骤
+        if id == 0:
+            max_sort_from_pnode = Step.objects.exclude(state=9).filter(pnode_id=pid).aggregate(Max("sort"))["sort__max"]
+
+            # 当前没有父节点
+            if not max_sort_from_pnode:
+                process_id = Step.objects.exclude(state=9).filter(id=pid)[0].process_id
+                max_sort_from_pnode = Step.objects.exclude(state=9).filter(id=pid)[0].sort
+            else:
+                process_id = Step.objects.exclude(state=9).filter(pnode_id=pid)[0].process_id
+            my_sort = max_sort_from_pnode + 1
+            changes_steps = Step.objects.exclude(state=9).filter(sort__gt=max_sort_from_pnode)
+            for changes_step in changes_steps:
+                changes_step.sort += 1
+                changes_step.save()
             step = Step()
-            step[0].name = name
-            try:
-                time = int(time)
-                step[0].time = time
-            except:
-                pass
             step.skip = skip
             step.approval = approval
             step.group = group
+            step.time = time
+            step.name = name
+            step.process_id = process_id
+            step.pnode_id = pid
+            step.sort = my_sort
             step.save()
             result = "保存成功。"
+        else:
+            step = Step.objects.filter(id=id)
+            if (len(step) > 0):
+                step[0].name = name
+                try:
+                    time = int(time)
+                    step[0].time = time
+                except:
+                    pass
+                step[0].skip = skip
+                step[0].approval = approval
+                step[0].group = group
+                step[0].save()
+                result = "保存成功。"
+            else:
+                step = Step()
+                step[0].name = name
+                try:
+                    time = int(time)
+                    step[0].time = time
+                except:
+                    pass
+                step.skip = skip
+                step.approval = approval
+                step.group = group
+                step.save()
+                result = "保存成功。"
         return HttpResponse(result)
 
 
@@ -6963,14 +6990,7 @@ def custom_step_tree(request):
         pid = request.POST.get('pid', "")
         name = request.POST.get('name', "")
         process_id = request.POST.get("process", "")
-        # try:
-        #     id = int(id)
-        # except:
-        #     raise Http404()
-        # try:
-        #     pstep_id = int(pid)
-        # except:
-        #     raise Http404()
+
         if id == 0:
             selectid = pid
             title = "新建"
@@ -6978,16 +6998,8 @@ def custom_step_tree(request):
             selectid = id
             title = name
 
-        if name.strip() == '':
-            errors.append('功能名称不能为空。')
-        else:
-            try:
-                p_step = Step.objects.get(id=pid)
-            except:
-                raise Http404()
-
         try:
-            if id == 0:  # 新增
+            if id == 0:
                 sort = 1
                 try:
                     maxstep = Step.objects.filter(pnode=p_step).latest('sort')
@@ -7009,6 +7021,7 @@ def custom_step_tree(request):
                 title = name
         except:
             errors.append('保存失败。')
+
         treedata = []
         rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None)
         if len(rootnodes) > 0:
@@ -7024,13 +7037,6 @@ def custom_step_tree(request):
                 root["data"] = {"time": rootnode.time, "approval": rootnode.approval, "skip": rootnode.skip,
                                 "group": rootnode.group, "scripts": script_string, "errors": errors, "title": title}
 
-                # try:
-                #     if int(selectid) == rootnode.id:
-                #         root["state"] = {"opened": True, "selected": True}
-                #     else:
-                #         root["state"] = {"opened": True}
-                # except:
-                #     root["state"] = {"opened": True}
                 root["children"] = get_step_tree(rootnode, selectid)
                 treedata.append(root)
 
@@ -7053,24 +7059,18 @@ def del_step(request):
     if request.user.is_authenticated():
         if 'id' in request.POST:
             id = request.POST.get('id', '')
-            print("id", id)
             try:
                 id = int(id)
             except:
                 raise Http404()
             all_steps = Step.objects.filter(id=id)
             if (len(all_steps) > 0):
-                sort = all_steps[0].sort
-                p_step = all_steps[0].pnode
+                current_sort = all_steps[0].sort
+                sorts_behind = Step.objects.exclude(state=9).filter(sort__gt=current_sort)
+                for obj in sorts_behind:
+                    obj.sort -= 1
+                    obj.save()
                 all_steps[0].delete()
-                sort_steps = Step.objects.filter(pnode=p_step).filter(sort__gt=sort)
-                if len(sort_steps) > 0:
-                    for sort_step in sort_steps:
-                        try:
-                            sort_step.sort = sort_step.sort - 1
-                            sort_step.save()
-                        except:
-                            pass
                 return HttpResponse(1)
             else:
                 return HttpResponse(0)
@@ -7082,8 +7082,6 @@ def move_step(request):
             id = request.POST.get('id', '')
             parent = request.POST.get('parent', '')
             old_parent = request.POST.get('old_parent', '')
-            position = request.POST.get('position', '')
-            old_position = request.POST.get('old_position', '')
             try:
                 id = int(id)
             except:
@@ -7093,44 +7091,51 @@ def move_step(request):
             except:
                 raise Http404()
             try:
-                position = int(position)
-            except:
-                raise Http404()
-            try:
                 parent = int(parent)
             except:
                 raise Http404()
-            try:
-                old_position = int(old_position)
-            except:
-                raise Http404()
-            old_parent_step = Step.objects.get(id=old_parent)
-            oldsort = old_position + 1
-            oldsteps = Step.objects.filter(pnode=old_parent_step).filter(sort__gt=oldsort)
 
+            # sort
+            if int(parent) <= int(old_parent):
+                # 1.向上拽
+                after_step_up_sort = Step.objects.filter(id=parent)[0].sort
+                old_step_up_sort = Step.objects.filter(id=id)[0].sort
+                between_step_up = Step.objects.exclude(state=9).filter(sort__gt=after_step_up_sort, sort__lt=old_step_up_sort)
+                for between_step in between_step_up:
+                    between_step.sort += 1
+                    between_step.save()
+
+                old_step_up = Step.objects.filter(id=id)[0]
+                old_step_up.sort = Step.objects.filter(id=parent)[0].sort + 1
+                # old_step_up.last_id = ""
+                old_step_up.save()
+
+                # last_id
+                # steps_upon_curr_pnode = Step.objects.exclude(state=9).filter(pnode_id=parent)
+                # for step in steps_upon_curr_pnode:
+                #     step.last_id = step.sort
+                #     step.save()
+
+
+            if int(parent) > int(old_parent):
+                # 2.向下拽
+                after_step_down_sort = Step.objects.filter(id=parent)[0].sort
+                old_step_down_sort = Step.objects.filter(id=id)[0].sort
+                between_step_down = Step.objects.filter(sort__gt=old_step_down_sort, sort__lte=after_step_down_sort)
+                for between_step in between_step_down:
+                    between_step.sort -= 1
+                    between_step.save()
+
+                old_step_down = Step.objects.filter(id=id)[0]
+                old_step_down.sort = Step.objects.filter(id=parent)[0].sort + 1
+                old_step_down.last_id = ""
+                old_step_down.save()
+
+            # pnode
             parent_step = Step.objects.get(id=parent)
-            sort = position + 1
-            steps = Step.objects.filter(pnode=parent_step).filter(sort__gte=sort).exclude(id=id)
-
-            if (len(oldsteps) > 0):
-                for oldstep in oldsteps:
-                    try:
-                        oldstep.sort = oldstep.sort - 1
-                        oldstep.save()
-                    except:
-                        pass
-
-            if (len(steps) > 0):
-                for fun in steps:
-                    try:
-                        fun.sort = fun.sort + 1
-                        fun.save()
-                    except:
-                        pass
             mystep = Step.objects.get(id=id)
             try:
                 mystep.pnode = parent_step
-                mystep.sort = sort
                 mystep.save()
             except:
                 pass
