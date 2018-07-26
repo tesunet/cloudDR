@@ -210,7 +210,7 @@
 
                                         </ul>
                                     </li>
-                                    <li class="{% if disasterdrillpage %}active{% endif %} {% if manualrecoverypage %}active{% endif %}{% if workflowsetpage %}active{% endif %}">
+                                    <li class="{% if disasterdrillpage %}active{% endif %} {% if manualrecoverypage %}active{% endif %}{% if workflowsetpage %}active{% endif %}{% if falconstorpage %}active{% endif %}{% if step_tree_index %}active{% endif %}">
                                         <a href="#" class="auto">
                         <span class="pull-right text-muted">
                           <i class="i i-circle-sm-o text"></i>
@@ -239,14 +239,19 @@
                                                     <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;自主恢复</span>
                                                 </a>
                                             </li>
-                                            <li class="nav-item  {% if disasterdrillpage %}active open{% endif %}">
+                                            <li class="nav-item  {% if disasterdrillpage %}active{% endif %}">
                                                 <a href="/disasterdrill" class="nav-link ">
                                                     <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;异机恢复</span>
                                                 </a>
                                             </li>
-                                            <li class="nav-item  {% if step_tree_index %}active open{% endif %}">
+                                            <li class="nav-item  {% if falconstorpage %}active{% endif %}">
+                                                <a href="/falconstorswitch" class="nav-link ">
+                                                    <span >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;飞康切换</span>
+                                                </a>
+                                            </li>
+                                            <li class="nav-item  {% if step_tree_index %}active{% endif %}">
                                                 <a href="/step_tree_index" class="nav-link ">
-                                                    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;功能管理</span>
+                                                    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;流程配置</span>
                                                 </a>
                                             </li>
                                         </ul>

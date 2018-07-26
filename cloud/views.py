@@ -474,9 +474,9 @@ def get_dashboard_amchart_3(request):
             for i in range(7):
                 ll = 0
                 day = dttime + datetime.timedelta(days=i)
-                s = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%S:%M")
+                s = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%M:%S")
                 e = (datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=1)).strftime(
-                    "%Y-%m-%d %H:%S:%M")
+                    "%Y-%m-%d %H:%M:%S")
                 cur.execute(
                     """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
                         s, e, tuple(hostlist)))
@@ -506,7 +506,7 @@ def get_dashboard_amchart_3(request):
                                 job_id))
                         rl = cur.fetchall()[0][0]
                         # rl = rlfulljoblist[0].diskcapacity
-                        s = rlfulljoblist[0][0].strftime("%Y-%m-%d %H:%S:%M")
+                        s = rlfulljoblist[0][0].strftime("%Y-%m-%d %H:%M:%S")
                     try:
                         rlsum = rlsum + rl
                     except:
@@ -534,8 +534,8 @@ def get_dashboard_amchart_3(request):
                 day = dttime + datetime.timedelta(days=i * 7)
                 s = datetime.datetime(day.year, day.month, day.day)
                 e = datetime.datetime(day.year, day.month, day.day) + datetime.timedelta(days=7)
-                s1 = s.strftime("%Y-%m-%d %H:%S:%M")
-                e1 = e.strftime("%Y-%m-%d %H:%S:%M")
+                s1 = s.strftime("%Y-%m-%d %H:%M:%S")
+                e1 = e.strftime("%Y-%m-%d %H:%M:%S")
 
                 cur.execute(
                     """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
@@ -565,8 +565,8 @@ def get_dashboard_amchart_3(request):
                 s = datetime.datetime(day.year, day.month, day.day)
                 q, r = divmod(s.month - 1 + 1, 12)
                 e = datetime.datetime(s.year + q, r + 1, 1)
-                s1 = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%S:%M")
-                e1 = datetime.datetime(s.year + q, r + 1, 1).strftime("%Y-%m-%d %H:%S:%M")
+                s1 = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%M:%S")
+                e1 = datetime.datetime(s.year + q, r + 1, 1).strftime("%Y-%m-%d %H:%M:%S")
                 cur.execute(
                     """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
                         s1, e1, tuple(hostlist)))
@@ -594,8 +594,8 @@ def get_dashboard_amchart_3(request):
                 s = datetime.datetime(day.year, day.month, day.day)
                 q, r = divmod(s.month - 1 + 1, 12)
                 e = datetime.datetime(s.year + q, r + 1, 1)
-                s1 = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%S:%M")
-                e1 = datetime.datetime(s.year + q, r + 1, 1).strftime("%Y-%m-%d %H:%S:%M")
+                s1 = datetime.datetime(day.year, day.month, day.day).strftime("%Y-%m-%d %H:%M:%S")
+                e1 = datetime.datetime(s.year + q, r + 1, 1).strftime("%Y-%m-%d %H:%M:%S")
 
                 cur.execute(
                     """select sum(numbytesuncomp) from [commserv].[dbo].[CommCellBackupInfo] where clientname in {2} and startdate between '{0}' and '{1}' group by numbytesuncomp""".format(
@@ -6895,6 +6895,16 @@ def get_current_scriptinfo(request):
                 "IGNORE": "忽略",
                 "": "",
             }
+            starttime=""
+            endtime=""
+            try:
+                starttime=scriptrun_obj.starttime.strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                pass
+            try:
+                endtime = scriptrun_obj.starttime.strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                pass
             script_info = {
                 "code": script_obj.code,
                 "ip": script_obj.ip,
@@ -6902,8 +6912,8 @@ def get_current_scriptinfo(request):
                 "filename": script_obj.filename,
                 "scriptpath": script_obj.scriptpath,
                 "state": state_dict["{0}".format(scriptrun_obj.state)],
-                "starttime": scriptrun_obj.starttime.strftime("%Y-%m-%d %H:%M:%S"),
-                "endtime": scriptrun_obj.starttime.strftime("%Y-%m-%d %H:%M:%S"),
+                "starttime": starttime,
+                "endtime": endtime,
                 "operator": scriptrun_obj.operator,
                 "show_button": show_button,
                 "step_id_from_script": step_id_from_script
@@ -7143,3 +7153,248 @@ def move_step(request):
                 return HttpResponse(parent_step.name + "^" + str(parent_step.id))
             else:
                 return HttpResponse("0")
+
+
+def falconstorswitch(request):
+    if request.user.is_authenticated():
+        return render(request, 'falconstorswitch.html',
+                      {'username': request.user.userinfo.fullname, "falconstorpage": True})
+    else:
+        return HttpResponseRedirect("/login")
+
+
+def falconstorswitchdata(request):
+    if request.user.is_authenticated():
+        result = []
+        allprocess = Process.objects.exclude(state="9")\
+            #.filter(type="falconstor")
+        if (len(allprocess) > 0):
+            for process in allprocess:
+                code = process.code
+                name = process.name
+                rto = process.rto
+                rpo = process.rpo
+                remark = process.remark
+                result.append(
+                        {"code": code, "name": name, "rto": rto, "rpo": rpo,
+                         "remark": remark, "id": process.id})
+        return HttpResponse(json.dumps({"data": result}))
+
+
+def falconstorrun(request):
+    if request.user.is_authenticated():
+        result = {}
+        processid = request.POST.get('processid', '')
+        try:
+            processid = int(processid)
+        except:
+            raise Http404()
+
+        process = Process.objects.filter(id=processid).exclude(state="9")
+        if (len(process) <= 0):
+            result["res"] = '流程启动失败，该流程不存在。'
+        else:
+            curprocessrun = ProcessRun.objects.filter(process=process[0], state="RUN")
+            if (len(curprocessrun) > 0):
+                result["res"] = '流程启动失败，该流程正在进行中，请勿重复启动。'
+            else:
+                myprocessrun = ProcessRun()
+                myprocessrun.process = process[0]
+                myprocessrun.starttime = datetime.datetime.now()
+                myprocessrun.creatuser = request.user.username
+                myprocessrun.state = "RUN"
+                myprocessrun.DataSet_id=89
+                myprocessrun.save()
+                mystep = process[0].step_set.exclude(state="9")
+                if (len(mystep) <= 0):
+                    result["res"] = '流程启动失败，没有找到可用步骤。'
+                else:
+                    for step in mystep:
+                        mysteprun = StepRun()
+                        mysteprun.step = step
+                        mysteprun.processrun = myprocessrun
+                        mysteprun.state = "EDIT"
+                        mysteprun.save()
+
+                        myscript = step.script_set.exclude(state="9")
+                        print(myscript)
+                        for script in myscript:
+                            print(1)
+                            myscriptrun = ScriptRun()
+                            myscriptrun.script = script
+                            myscriptrun.steprun = mysteprun
+                            myscriptrun.state = "EDIT"
+                            myscriptrun.save()
+
+                    myprocesstask = ProcessTask()
+                    myprocesstask.processrun = myprocessrun
+                    myprocesstask.steprun = mysteprun
+                    myprocesstask.starttime = datetime.datetime.now()
+                    myprocesstask.senduser = request.user.username
+                    myprocesstask.receiveuser = request.user.username
+                    myprocesstask.type = "RUN"
+                    myprocesstask.state = "0"
+                    myprocesstask.content = process[0].name + " 流程已启动，点击查看。"
+                    myprocesstask.save()
+
+                    result["res"] = "新增成功。"
+                    result["data"] = process[0].url + "/" + str(myprocessrun.id)
+        return HttpResponse(json.dumps(result))
+
+
+def falconstor(request, offset):
+    if request.user.is_authenticated():
+        id = 0
+        try:
+            id = int(offset)
+        except:
+            raise Http404()
+        return render(request, 'falconstor.html',
+                      {'username': request.user.userinfo.fullname, "process":id,"falconstorpage": True})
+    else:
+        return HttpResponseRedirect("/index")
+
+
+def getchildrensteps(processrun,curstep):
+    childresult = []
+    steplist = Step.objects.exclude(state="9").filter(pnode=curstep)
+    for step in steplist:
+        runid = 0
+        starttime = ""
+        endtime = ""
+        operator = ""
+        parameter = ""
+        runresult = ""
+        explain = ""
+        state = ""
+        steprunlist = StepRun.objects.exclude(state="9").filter(processrun=processrun, step=step)
+        if len(steprunlist) > 0:
+            runid = steprunlist[0].id
+            try:
+                starttime = steprunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+            except:
+                pass
+            try:
+                endtime = steprunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+            except:
+                pass
+            operator = steprunlist[0].operator
+            parameter = steprunlist[0].parameter
+            runresult = steprunlist[0].result
+            explain = steprunlist[0].explain
+            state = steprunlist[0].state
+        scripts = []
+        scriptlist = Script.objects.exclude(state="9").filter(step=step)
+        for script in scriptlist:
+            runscriptid = 0
+            scriptstarttime = ""
+            scriptendtime = ""
+            scriptoperator = ""
+            scriptrunresult = ""
+            scriptexplain = ""
+            scriptrunlog = ""
+            scriptstate = ""
+            if len(steprunlist) > 0:
+                scriptrunlist = ScriptRun.objects.exclude(state="9").filter(steprun=steprunlist[0], script=script)
+                if len(scriptrunlist) > 0:
+                    runscriptid = scriptrunlist[0].id
+                    try:
+                        scriptstarttime = scriptrunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                    except:
+                        pass
+                    try:
+                        scriptendtime = scriptrunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                    except:
+                        pass
+                        scriptoperator = scriptrunlist[0].operator
+                    scriptrunlog = scriptrunlist[0].runlog
+                    scriptrunresult = scriptrunlist[0].result
+                    scriptexplain = scriptrunlist[0].explain
+                    scriptstate = scriptrunlist[0].state
+            scripts.append({"id": script.id, "code": script.code, "name": script.name, "runscriptid": runscriptid,
+                            "scriptstarttime": scriptstarttime,
+                            "scriptendtime": scriptendtime, "scriptoperator": scriptoperator,
+                            "scriptrunresult": scriptrunresult, "scriptexplain": scriptexplain,
+                            "scriptrunlog": scriptrunlog, "scriptstate": scriptstate})
+        childresult.append({"id": step.id, "code": step.code, "name": step.name, "approval": step.approval,
+                                   "skip": step.skip, "group": step.group, "time": step.time, "runid":runid,"starttime":starttime,
+                                   "endtime":endtime,"operator":operator,"parameter":parameter,"runresult":runresult,
+                                   "explain":explain,"state":state,"scripts":scripts,"children":getchildrensteps(processrun, step)})
+    return childresult
+
+
+def getrunsetps(request):
+    if request.user.is_authenticated():
+        if request.method == 'POST':
+            result = []
+            processrun = request.POST.get('process', '')
+            try:
+                processrun = int(processrun)
+            except:
+                raise Http404()
+            processruns = ProcessRun.objects.exclude(state="9").filter(id=processrun)
+            if len(processruns) > 0:
+                steplist = Step.objects.exclude(state="9").filter(process=processruns[0].process,pnode = None)
+                for step in steplist:
+                    runid=0
+                    starttime = ""
+                    endtime = ""
+                    operator = ""
+                    parameter = ""
+                    runresult = ""
+                    explain = ""
+                    state = ""
+                    steprunlist = StepRun.objects.exclude(state="9").filter(processrun=processruns[0], step=step)
+                    if len(steprunlist)>0:
+                        runid=steprunlist[0].id
+                        try:
+                            starttime = steprunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                        except:
+                            pass
+                        try:
+                            endtime = steprunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                        except:
+                            pass
+                        operator = steprunlist[0].operator
+                        parameter = steprunlist[0].parameter
+                        runresult = steprunlist[0].result
+                        explain = steprunlist[0].explain
+                        state = steprunlist[0].state
+                    scripts=[]
+                    scriptlist = Script.objects.exclude(state="9").filter(step=step)
+                    for script in scriptlist:
+                        runscriptid=0
+                        scriptstarttime = ""
+                        scriptendtime = ""
+                        scriptoperator = ""
+                        scriptrunresult = ""
+                        scriptexplain = ""
+                        scriptrunlog = ""
+                        scriptstate = ""
+                        if len(steprunlist) > 0:
+                            scriptrunlist = ScriptRun.objects.exclude(state="9").filter(steprun=steprunlist[0], script=script)
+                            if len(scriptrunlist) > 0:
+                                runscriptid=scriptrunlist[0].id
+                                try:
+                                    scriptstarttime = scriptrunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                                except:
+                                    pass
+                                try:
+                                    scriptendtime = scriptrunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                                except:
+                                    pass
+                                    scriptoperator = scriptrunlist[0].operator
+                                scriptrunlog = scriptrunlist[0].runlog
+                                scriptrunresult = scriptrunlist[0].result
+                                scriptexplain = scriptrunlist[0].explain
+                                scriptstate = scriptrunlist[0].state
+                        scripts.append({"id":script.id,"code":script.code,"name":script.name,"runscriptid":runscriptid,"scriptstarttime":scriptstarttime,
+                                        "scriptendtime":scriptendtime,"scriptoperator":scriptoperator,"scriptrunresult":scriptrunresult,"scriptexplain":scriptexplain,
+                                        "scriptrunlog":scriptrunlog,"scriptstate":scriptstate})
+
+                    result.append({"id": step.id, "code": step.code, "name": step.name, "approval": step.approval,
+                                   "skip": step.skip, "group": step.group, "time": step.time,"runid":runid, "starttime":starttime,
+                                   "endtime":endtime,"operator":operator,"parameter":parameter,"runresult":runresult,
+                                   "explain":explain,"state":state,"scripts":scripts,"children":getchildrensteps(processruns[0],step)})
+
+            return HttpResponse(json.dumps(result))

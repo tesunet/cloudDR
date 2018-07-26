@@ -176,6 +176,14 @@ urlpatterns = patterns('cloud.views',
                        (r'^exec_script_by_hand/$', 'exec_script_by_hand'),
                        (r'^ignore_current_script/$', 'ignore_current_script'),
 
+
+                        (r'^falconstorswitch/$', 'falconstorswitch'),
+                        (r'^falconstorswitchdata/$', 'falconstorswitchdata'),
+                        (r'^falconstorrun/$', 'falconstorrun'),
+                        (r'^falconstor/(\d+)/$', 'falconstor'),
+                        (r'^getrunsetps/$', 'getrunsetps'),
+
+
                        (r'^custom_step_tree/$', 'custom_step_tree'),
                        (r'^step_tree_index/$', 'step_tree_index'),
                        (r'^del_step/$', 'del_step'),
