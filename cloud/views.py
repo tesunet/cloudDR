@@ -310,7 +310,6 @@ def get_dashboard_amchart_1(request):
         if type == "1":
             for i in range((nowtime - dttime).days + 1):
                 day = dttime + datetime.timedelta(days=i)
-                print("====", day)
                 count1 = 0
                 count2 = 0
                 for time1 in times1:
@@ -688,7 +687,6 @@ def get_dashboard_amchart_4(request):
 def not_display_jobs(request):
     if request.user.is_authenticated():
         job_id = request.POST.get("jobid", "")
-        print(job_id)
         result = ''
         if job_id:
             job_obj = Joblist()
@@ -697,7 +695,6 @@ def not_display_jobs(request):
             result = "0"
         else:
             result = "1"
-        print(result)
         return JsonResponse({"result": result})
 
 
@@ -1548,6 +1545,7 @@ def processscriptsave(request):
                                                                     scriptsave.save()
                                                                     result["res"] = "新增成功。"
                                                                     result["data"] = scriptsave.id
+
                                                         else:
                                                             allscript = Script.objects.filter(code=code).exclude(
                                                                 id=id).exclude(state="9").filter(step_id=pid)
@@ -5712,6 +5710,17 @@ def setpsave(request):
             step.pnode_id = pid
             step.sort = my_sort
             step.save()
+            # last_id
+            # current_pnode_id = Step.objects.exclude(state=9).filter(pnode_id=pid)[0].pnode_id
+            current_steps = Step.objects.filter(pnode_id=pid).exclude(state=9).order_by("sort")
+            last_id = current_steps[0].id
+            for num, step in enumerate(current_steps):
+                if num == 0:
+                    step.last_id = ""
+                else:
+                    step.last_id = last_id
+                last_id = step.id
+                step.save()
             result = "保存成功。"
         else:
             step = Step.objects.filter(id=id)
@@ -6590,7 +6599,6 @@ def filecrossnext(request):
         result = {}
         steprunid = request.POST.get('steprunid', '')
         stepindex = request.POST.get('stepindex', '')
-        print("steprunid", steprunid)
         try:
             steprunid = int(steprunid)
         except:
@@ -6968,7 +6976,7 @@ def ignore_current_script(request):
 
 def get_step_tree(parent, selectid):
     nodes = []
-    children = parent.children.order_by("sort").all()
+    children = parent.children.exclude(state=9).order_by("sort").all()
     for child in children:
         node = {}
         node["text"] = child.name
@@ -7012,7 +7020,7 @@ def custom_step_tree(request):
             if id == 0:
                 sort = 1
                 try:
-                    maxstep = Step.objects.filter(pnode=p_step).latest('sort')
+                    maxstep = Step.objects.filter(pnode=p_step).latest('sort').exclude(state=9)
                     sort = maxstep.sort + 1
                 except:
                     pass
@@ -7033,7 +7041,7 @@ def custom_step_tree(request):
             errors.append('保存失败。')
 
         treedata = []
-        rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None)
+        rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None).exclude(state=9)
         if len(rootnodes) > 0:
             for rootnode in rootnodes:
                 root = {}
@@ -7061,7 +7069,7 @@ def step_tree_index(request):
         processlist = []
         for process in processes:
             processlist.append({"id": process.id, "code": process.code, "name": process.name})
-        return render(request, 'function.html', {'username': request.user.userinfo.fullname, "functionpage": True,
+        return render(request, 'processconfig.html', {'username': request.user.userinfo.fullname, "functionpage": True,
                                                  "processlist": processlist})
 
 
@@ -7076,11 +7084,26 @@ def del_step(request):
             all_steps = Step.objects.filter(id=id)
             if (len(all_steps) > 0):
                 current_sort = all_steps[0].sort
+
                 sorts_behind = Step.objects.exclude(state=9).filter(sort__gt=current_sort)
                 for obj in sorts_behind:
                     obj.sort -= 1
                     obj.save()
-                all_steps[0].delete()
+                all_steps[0].state = 9
+                all_steps[0].save()
+                current_pnode_id = all_steps[0].pnode_id
+                # last_id
+                current_steps = Step.objects.filter(pnode_id=current_pnode_id).exclude(state=9).order_by("sort")
+                if current_steps:
+                    last_id = current_steps[0].id
+                    for num, step in enumerate(current_steps):
+                        if num == 0:
+                            step.last_id = ""
+                        else:
+                            step.last_id = last_id
+                        last_id = step.id
+                        step.save()
+
                 return HttpResponse(1)
             else:
                 return HttpResponse(0)
@@ -7101,10 +7124,9 @@ def move_step(request):
             except:
                 raise Http404()
             try:
-                parent = int(parent)
+                old_parent = int(old_parent)
             except:
                 raise Http404()
-
             # sort
             if int(parent) <= int(old_parent):
                 # 1.向上拽
@@ -7117,30 +7139,20 @@ def move_step(request):
 
                 old_step_up = Step.objects.filter(id=id)[0]
                 old_step_up.sort = Step.objects.filter(id=parent)[0].sort + 1
-                # old_step_up.last_id = ""
                 old_step_up.save()
-
-                # last_id
-                # steps_upon_curr_pnode = Step.objects.exclude(state=9).filter(pnode_id=parent)
-                # for step in steps_upon_curr_pnode:
-                #     step.last_id = step.sort
-                #     step.save()
-
-
             if int(parent) > int(old_parent):
                 # 2.向下拽
                 after_step_down_sort = Step.objects.filter(id=parent)[0].sort
                 old_step_down_sort = Step.objects.filter(id=id)[0].sort
-                between_step_down = Step.objects.filter(sort__gt=old_step_down_sort, sort__lte=after_step_down_sort)
+                between_step_down = Step.objects.exclude(state=9).filter(sort__gt=old_step_down_sort, sort__lte=after_step_down_sort)
                 for between_step in between_step_down:
                     between_step.sort -= 1
                     between_step.save()
 
                 old_step_down = Step.objects.filter(id=id)[0]
-                old_step_down.sort = Step.objects.filter(id=parent)[0].sort + 1
-                old_step_down.last_id = ""
+                old_p_sort = Step.objects.filter(id=parent)[0].sort
+                old_step_down.sort = old_p_sort + 1
                 old_step_down.save()
-
             # pnode
             parent_step = Step.objects.get(id=parent)
             mystep = Step.objects.get(id=id)
@@ -7149,6 +7161,27 @@ def move_step(request):
                 mystep.save()
             except:
                 pass
+
+            # last_id
+            old_steps = Step.objects.filter(pnode_id=old_parent).exclude(state=9).order_by("sort")
+            if len(old_steps) > 1:
+                last_id = old_steps[0].id
+                for num, step in enumerate(old_steps):
+                    if num == 0:
+                        step.last_id = ""
+                    else:
+                        step.last_id = last_id
+                    last_id = step.id
+                    step.save()
+            after_steps = Step.objects.filter(pnode_id=parent).exclude(state=9).order_by("sort")
+            last_id = after_steps[0].id
+            for num, step in enumerate(after_steps):
+                if num == 0:
+                    step.last_id = ""
+                else:
+                    step.last_id = last_id
+                last_id = step.id
+                step.save()
             if parent != old_parent:
                 return HttpResponse(parent_step.name + "^" + str(parent_step.id))
             else:
@@ -7217,9 +7250,9 @@ def falconstorrun(request):
                         mysteprun.save()
 
                         myscript = step.script_set.exclude(state="9")
-                        print(myscript)
+                        # print(myscript)
                         for script in myscript:
-                            print(1)
+                            # print(1)
                             myscriptrun = ScriptRun()
                             myscriptrun.script = script
                             myscriptrun.steprun = mysteprun

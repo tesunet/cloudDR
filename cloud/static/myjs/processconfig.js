@@ -62,16 +62,14 @@ $.ajax({
                                     $.ajax({
                                         type: "POST",
                                         url: "../del_step/",
-                                        data:
-                                            {
-                                                id: obj.id,
-                                            },
+                                        data: {
+                                            id: obj.id,
+                                        },
                                         success: function (data) {
                                             if (data == 1) {
                                                 inst.delete_node(obj);
                                                 alert("删除成功！");
-                                            }
-                                            else
+                                            } else
                                                 alert("删除失败，请于管理员联系。");
                                         },
                                         error: function (e) {
@@ -91,24 +89,21 @@ $.ajax({
                 if (data.old_parent == "#") {
                     alert("根节点禁止移动。");
                     location.reload()
-                }
-                else {
+                } else {
                     if (data.parent == "#") {
                         alert("禁止新建根节点。");
                         location.reload()
-                    }
-                    else {
+                    } else {
                         $.ajax({
                             type: "POST",
                             url: "../move_step/",
-                            data:
-                                {
-                                    id: data.node.id,
-                                    parent: data.parent,
-                                    old_parent: data.old_parent,
-                                    position: data.position,
-                                    old_position: data.old_position,
-                                },
+                            data: {
+                                id: data.node.id,
+                                parent: data.parent,
+                                old_parent: data.old_parent,
+                                position: data.position,
+                                old_position: data.old_position,
+                            },
                             success: function (data) {
                                 var selectid = $("#id").val();
                                 if (selectid == moveid) {
@@ -171,6 +166,7 @@ $.ajax({
                     }
                 }
 
+
             });
         // context-menu
         $('#se_1').contextmenu({
@@ -203,11 +199,10 @@ $.ajax({
                             $.ajax({
                                 type: "POST",
                                 url: "../get_script_data/",
-                                data:
-                                    {
-                                        id: $("#id").val(),
-                                        script_id: $("#se_1").find('option:selected').val()
-                                    },
+                                data: {
+                                    id: $("#id").val(),
+                                    script_id: $("#se_1").find('option:selected').val()
+                                },
                                 dataType: "json",
                                 success: function (data) {
                                     $("#scriptid").val(data["id"]);
@@ -247,16 +242,14 @@ $.ajax({
                             $.ajax({
                                 type: "POST",
                                 url: "../../remove_script/",
-                                data:
-                                    {
-                                        script_id: $("#se_1").find('option:selected').val(),
-                                    },
+                                data: {
+                                    script_id: $("#se_1").find('option:selected').val(),
+                                },
                                 success: function (data) {
                                     if (data["status"] == 1) {
                                         $("#se_1").find('option:selected').remove();
                                         alert("删除成功！");
-                                    }
-                                    else
+                                    } else
                                         alert("删除失败，请于管理员联系。");
                                 },
                                 error: function (e) {
@@ -269,10 +262,107 @@ $.ajax({
 
             }
         });
+        // dataTable
+        $("#sample_1").dataTable().fnDestroy();
+        $('#sample_1').dataTable({
+            "bAutoWidth": true,
+            "bSort": false,
+            "bProcessing": true,
+            "ajax": "../../scriptdata/",
+            "columns": [
+                {"data": "id"},
+                {"data": "code"},
+                {"data": "ip"},
+                {"data": "port"},
+                {"data": "type"},
+                {"data": "runtype"},
+                {"data": "filename"},
+                {"data": "time"},
+                {"data": "username"},
+                {"data": "password"},
+                {"data": "paramtype"},
+                {"data": "param"},
+                {"data": "scriptpath"},
+                {"data": "runpath"},
+                {"data": "maxtime"},
+                {"data": null}
+            ],
+
+            "columnDefs": [{
+                "targets": -1,
+                "data": null,
+                "defaultContent": "<button  id='select' title='选择'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-check'></i></button>"
+            }, {
+                "targets": [-2],
+                "visible": false
+            }, {
+                "targets": [-3],
+                "visible": false
+            }, {
+                "targets": [-4],
+                "visible": false
+            }, {
+                "targets": [-5],
+                "visible": false
+            }, {
+                "targets": [-6],
+                "visible": false
+            }, {
+                "targets": [-7],
+                "visible": false
+            }, {
+                "targets": [-8],
+                "visible": false
+            }, {
+                "targets": [-9],
+                "visible": false
+            }, {
+                "targets": [0],
+                "visible": false
+            }],
+            "oLanguage": {
+                "sLengthMenu": "每页显示 _MENU_ 条记录",
+                "sZeroRecords": "抱歉， 没有找到",
+                "sInfo": "从 _START_ 到 _END_ /共 _TOTAL_ 条数据",
+                "sInfoEmpty": "没有数据",
+                "sInfoFiltered": "(从 _MAX_ 条数据中检索)",
+                "sSearch": "搜索",
+                "oPaginate": {
+                    "sFirst": "首页",
+                    "sPrevious": "前一页",
+                    "sNext": "后一页",
+                    "sLast": "尾页"
+                },
+                "sZeroRecords": "没有检索到数据",
+
+            }
+        });
     },
     error: function (e) {
         alert("流程读取失败，请于客服联系。");
     }
+});
+
+
+$('#sample_1 tbody').on('click', 'button#select', function () {
+    var table = $('#sample_1').DataTable();
+    var data = table.row($(this).parents('tr')).data();
+    $("#scriptcode").val(data.code);
+    $("#scriptip").val(data.ip);
+    $("#scriptport").val(data.port);
+    $("#scripttype").val(data.type);
+    $("#scriptruntype").val(data.runtype);
+    $("#scriptusername").val(data.username);
+    $("#scriptpassword").val(data.password);
+    $("#scriptfilename").val(data.filename);
+    $("#scriptparamtype").val(data.paramtype);
+    $("#scriptparam").val(data.param);
+    $("#scriptscriptpath").val(data.scriptpath);
+    $("#scriptrunpath").val(data.runpath);
+    $("#scriptcommand").val("cd " + $("#scriptscriptpath").val() + ";" + $("#scriptrunpath").val() + "/" + $("#scriptfilename").val() + " " + $("#scriptparam").val());
+    $("#scriptmaxtime").val(data.maxtime);
+    $("#scripttime").val(data.time);
+    $('#static1').modal('hide');
 });
 
 $("#process").change(function () {
@@ -281,12 +371,11 @@ $("#process").change(function () {
     $.ajax({
         type: "POST",
         url: "../custom_step_tree/",
-        data:
-            {
-                process: $("#process").val(),
-                name: $("#name").val(),
-                id: $("#id").val(),
-            },
+        data: {
+            process: $("#process").val(),
+            name: $("#name").val(),
+            id: $("#id").val(),
+        },
         dataType: "json",
         success: function (data) {
             JSON.stringify(data.treedata);
@@ -342,16 +431,14 @@ $("#process").change(function () {
                                         $.ajax({
                                             type: "POST",
                                             url: "../del_step/",
-                                            data:
-                                                {
-                                                    id: obj.id,
-                                                },
+                                            data: {
+                                                id: obj.id,
+                                            },
                                             success: function (data) {
                                                 if (data == 1) {
                                                     inst.delete_node(obj);
                                                     alert("删除成功！");
-                                                }
-                                                else
+                                                } else
                                                     alert("删除失败，请于管理员联系。");
                                             },
                                             error: function (e) {
@@ -372,22 +459,19 @@ $("#process").change(function () {
                     if (data.old_parent == "#") {
                         alert("根节点禁止移动。");
                         location.reload()
-                    }
-                    else {
+                    } else {
                         if (data.parent == "#") {
                             alert("禁止新建根节点。");
                             location.reload()
-                        }
-                        else {
+                        } else {
                             $.ajax({
                                 type: "POST",
                                 url: "../move_step/",
-                                data:
-                                    {
-                                        id: data.node.id,  // 当前选择拖拽的节点step_id
-                                        parent: data.parent,  // 拖拽至目标节点的pnode_id
-                                        old_parent: data.old_parent,  // 原来所在的pnode_id
-                                    },
+                                data: {
+                                    id: data.node.id, // 当前选择拖拽的节点step_id
+                                    parent: data.parent, // 拖拽至目标节点的pnode_id
+                                    old_parent: data.old_parent, // 原来所在的pnode_id
+                                },
                                 success: function (data) {
                                     var selectid = $("#id").val();
                                     if (selectid == moveid) {
@@ -482,11 +566,10 @@ $("#process").change(function () {
                                 $.ajax({
                                     type: "POST",
                                     url: "../get_script_data/",
-                                    data:
-                                        {
-                                            id: $("#id").val(),
-                                            script_id: $("#se_1").find('option:selected').val()
-                                        },
+                                    data: {
+                                        id: $("#id").val(),
+                                        script_id: $("#se_1").find('option:selected').val()
+                                    },
                                     dataType: "json",
                                     success: function (data) {
                                         $("#scriptid").val(data["id"]);
@@ -526,16 +609,14 @@ $("#process").change(function () {
                                 $.ajax({
                                     type: "POST",
                                     url: "../../remove_script/",
-                                    data:
-                                        {
-                                            script_id: $("#se_1").find('option:selected').val(),
-                                        },
+                                    data: {
+                                        script_id: $("#se_1").find('option:selected').val(),
+                                    },
                                     success: function (data) {
                                         if (data["status"] == 1) {
                                             $("#se_1").find('option:selected').remove();
                                             alert("删除成功！");
-                                        }
-                                        else
+                                        } else
                                             alert("删除失败，请于管理员联系。");
                                     },
                                     error: function (e) {
@@ -548,7 +629,81 @@ $("#process").change(function () {
 
                 }
             });
+            // dataTable
+            $("#sample_1").dataTable().fnDestroy();
+            $('#sample_1').dataTable({
+                "bAutoWidth": true,
+                "bSort": false,
+                "bProcessing": true,
+                "ajax": "../../scriptdata/",
+                "columns": [
+                    {"data": "id"},
+                    {"data": "code"},
+                    {"data": "ip"},
+                    {"data": "port"},
+                    {"data": "type"},
+                    {"data": "runtype"},
+                    {"data": "filename"},
+                    {"data": "time"},
+                    {"data": "username"},
+                    {"data": "password"},
+                    {"data": "paramtype"},
+                    {"data": "param"},
+                    {"data": "scriptpath"},
+                    {"data": "runpath"},
+                    {"data": "maxtime"},
+                    {"data": null}
+                ],
 
+                "columnDefs": [{
+                    "targets": -1,
+                    "data": null,
+                    "defaultContent": "<button  id='select' title='选择'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-check'></i></button>"
+                }, {
+                    "targets": [-2],
+                    "visible": false
+                }, {
+                    "targets": [-3],
+                    "visible": false
+                }, {
+                    "targets": [-4],
+                    "visible": false
+                }, {
+                    "targets": [-5],
+                    "visible": false
+                }, {
+                    "targets": [-6],
+                    "visible": false
+                }, {
+                    "targets": [-7],
+                    "visible": false
+                }, {
+                    "targets": [-8],
+                    "visible": false
+                }, {
+                    "targets": [-9],
+                    "visible": false
+                }, {
+                    "targets": [0],
+                    "visible": false
+                }],
+                "oLanguage": {
+                    "sLengthMenu": "每页显示 _MENU_ 条记录",
+                    "sZeroRecords": "抱歉， 没有找到",
+                    "sInfo": "从 _START_ 到 _END_ /共 _TOTAL_ 条数据",
+                    "sInfoEmpty": "没有数据",
+                    "sInfoFiltered": "(从 _MAX_ 条数据中检索)",
+                    "sSearch": "搜索",
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "前一页",
+                        "sNext": "后一页",
+                        "sLast": "尾页"
+                    },
+                    "sZeroRecords": "没有检索到数据",
+
+                }
+            });
         },
         error: function (e) {
             alert("流程读取失败，请于客服联系。");
@@ -558,30 +713,30 @@ $("#process").change(function () {
 
 // 脚本
 $('#scriptsave').click(function () {
+
     $.ajax({
         type: "POST",
         dataType: 'json',
         url: "../../processscriptsave/",
-        data:
-            {
-                processid: $("#process option:selected").val(),
-                pid: $("#id").val().replace("demo_node_", ""),
-                id: $("#scriptid").val().replace("script_", ""),
-                code: $("#scriptcode").val(),
-                ip: $("#scriptip").val(),
-                port: $("#scriptport").val(),
-                type: $("#scripttype").val(),
-                runtype: $("#scriptruntype").val(),
-                username: $("#scriptusername").val(),
-                password: $("#scriptpassword").val(),
-                filename: $("#scriptfilename").val(),
-                paramtype: $("#scriptparamtype").val(),
-                param: $("#scriptparam").val(),
-                scriptpath: $("#scriptscriptpath").val(),
-                runpath: $("#scriptrunpath").val(),
-                maxtime: $("#scriptmaxtime").val(),
-                time: $("#scripttime").val(),
-            },
+        data: {
+            processid: $("#process option:selected").val(),
+            pid: $("#id").val().replace("demo_node_", ""),
+            id: $("#scriptid").val().replace("script_", ""),
+            code: $("#scriptcode").val(),
+            ip: $("#scriptip").val(),
+            port: $("#scriptport").val(),
+            type: $("#scripttype").val(),
+            runtype: $("#scriptruntype").val(),
+            username: $("#scriptusername").val(),
+            password: $("#scriptpassword").val(),
+            filename: $("#scriptfilename").val(),
+            paramtype: $("#scriptparamtype").val(),
+            param: $("#scriptparam").val(),
+            scriptpath: $("#scriptscriptpath").val(),
+            runpath: $("#scriptrunpath").val(),
+            maxtime: $("#scriptmaxtime").val(),
+            time: $("#scripttime").val(),
+        },
         success: function (data) {
             var myres = data["res"];
             var mydata = data["data"];
@@ -636,98 +791,3 @@ $('#save').click(function () {
         }
     });
 })
-
-$('#sample_1').dataTable({
-    "bAutoWidth": true,
-    "bSort": false,
-    "bProcessing": true,
-    "ajax": "../../scriptdata/",
-    "columns": [
-        {"data": "id"},
-        {"data": "code"},
-        {"data": "ip"},
-        {"data": "port"},
-        {"data": "type"},
-        {"data": "runtype"},
-        {"data": "filename"},
-        {"data": "time"},
-        {"data": "username"},
-        {"data": "password"},
-        {"data": "paramtype"},
-        {"data": "param"},
-        {"data": "scriptpath"},
-        {"data": "runpath"},
-        {"data": "maxtime"},
-        {"data": null}
-    ],
-
-    "columnDefs": [{
-        "targets": -1,
-        "data": null,
-        "defaultContent": "<button  id='select' title='选择'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-check'></i></button>"
-    }, {
-        "targets": [-2],
-        "visible": false
-    }, {
-        "targets": [-3],
-        "visible": false
-    }, {
-        "targets": [-4],
-        "visible": false
-    }, {
-        "targets": [-5],
-        "visible": false
-    }, {
-        "targets": [-6],
-        "visible": false
-    }, {
-        "targets": [-7],
-        "visible": false
-    }, {
-        "targets": [-8],
-        "visible": false
-    }, {
-        "targets": [-9],
-        "visible": false
-    }, {
-        "targets": [0],
-        "visible": false
-    }],
-    "oLanguage": {
-        "sLengthMenu": "每页显示 _MENU_ 条记录",
-        "sZeroRecords": "抱歉， 没有找到",
-        "sInfo": "从 _START_ 到 _END_ /共 _TOTAL_ 条数据",
-        "sInfoEmpty": "没有数据",
-        "sInfoFiltered": "(从 _MAX_ 条数据中检索)",
-        "sSearch": "搜索",
-        "oPaginate": {
-            "sFirst": "首页",
-            "sPrevious": "前一页",
-            "sNext": "后一页",
-            "sLast": "尾页"
-        },
-        "sZeroRecords": "没有检索到数据",
-
-    }
-});
-$('#sample_1 tbody').on('click', 'button#select', function () {
-    var table = $('#sample_1').DataTable();
-    var data = table.row($(this).parents('tr')).data();
-    $("#scriptcode").val(data.code);
-    $("#scriptip").val(data.ip);
-    $("#scriptport").val(data.port);
-    $("#scripttype").val(data.type);
-    $("#scriptruntype").val(data.runtype);
-    $("#scriptusername").val(data.username);
-    $("#scriptpassword").val(data.password);
-    $("#scriptfilename").val(data.filename);
-    $("#scriptparamtype").val(data.paramtype);
-    $("#scriptparam").val(data.param);
-    $("#scriptscriptpath").val(data.scriptpath);
-    $("#scriptrunpath").val(data.runpath);
-    $("#scriptcommand").val("cd " + $("#scriptscriptpath").val() + ";" + $("#scriptrunpath").val() + "/" + $("#scriptfilename").val() + " " + $("#scriptparam").val());
-    $("#scriptmaxtime").val(data.maxtime);
-    $("#scripttime").val(data.time);
-    $('#static1').modal('hide');
-});
-
