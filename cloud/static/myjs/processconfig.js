@@ -64,6 +64,7 @@ $.ajax({
                                         url: "../del_step/",
                                         data: {
                                             id: obj.id,
+                                            process_id: $("#process option:selected").val(),
                                         },
                                         success: function (data) {
                                             if (data == 1) {
@@ -103,6 +104,7 @@ $.ajax({
                                 old_parent: data.old_parent,
                                 position: data.position,
                                 old_position: data.old_position,
+                                process_id: $("#process option:selected").val(),
                             },
                             success: function (data) {
                                 var selectid = $("#id").val();
@@ -433,6 +435,7 @@ $("#process").change(function () {
                                             url: "../del_step/",
                                             data: {
                                                 id: obj.id,
+                                                process_id: $("#process option:selected").val(),
                                             },
                                             success: function (data) {
                                                 if (data == 1) {
@@ -468,9 +471,12 @@ $("#process").change(function () {
                                 type: "POST",
                                 url: "../move_step/",
                                 data: {
-                                    id: data.node.id, // 当前选择拖拽的节点step_id
-                                    parent: data.parent, // 拖拽至目标节点的pnode_id
-                                    old_parent: data.old_parent, // 原来所在的pnode_id
+                                    id: data.node.id,
+                                    parent: data.parent,
+                                    old_parent: data.old_parent,
+                                    position: data.position,
+                                    old_position: data.old_position,
+                                    process_id: $("#process option:selected").val(),
                                 },
                                 success: function (data) {
                                     var selectid = $("#id").val();
@@ -769,6 +775,7 @@ $('#save').click(function () {
             approval: $("#approval").val(),
             group: $("#group").val(),
             new: $("#new").val(),
+            process_id: $("#process option:selected").val(),
         },
         success: function (data) {
             alert(data);
