@@ -7164,7 +7164,7 @@ def move_step(request):
 
             # last_id
             old_steps = Step.objects.filter(pnode_id=old_parent).exclude(state=9).order_by("sort")
-            if len(old_steps) > 1:
+            if old_steps:
                 last_id = old_steps[0].id
                 for num, step in enumerate(old_steps):
                     if num == 0:
@@ -7174,14 +7174,15 @@ def move_step(request):
                     last_id = step.id
                     step.save()
             after_steps = Step.objects.filter(pnode_id=parent).exclude(state=9).order_by("sort")
-            last_id = after_steps[0].id
-            for num, step in enumerate(after_steps):
-                if num == 0:
-                    step.last_id = ""
-                else:
-                    step.last_id = last_id
-                last_id = step.id
-                step.save()
+            if after_steps:
+                last_id = after_steps[0].id
+                for num, step in enumerate(after_steps):
+                    if num == 0:
+                        step.last_id = ""
+                    else:
+                        step.last_id = last_id
+                    last_id = step.id
+                    step.save()
             if parent != old_parent:
                 return HttpResponse(parent_step.name + "^" + str(parent_step.id))
             else:
