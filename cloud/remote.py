@@ -46,7 +46,13 @@ class ServerByPara(object):
                 data_init += data
             if "command not found" in data_init:  # 命令不存在
                 exec_tag = 1
+            elif "tesunetfailed" in data_init:
+                exec_tag = 1
+            elif "tesunet succeed" in data_init:
+                exec_tag = 0
             elif "syntax error" in data_init:  # 语法错误
+                exec_tag = 1
+            elif "No such file or directory":  # 脚本不存在
                 exec_tag = 1
         return {
             "exec_tag": exec_tag,

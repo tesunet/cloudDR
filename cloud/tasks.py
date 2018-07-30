@@ -204,7 +204,6 @@ def exec_script(steprunid, username, fullname):
     end_step_tag = True
     steprun = StepRun.objects.filter(id=steprunid)
     steprun = steprun[0]
-    # scriptruns = steprun.scriptrun_set.exclude(state="9").exclude(state="DONE").exclude(result=0)  # 查询失败或者未执行的脚本
     scriptruns = steprun.scriptrun_set.exclude(Q(state__in=("9", "DONE", "IGNORE")) | Q(result=0))
     for script in scriptruns:
         cmd = r"{0}".format(script.script.scriptpath + script.script.filename)
@@ -221,20 +220,20 @@ def exec_script(steprunid, username, fullname):
         script.starttime = datetime.datetime.now()
         result = rm_obj.run()
 
+        script.endtime = datetime.datetime.now()
         script.result = result["exec_tag"]
+        script.operator = result['data']
+
         # 处理脚本执行失败问题
         if result["exec_tag"] == 1:
-            print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
-            script.operator = result['data']
-            script.save()
             end_step_tag = False
             steprun.state = "ERROR"
+            script.save()
             steprun.save()
             break
-        script.endtime = datetime.datetime.now()
-        script.operator = ""
         script.state = "DONE"
         script.save()
+
     if end_step_tag:
         steprun.state = "DONE"
         steprun.save()
