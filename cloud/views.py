@@ -5701,8 +5701,8 @@ def setpsave(request):
         # 新增步骤
         if id == 0:
             max_sort_from_pnode = \
-            Step.objects.exclude(state=9).filter(pnode_id=pid).filter(process_id=process_id).aggregate(Max("sort"))[
-                "sort__max"]
+                Step.objects.exclude(state=9).filter(pnode_id=pid).filter(process_id=process_id).aggregate(Max("sort"))[
+                    "sort__max"]
 
             # 当前没有父节点
             if not max_sort_from_pnode:
@@ -7065,9 +7065,20 @@ def custom_step_tree(request):
                     script_string += id_code_plus
                 root["text"] = rootnode.name
                 root["id"] = rootnode.id
-                root["data"] = {"time": rootnode.time, "approval": rootnode.approval, "skip": rootnode.skip,
-                                "group": rootnode.group, "scripts": script_string, "errors": errors, "title": title}
+                group_name = ""
+                if rootnode.group:
+                    group_id = rootnode.group
+                    group_name = Group.objects.filter(id=group_id)[0].name
+                all_groups = Group.objects.all()
+                group_string = ""
+                for group in all_groups:
+                    id_name_plus = str(group.id) + "+" + str(group.name) + "&"
+                    group_string += id_name_plus
 
+                root["data"] = {"time": rootnode.time, "approval": rootnode.approval, "skip": rootnode.skip,
+                                "allgroups": group_string, "group": rootnode.group, "group_name": group_name,
+                                "scripts": script_string,"errors": errors, "title": title}
+                print("group_string", group_string)
                 root["children"] = get_step_tree(rootnode, selectid)
                 treedata.append(root)
 
@@ -7165,7 +7176,7 @@ def move_step(request):
                 raise Http404()
 
             cur_step_obj = \
-            Step.objects.filter(pnode_id=old_parent).filter(sort=old_position).filter(process_id=process_id)[0]
+                Step.objects.filter(pnode_id=old_parent).filter(sort=old_position).filter(process_id=process_id)[0]
             cur_step_obj.sort = position
             cur_step_id = cur_step_obj.id
             cur_step_obj.save()

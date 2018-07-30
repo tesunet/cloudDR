@@ -127,12 +127,28 @@ $.ajax({
             .bind('select_node.jstree', function (event, data) {
                 $("#formdiv").show();
                 $("#se_1").empty();
+                $("#group").empty();
                 $("#title").text(data.node.text);
                 $("#id").val(data.node.id);
                 $("#pid").val(data.node.parent);
                 $("#name").val(data.node.text);
                 $("#time").val(data.node.data.time);
                 $("#group option:selected").val(data.node.data.group);
+                // all_groups
+                var groupInfoList = data.node.data.allgroups.split("&");
+                if (data.node.data.group) {
+                    for (var i = 0; i < groupInfoList.length - 1; i++) {
+                        var singlegroupInfoList = groupInfoList[i].split("+");
+                        if (singlegroupInfoList[0] == data.node.data.group) {
+                            $("#group").append('<option value="' + singlegroupInfoList[0] + '" selected>' + singlegroupInfoList[1] + '</option>')
+                        } else {
+                            $("#group").append('<option value="' + singlegroupInfoList[0] + '">' + singlegroupInfoList[1] + '</option>')
+                        }
+                    }
+                } else {
+                    $("#group").attr("disabled", true)
+                }
+
                 if (data.node.data.approval == "1") {
                     $("#approval").find("option[value='" + data.node.data.approval + "']").attr("selected", true);
                 } else if (data.node.data.approval == "0") {
@@ -498,12 +514,28 @@ $("#process").change(function () {
                 .bind('select_node.jstree', function (event, data) {
                     $("#formdiv").show();
                     $("#se_1").empty();
+                    $("#group").empty();
+                    $("#group").attr("disabled", false);
                     $("#title").text(data.node.text);
                     $("#id").val(data.node.id);
                     $("#pid").val(data.node.parent);
                     $("#name").val(data.node.text);
                     $("#time").val(data.node.data.time);
-                    $("#group option:selected").val(data.node.data.group);
+
+                    // all_groups
+                    var groupInfoList = data.node.data.allgroups.split("&");
+                    if (data.node.data.group) {
+                        for (var i = 0; i < groupInfoList.length - 1; i++) {
+                            var singlegroupInfoList = groupInfoList[i].split("+");
+                            if (singlegroupInfoList[0] == data.node.data.group) {
+                                $("#group").append('<option value="' + singlegroupInfoList[0] + '" selected>' + singlegroupInfoList[1] + '</option>')
+                            } else {
+                                $("#group").append('<option value="' + singlegroupInfoList[0] + '">' + singlegroupInfoList[1] + '</option>')
+                            }
+                        }
+                    } else {
+                        $("#group").attr("disabled", true)
+                    }
 
                     if (data.node.data.approval == "1") {
                         $("#approval").find("option[value='" + data.node.data.approval + "']").attr("selected", true);
