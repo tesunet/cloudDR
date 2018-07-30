@@ -46,10 +46,6 @@ var FormWizard = function () {
                     });
                 }
             });
-            $('#form_wizard_1 .button-submit').click(function () {
-
-
-            }).hide();
             handleTitle(0, "EDIT");
 
 
@@ -70,6 +66,7 @@ if (App.isAngularJsApp() === false) {
                 },
             dataType: "json",
             success: function (data) {
+                $("#continue").hide();
                 $("ul.steps").empty();
                 $("div.tab-content").empty();
                 for (var i = 0; i < data.length; i++) {
@@ -79,6 +76,8 @@ if (App.isAngularJsApp() === false) {
                         first = "first"
                     if (i == data.length - 1)
                         last = "last"
+                    if(data[i]["state"]=="ERROR")
+                        $("#continue").show();
                     var tabdone = ""
                     if(data[i]["state"]=="DONE")
                         tabdone= "done"
@@ -119,7 +118,7 @@ if (App.isAngularJsApp() === false) {
                         }
                     }
                     else{
-                        $("#tab" + (i + 1).toString()).append("<div class='col-md-12'><select id='se" + (i + 1).toString() + "' size='7' class='form-control' style='overflow-y:auto;'></select></div>")
+                        $("#tab" + (i + 1).toString()).append("<div class='col-md-12'><select id='se" + (i + 1).toString() + "' size='7' class='form-control' style='overflow-y:auto;'></select><br><br></div>")
                         for (var j = 0; j < data[i]["scripts"].length; j++) {
                             var color=""
                             if(data[i]["scripts"][j]["scriptstate"]=="DONE")
@@ -186,6 +185,28 @@ if (App.isAngularJsApp() === false) {
                         }
 
                     });
+
+                $('#continue').click(function () {
+                    $.ajax({
+                        type: "POST",
+                        dataType: 'json',
+                        url: "../../falconstorcontinue/",
+                        data:
+                            {
+                                process: $('#process').val(),
+                            },
+                        success: function (data) {
+                            if (data["res"] == "执行成功。") {
+                                $('#continue').hide()
+                            }
+                            else
+                                alert(data["res"]);
+                        },
+                        error: function (e) {
+                            alert("执行失败，请于管理员联系。");
+                        }
+                    });
+                })
 
             },
             error: function (e) {

@@ -11,7 +11,6 @@ import datetime
 from django.db.models import Q
 import sys
 import os
-from cloud.tasks import just_save
 import json
 import random
 from django.core.mail import send_mail
@@ -7251,8 +7250,7 @@ def falconstorswitch(request):
 def falconstorswitchdata(request):
     if request.user.is_authenticated():
         result = []
-        allprocess = Process.objects.exclude(state="9") \
-            # .filter(type="falconstor")
+        allprocess = Process.objects.exclude(state="9").filter(type="falconstor")
         if (len(allprocess) > 0):
             for process in allprocess:
                 code = process.code
@@ -7313,7 +7311,6 @@ def falconstorrun(request):
 
                     myprocesstask = ProcessTask()
                     myprocesstask.processrun = myprocessrun
-                    myprocesstask.steprun = mysteprun
                     myprocesstask.starttime = datetime.datetime.now()
                     myprocesstask.senduser = request.user.username
                     myprocesstask.receiveuser = request.user.username
@@ -7322,8 +7319,11 @@ def falconstorrun(request):
                     myprocesstask.content = process[0].name + " 流程已启动，点击查看。"
                     myprocesstask.save()
 
+                    exec_process.delay(myprocessrun.id)
+
                     result["res"] = "新增成功。"
                     result["data"] = process[0].url + "/" + str(myprocessrun.id)
+
         return HttpResponse(json.dumps(result))
 
 
@@ -7492,3 +7492,17 @@ def getrunsetps(request):
                                    "children": getchildrensteps(processruns[0], step)})
 
             return HttpResponse(json.dumps(result))
+
+
+
+def falconstorcontinue(request):
+    if request.user.is_authenticated():
+        result = {}
+        process = request.POST.get('process', '')
+        try:
+            process = int(process)
+        except:
+            raise Http404()
+        exec_process.delay(process)
+        result["res"] = "执行成功。"
+        return HttpResponse(json.dumps(result))
