@@ -74,7 +74,7 @@ class Script(models.Model):
     time = models.IntegerField(u"预计耗时", blank=True, null=True)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
     sort = models.IntegerField(u"排序", blank=True, null=True)
-    succeedtest = models.CharField("成功代码", blank=True, null=True, max_length=500)
+    succeedtext = models.CharField("成功代码", blank=True, null=True, max_length=500)
 
 
 class ResourcePool(models.Model):

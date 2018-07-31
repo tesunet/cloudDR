@@ -189,5 +189,5 @@ urlpatterns = patterns('cloud.views',
                        (r'^step_tree_index/$', 'step_tree_index'),
                        (r'^del_step/$', 'del_step'),
                        (r'^move_step/$', 'move_step'),
-
+                       (r'^get_all_groups/$', 'get_all_groups'),
                        )

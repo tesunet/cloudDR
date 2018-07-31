@@ -113,7 +113,7 @@ def exec_script(steprunid, username, fullname):
     scriptruns = steprun.scriptrun_set.exclude(Q(state__in=("9", "DONE", "IGNORE")) | Q(result=0))
     for script in scriptruns:
         script.starttime = datetime.datetime.now()
-        script.operator = ""
+        script.result = ""
         script.state = "RUN"
         script.save()
         cmd = r"{0}".format(script.script.scriptpath + script.script.filename)
@@ -131,10 +131,12 @@ def exec_script(steprunid, username, fullname):
 
         script.endtime = datetime.datetime.now()
         script.result = result["exec_tag"]
-        script.operator = result['data']
-
+        script.explain = result['data']
+        if len(script.explain) > 5000:
+            script.explain = result['data'][-4999:]
         # 处理脚本执行失败问题
         if result["exec_tag"] == 1:
+            script.runlog = result['log']
             end_step_tag = False
             script.state = "ERROR"
             steprun.state = "ERROR"
@@ -179,23 +181,23 @@ def runstep(steprun):
     执行当前步骤下的所有脚本
     """
 
-    #判断该步骤是否已完成，如果未完成，先执行当前步骤
-    if steprun.state!="DONE":
-        #判断是否有子步骤，如果有，先执行子步骤
-        steprun.state ="RUN"
+    # 判断该步骤是否已完成，如果未完成，先执行当前步骤
+    if steprun.state != "DONE":
+        # 判断是否有子步骤，如果有，先执行子步骤
+        steprun.state = "RUN"
         steprun.starttime = datetime.datetime.now()
         steprun.save()
         children = steprun.step.children.order_by("sort").exclude(state="9")
-        if len(children)>0:
+        if len(children) > 0:
             for child in children:
                 childsteprun = child.steprun_set.exclude(state="9").filter(processrun=steprun.processrun)
                 if len(childsteprun) > 0:
-                    if runstep(childsteprun[0])==False:
+                    if runstep(childsteprun[0]) == False:
                         return False
         scriptruns = steprun.scriptrun_set.exclude(Q(state__in=("9", "DONE", "IGNORE")) | Q(result=0))
         for script in scriptruns:
             script.starttime = datetime.datetime.now()
-            script.operator = ""
+            script.result = ""
             script.state = "RUN"
             script.save()
 
@@ -213,10 +215,13 @@ def runstep(steprun):
             result = rm_obj.run(script.script.succeedtext)
 
             script.endtime = datetime.datetime.now()
-            script.operator = result['data']
-            script.result = result["exec_tag"]
+            script.result = result['exec_tag']
+            script.explain = result['data']
+            if len(script.explain) > 5000:
+                script.explain = result['data'][-4999:]
             # 处理脚本执行失败问题
             if result["exec_tag"] == 1:
+                script.runlog = result['log']
                 print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
                 script.state = "ERROR"
                 script.save()
@@ -225,7 +230,7 @@ def runstep(steprun):
                 return False
 
             script.endtime = datetime.datetime.now()
-            script.operator = ""
+            script.result = ""
             script.state = "DONE"
             script.save()
         steprun.state = "DONE"
@@ -236,7 +241,7 @@ def runstep(steprun):
     if len(nextstep) > 0:
         nextsteprun = nextstep[0].steprun_set.exclude(state="9").filter(processrun=steprun.processrun)
         if len(nextsteprun) > 0:
-            if runstep(nextsteprun[0])==False:
+            if runstep(nextsteprun[0]) == False:
                 return False
     return True
 
@@ -249,30 +254,30 @@ def exec_process(processrunid):
     end_step_tag = False
     processrun = ProcessRun.objects.filter(id=processrunid)
     processrun = processrun[0]
-    steprunlist = StepRun.objects.exclude(state="9").filter(processrun=processrun,step__last=None,step__pnode=None,)
-    if len(steprunlist)>0:
+    steprunlist = StepRun.objects.exclude(state="9").filter(processrun=processrun, step__last=None, step__pnode=None, )
+    if len(steprunlist) > 0:
         end_step_tag = runstep(steprunlist[0])
     if end_step_tag:
-        processrun.state="DONE"
+        processrun.state = "DONE"
         processrun.save()
 
-        processtasks = ProcessTask.objects.filter(state="0",processrun=processrun)
-        if len(processtasks)>0:
-            processtasks[0].state="1"
+        processtasks = ProcessTask.objects.filter(state="0", processrun=processrun)
+        if len(processtasks) > 0:
+            processtasks[0].state = "1"
             processtasks[0].endtime = datetime.datetime.now()
             processtasks[0].save()
     else:
         processrun.state = "ERROR"
         processrun.save()
-        processtasks = ProcessTask.objects.filter(state="0",processrun=processrun)
-        if len(processtasks)>0:
-            processtasks[0].state="1"
+        processtasks = ProcessTask.objects.filter(state="0", processrun=processrun)
+        if len(processtasks) > 0:
+            processtasks[0].state = "1"
             processtasks[0].save()
 
             myprocesstask = ProcessTask()
             myprocesstask.processrun = processrun
             myprocesstask.starttime = datetime.datetime.now()
-            myprocesstask.senduser =processtasks[0].senduser
+            myprocesstask.senduser = processtasks[0].senduser
             myprocesstask.receiveuser = processtasks[0].receiveuser
             myprocesstask.type = "RUN"
             myprocesstask.state = "0"

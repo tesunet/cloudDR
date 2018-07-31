@@ -5703,16 +5703,12 @@ def setpsave(request):
             max_sort_from_pnode = \
                 Step.objects.exclude(state=9).filter(pnode_id=pid).filter(process_id=process_id).aggregate(Max("sort"))[
                     "sort__max"]
-
             # 当前没有父节点
-            if not max_sort_from_pnode:
-                max_sort_from_pnode = Step.objects.exclude(state=9).filter(id=pid)[0].sort
-            my_sort = max_sort_from_pnode + 1
-            changes_steps = Step.objects.exclude(state=9).filter(sort__gt=max_sort_from_pnode).filter(
-                process_id=process_id)
-            for changes_step in changes_steps:
-                changes_step.sort += 1
-                changes_step.save()
+            if max_sort_from_pnode or max_sort_from_pnode == 0:
+                my_sort = max_sort_from_pnode + 1
+            else:
+                my_sort = 0
+
             step = Step()
             step.skip = skip
             step.approval = approval
@@ -7002,13 +6998,18 @@ def get_step_tree(parent, selectid):
             id_code_plus = str(script.id) + "+" + str(script.code) + "&"
             script_string += id_code_plus
 
+        group_name = ""
+        if child.group:
+            group_id = child.group
+            group_name = Group.objects.filter(id=group_id)[0].name
+
         all_groups = Group.objects.exclude(state=9)
         group_string = ""
         for group in all_groups:
             id_name_plus = str(group.id) + "+" + str(group.name) + "&"
             group_string += id_name_plus
 
-        node["data"] = {"time": child.time, "approval": child.approval, "skip": child.skip,
+        node["data"] = {"time": child.time, "approval": child.approval, "skip": child.skip, "group_name": group_name,
                         "group": child.group, "scripts": script_string, "allgroups": group_string}
         try:
             if int(selectid) == child.id:
@@ -7255,6 +7256,19 @@ def move_step(request):
                 return HttpResponse("0")
 
 
+def get_all_groups(request):
+    if request.user.is_authenticated():
+        all_group_list = []
+        all_groups = Group.objects.exclude(state=9)
+        for group in all_groups:
+            group_info_dict = {
+                "group_id": group.id,
+                "group_name": group.name,
+            }
+            all_group_list.append(group_info_dict)
+        return JsonResponse({"data": all_group_list})
+
+
 def falconstorswitch(request):
     if request.user.is_authenticated():
         return render(request, 'falconstorswitch.html',
@@ -7372,11 +7386,11 @@ def getchildrensteps(processrun, curstep):
         if len(steprunlist) > 0:
             runid = steprunlist[0].id
             try:
-                starttime = steprunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                starttime = steprunlist[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
             except:
                 pass
             try:
-                endtime = steprunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                endtime = steprunlist[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
             except:
                 pass
             operator = steprunlist[0].operator
@@ -7400,11 +7414,11 @@ def getchildrensteps(processrun, curstep):
                 if len(scriptrunlist) > 0:
                     runscriptid = scriptrunlist[0].id
                     try:
-                        scriptstarttime = scriptrunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                        scriptstarttime = scriptrunlist[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
                     except:
                         pass
                     try:
-                        scriptendtime = scriptrunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                        scriptendtime = scriptrunlist[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
                     except:
                         pass
                         scriptoperator = scriptrunlist[0].operator
@@ -7451,11 +7465,11 @@ def getrunsetps(request):
                     if len(steprunlist) > 0:
                         runid = steprunlist[0].id
                         try:
-                            starttime = steprunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                            starttime = steprunlist[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
                         except:
                             pass
                         try:
-                            endtime = steprunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                            endtime = steprunlist[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
                         except:
                             pass
                         operator = steprunlist[0].operator
@@ -7480,11 +7494,11 @@ def getrunsetps(request):
                             if len(scriptrunlist) > 0:
                                 runscriptid = scriptrunlist[0].id
                                 try:
-                                    scriptstarttime = scriptrunlist[0].starttime.strftime("%Y-%m-%d %H:%S:%M")
+                                    scriptstarttime = scriptrunlist[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
                                 except:
                                     pass
                                 try:
-                                    scriptendtime = scriptrunlist[0].endtime.strftime("%Y-%m-%d %H:%S:%M")
+                                    scriptendtime = scriptrunlist[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
                                 except:
                                     pass
                                     scriptoperator = scriptrunlist[0].operator
@@ -7508,7 +7522,6 @@ def getrunsetps(request):
                                    "children": getchildrensteps(processruns[0], step)})
 
             return HttpResponse(json.dumps(result))
-
 
 
 def falconstorcontinue(request):
