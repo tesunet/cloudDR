@@ -7002,9 +7002,15 @@ def get_step_tree(parent, selectid):
         for script in scripts:
             id_code_plus = str(script.id) + "+" + str(script.code) + "&"
             script_string += id_code_plus
-        node["data"] = {"time": child.time, "approval": child.approval, "skip": child.skip,
-                        "group": child.group, "scripts": script_string}
 
+        all_groups = Group.objects.exclude(state=9)
+        group_string = ""
+        for group in all_groups:
+            id_name_plus = str(group.id) + "+" + str(group.name) + "&"
+            group_string += id_name_plus
+
+        node["data"] = {"time": child.time, "approval": child.approval, "skip": child.skip,
+                        "group": child.group, "scripts": script_string, "allgroups": group_string}
         try:
             if int(selectid) == child.id:
                 node["state"] = {"selected": True}
