@@ -82,7 +82,7 @@ if (App.isAngularJsApp() === false) {
                     if(data[i]["state"]=="DONE")
                         tabdone= "done"
                     var tabrun = ""
-                    if(data[i]["state"]=="RUN")
+                    if(data[i]["state"]=="RUN"||data[i]["state"]=="ERROR")
                         tabrun= "active"
                     $("ul.steps").append("<li id='li_" + (i + 1).toString() + "' class='" + tabdone + " " + tabrun  + "'><a href='#tab" + (i + 1).toString() + "' data-toggle='tab' class='step' aria-expanded='true'><span class='number'> " + (i + 1).toString() + " </span><span class='desc'><i hidden class='fa fa-check'></i> " + data[i]["name"] + " </span></a></li>")
                     $("div.tab-content").append("<div class='tab-pane " + tabrun + "' id='tab" + (i + 1).toString() + "'></div>")
@@ -95,7 +95,7 @@ if (App.isAngularJsApp() === false) {
                             var steprun = ""
                             var hidediv = "hidden"
                             var style = "display:none;"
-                            if(data[i]["children"][j]["state"]=="RUN") {
+                            if(data[i]["children"][j]["state"]=="RUN"||data[i]["children"][j]["state"]=="ERROR") {
                                 hidediv = ""
                                 steprun = "active"
                                 style = ""
@@ -165,6 +165,7 @@ if (App.isAngularJsApp() === false) {
                                     type: "post",
                                     data: {"steprunid": steprunid, "scriptid": scriptid},
                                     success: function (data) {
+                                        $("#steprunid").val(scriptid);
                                         $("#code").val(data.data["code"]);
                                         $("#script_ip").val(data.data["ip"]);
                                         $("#script_port").val(data.data["port"]);
@@ -186,7 +187,8 @@ if (App.isAngularJsApp() === false) {
 
                     });
 
-                $('#continue').click(function () {
+                // 继续
+                $('#exec').click(function () {
                     $.ajax({
                         type: "POST",
                         dataType: 'json',
@@ -207,6 +209,20 @@ if (App.isAngularJsApp() === false) {
                         }
                     });
                 })
+
+                // 跳过脚本
+                $("#ignore").click(function () {
+                    var scriptid = $("#script_button").val();
+                    $.ajax({
+                        url: "/ignore_current_script/",
+                        type: "post",
+                        data: {"scriptid": scriptid},
+                        success: function (data) {
+                            alert(data.data);
+                            $('#static').modal('hide');
+                        }
+                    });
+                });
 
             },
             error: function (e) {

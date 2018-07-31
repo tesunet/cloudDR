@@ -127,8 +127,7 @@ def exec_script(steprunid, username, fullname):
         if script_type == "BAT":
             system_tag = "Windows"
         rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
-        script.starttime = datetime.datetime.now()
-        result = rm_obj.run()
+        result = rm_obj.run(script.script.succeedtext)
 
         script.endtime = datetime.datetime.now()
         script.result = result["exec_tag"]
@@ -137,6 +136,7 @@ def exec_script(steprunid, username, fullname):
         # 处理脚本执行失败问题
         if result["exec_tag"] == 1:
             end_step_tag = False
+            script.state = "ERROR"
             steprun.state = "ERROR"
             script.save()
             steprun.save()
@@ -210,18 +210,20 @@ def runstep(steprun):
             if script_type == "BAT":
                 system_tag = "Windows"
             rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
-            script.starttime = datetime.datetime.now()
-            result = rm_obj.run()
+            result = rm_obj.run(script.script.succeedtext)
 
+            script.endtime = datetime.datetime.now()
+            script.operator = result['data']
             script.result = result["exec_tag"]
             # 处理脚本执行失败问题
             if result["exec_tag"] == 1:
                 print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
-                script.operator = result['data']
+                script.state = "ERROR"
                 script.save()
                 steprun.state = "ERROR"
                 steprun.save()
                 return False
+
             script.endtime = datetime.datetime.now()
             script.operator = ""
             script.state = "DONE"
