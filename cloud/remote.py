@@ -25,17 +25,17 @@ class ServerByPara(object):
         except:
             print("连接服务器失败")
             return {
-            "exec_tag": 1,
-            "data": "连接服务器失败",
-        }
+                "exec_tag": 1,
+                "data": "连接服务器失败",
+            }
         try:
             stdin, stdout, stderr = self.client.exec_command(self.cmd, get_pty=True)
         except:
             print("脚本执行超时")
             return {
-            "exec_tag": 1,
-            "data": "脚本执行超时",
-        }
+                "exec_tag": 1,
+                "data": "脚本执行超时",
+            }
         if stderr.readlines():
             exec_tag = 1
             for data in stderr.readlines():
@@ -52,7 +52,7 @@ class ServerByPara(object):
                 exec_tag = 0
             elif "syntax error" in data_init:  # 语法错误
                 exec_tag = 1
-            elif "No such file or directory":  # 脚本不存在
+            elif "No such file or directory" in data_init:  # 脚本不存在
                 exec_tag = 1
         return {
             "exec_tag": exec_tag,
@@ -67,9 +67,9 @@ class ServerByPara(object):
         except:
             print("连接服务器失败")
             return {
-            "exec_tag": 1,
-            "data": "连接服务器失败",
-        }
+                "exec_tag": 1,
+                "data": "连接服务器失败",
+            }
         if ret.std_err.decode():
             exec_tag = 1
             for data in ret.std_err.decode().split("\r\n"):
@@ -91,8 +91,9 @@ class ServerByPara(object):
         print(result)
         return result
 
-#if __name__ == '__main__':
-	#server_obj = ServerByPara(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-	#server_obj = ServerByPara(r"C:\Users\Administrator\Desktop\test0.bat", "192.168.100.153", "administrator","tesunet@2017", "Windows")
-	#server_obj = ServerByPara(r"/root/Desktop/test06.sh hello", "47.95.195.90", "root","!zxcvbn123", "Linux")
-	#server_obj.run()
+
+# if __name__ == '__main__':
+    # server_obj = ServerByPara(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    # server_obj = ServerByPara(r"C:\Users\Administrator\Desktop\test0.bat", "192.168.100.153", "administrator","tesunet@2017", "Windows")
+    # server_obj = ServerByPara(r"/root/Desktop/test01.sh", "47.95.195.90", "root", "!zxcvbn123", "Linux")
+    # server_obj.run()

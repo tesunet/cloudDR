@@ -135,8 +135,9 @@ $.ajax({
                 $("#time").val(data.node.data.time);
                 $("#group option:selected").val(data.node.data.group);
                 // all_groups
-                var groupInfoList = data.node.data.allgroups.split("&");
                 if (data.node.data.group) {
+                    var groupInfoList = data.node.data.allgroups.split("&");
+
                     for (var i = 0; i < groupInfoList.length - 1; i++) {
                         var singlegroupInfoList = groupInfoList[i].split("+");
                         if (singlegroupInfoList[0] == data.node.data.group) {
@@ -523,8 +524,9 @@ $("#process").change(function () {
                     $("#time").val(data.node.data.time);
 
                     // all_groups
-                    var groupInfoList = data.node.data.allgroups.split("&");
                     if (data.node.data.group) {
+                        var groupInfoList = data.node.data.allgroups.split("&");
+
                         for (var i = 0; i < groupInfoList.length - 1; i++) {
                             var singlegroupInfoList = groupInfoList[i].split("+");
                             if (singlegroupInfoList[0] == data.node.data.group) {
