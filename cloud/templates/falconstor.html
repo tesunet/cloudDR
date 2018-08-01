@@ -21,24 +21,25 @@
 
                         <div class="portlet-body form">
                             <form class="bs-example form-horizontal activate-form" id="submit_form"><input type="hidden" name="csrfmiddlewaretoken" value="Z4oof1pUpztfrL7Z9iubXVL7EJWDZhex">
+                                <input hidden id="process" type="text" name="process"  value="{{ process }}">
+                                <div id="wizarddiv">
+                                    <div class="form-wizard">
+                                        <div class="form-body">
 
-                                <div class="form-wizard">
-                                    <div class="form-body">
-                                        <input hidden id="process" type="text" name="process"
-                                                               value="{{ process }}">
-                                        <ul class="nav nav-pills nav-justified steps">
+                                            <ul class="nav nav-pills nav-justified steps">
 
-                                        </ul>
-                                        <div id="bar" class="progress progress-striped" role="progressbar">
-                                            <div class="progress-bar progress-bar-success" style="width: 20%;"></div>
-                                        </div>
-                                        <div class="tab-content">
+                                            </ul>
+                                            <div id="bar" class="progress progress-striped" role="progressbar">
+                                                <div class="progress-bar progress-bar-success" style="width: 20%;"></div>
+                                            </div>
+                                            <div class="tab-content">
+                                                    加载中...
 
-
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div id="static" class="modal fade" tabindex="-1" data-backdrop="static"
+                                </div>
+                                <div id="static" class="modal fade" tabindex="-1" data-backdrop="static"
                                          data-keyboard="false">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
@@ -156,8 +157,6 @@
                                             </div>
                                         </div>
                                     </div>
-
-                                </div>
                             </form>
                         </div>
                     </div>
