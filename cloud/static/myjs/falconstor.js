@@ -62,8 +62,9 @@ if (App.isAngularJsApp() === false) {
         })
         function timefun() {
             num++;
-            if(num>=10){
-                //getstep();
+            if(num>=15){
+               $('#form_wizard_1').removeData('bootstrapWizard');
+                getstep();
                 num=0;
             }
         }
