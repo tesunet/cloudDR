@@ -3,7 +3,7 @@ from cloud.views import *
 from django.conf import settings
 
 urlpatterns = [
-    url(r'^$', index),
+    url(r'^$', index), 
     url(r'^test/$', test),
     url(r'^index/$', index),
     url(r'^get_dashboard_amchart_1/$', get_dashboard_amchart_1),
