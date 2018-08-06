@@ -136,7 +136,9 @@ def exec_script(steprunid, username, fullname):
             script.explain = result['data'][-4999:]
         # 处理脚本执行失败问题
         if result["exec_tag"] == 1:
-            script.runlog = result['log']
+            script.explain = result['log']
+            if len(script.explain) > 5000:
+                script.explain = result['data'][-4999:]
             end_step_tag = False
             script.state = "ERROR"
             steprun.state = "ERROR"
@@ -221,7 +223,9 @@ def runstep(steprun):
                 script.explain = result['data'][-4999:]
             # 处理脚本执行失败问题
             if result["exec_tag"] == 1:
-                script.runlog = result['log']
+                script.explain = result['log']
+                if len(script.explain) > 5000:
+                    script.explain = result['data'][-4999:]
                 print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
                 script.state = "ERROR"
                 script.save()

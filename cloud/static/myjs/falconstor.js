@@ -97,8 +97,7 @@ if (App.isAngularJsApp() === false) {
                         if(data[i]["state"]=="RUN"||data[i]["state"]=="ERROR"||((i==data.length-1)&&data[i]["state"]=="DONE"))
                             tabrun= "active"
                         if(data[i]["state"]=="ERROR"||((i==data.length-1)&&data[i]["state"]=="DONE"))
-                            //window.clearInterval(t2);
-                            ;
+                            window.clearInterval(t2);
                         $("ul.steps").append("<li id='li_" + (i + 1).toString() + "' class='" + tabdone + " " + tabrun  + "'><a href='#tab" + (i + 1).toString() + "' data-toggle='tab' class='step' aria-expanded='true'><span class='number'> " + (i + 1).toString() + " </span><span class='desc'><i hidden class='fa fa-check'></i> " + data[i]["name"] + " </span></a></li>")
                         $("div.tab-content").append("<div class='tab-pane " + tabrun + "' id='tab" + (i + 1).toString() + "'></div>")
                         if(data[i]["children"].length>0){
@@ -188,7 +187,7 @@ if (App.isAngularJsApp() === false) {
                                             $("#scriptstate").val(data.data["state"]);
                                             $("#ontime").val(data.data["starttime"]);
                                             $("#offtime").val(data.data["endtime"]);
-                                            $("#operator").val(data.data["operator"]);
+                                            $("#errorinfo").val(data.data["explain"]);
                                             if(data.data["state"]=="执行中"||data.data["state"]=="执行失败"){
                                                 $("#b1").show();
                                             } else {

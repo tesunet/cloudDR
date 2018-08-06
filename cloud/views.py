@@ -6932,6 +6932,7 @@ def get_current_scriptinfo(request):
                 "starttime": starttime,
                 "endtime": endtime,
                 "operator": scriptrun_obj.operator,
+                "explain": scriptrun_obj.explain,
                 "show_button": show_button,
                 "step_id_from_script": step_id_from_script
             }
