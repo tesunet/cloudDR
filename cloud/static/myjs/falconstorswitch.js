@@ -16,7 +16,7 @@ $(document).ready(function () {
         "columnDefs": [{
                     "targets": -1,
                     "data": null,
-                    "defaultContent": "<button title='启动'  id='runrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-edit'></i></button>"
+                    "defaultContent": "<button title='启动'  id='runrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-play'></i></button>"
             }],
         "oLanguage": {
             "sLengthMenu": "&nbsp;&nbsp;每页显示 _MENU_ 条记录",
