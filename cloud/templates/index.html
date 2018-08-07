@@ -112,26 +112,34 @@
                         </div>
                         <div class="portlet-body">
                             <div class="scroller" style="height: 339px;" data-always-visible="1" data-rail-visible="0">
-                                <ul class="feeds">
+                                <ul class="feeds" id="locate_task">
                                     {% for task in alltask %}
-                                        <li>
-                                            <a href="{{ task.myurl }}">
-                                                <div class="col1">
-                                                    <div class="cont">
-                                                        <div class="cont-col1">
-                                                            <div class="label label-sm label-success">
-                                                                <i class="fa fa-bell-o"></i>
-                                                            </div>
+                                        <li id="{{ task.task_id }}">
+                                            {% if task.pop %}
+                                                <a href="" data-toggle="modal" data-target="#static01">
+                                                <input id="task_id" type="text" value="{{ task.task_id }}" hidden>
+                                                <input id="process_name" type="text" value="{{ task.process_name }}" hidden>
+                                                <input id="send_time" type="text" value="{{ task.send_time }}" hidden>
+                                                <input id="sign_role" type="text" value="{{ request.user.username }}" hidden>
+                                            {% else %}
+                                                <a href="{{ task.myurl }}">
+                                            {% endif %}
+                                            <div class="col1">
+                                                <div class="cont">
+                                                    <div class="cont-col1">
+                                                        <div class="label label-sm label-success">
+                                                            <i class="fa fa-bell-o"></i>
                                                         </div>
-                                                        <div class="cont-col2">
-                                                            <div class="desc"> {{ task.content }}
-                                                            </div>
+                                                    </div>
+                                                    <div class="cont-col2">
+                                                        <div class="desc"> {{ task.content }}
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col2">
-                                                    <div class="date"> {{ task.time }} </div>
-                                                </div>
+                                            </div>
+                                            <div class="col2">
+                                                <div class="date"> {{ task.time }} </div>
+                                            </div>
                                             </a>
                                         </li>
 
@@ -282,30 +290,33 @@
                             <div class="scroller" style="height: 339px;">
                                 <ul class="feeds" id="locate">
                                     {% for error_job in display_error_joblist %}
-                                    <li id="{{ error_job.jobid }}">
-                                        <div class="col1">
-                                            <div class="cont">
-                                                <div class="cont-col1">
-                                                    <div class="label label-sm label-info">
-                                                        <i class="fa fa-bullhorn"></i>
+                                        <li id="{{ error_job.jobid }}">
+                                            <div class="col1">
+                                                <div class="cont">
+                                                    <div class="cont-col1">
+                                                        <div class="label label-sm label-info">
+                                                            <i class="fa fa-bullhorn"></i>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div class="cont-col2">
-                                                    <div class="desc">
-                                                        <a href="#" data-toggle="modal" data-target="#static">
-                                                            <font style="vertical-align: inherit;">
-                                                                <font style="vertical-align: inherit;">{{ error_job.jobfailedreason }}
+                                                    <div class="cont-col2">
+                                                        <div class="desc">
+                                                            <a href="#" data-toggle="modal" data-target="#static">
+                                                                <font style="vertical-align: inherit;">
+                                                                    <font style="vertical-align: inherit;">{{ error_job.jobfailedreason }}
+                                                                    </font>
                                                                 </font>
-                                                            </font>
-                                                        </a>
-                                                        <input id="clientname_tag" type="text" value="{{ error_job.clientname }}" hidden>
-                                                        <input id="idataagent_tag" type="text" value="{{ error_job.idataagent }}" hidden>
-                                                        <input id="jobfailedreason_tag" type="text" value="{{ error_job.jobfailedreason }}" hidden>
+                                                            </a>
+                                                            <input id="clientname_tag" type="text"
+                                                                   value="{{ error_job.clientname }}" hidden>
+                                                            <input id="idataagent_tag" type="text"
+                                                                   value="{{ error_job.idataagent }}" hidden>
+                                                            <input id="jobfailedreason_tag" type="text"
+                                                                   value="{{ error_job.jobfailedreason }}" hidden>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </li>
+                                        </li>
                                     {% endfor %}
                                 </ul>
                             </div>
@@ -344,7 +355,9 @@
                                             <div class="form-group ">
                                                 <label class="col-md-3 control-label">告警信息</label>
                                                 <div class="col-md-9" id="">
-                                                    <textarea name="jobfailedreason" id="jobfailedreason" cols="50" rows="10" style="resize:none;" autocomplete="off" class="form-control" readonly></textarea>
+                                                    <textarea name="jobfailedreason" id="jobfailedreason" cols="50"
+                                                              rows="10" style="resize:none;" autocomplete="off"
+                                                              class="form-control" readonly></textarea>
                                                 </div>
                                             </div>
 
@@ -352,7 +365,8 @@
 
                                         <div class="form-actions ">
                                             <div class="modal-footer">
-                                                <button type="button" id="not_display" name="not_display" class="btn green">不再显示
+                                                <button type="button" id="not_display" name="not_display"
+                                                        class="btn green">不再显示
                                                 </button>
                                             </div>
                                         </div>
@@ -368,6 +382,70 @@
                 </div>
             </div>
 
+            <div id="static01" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">用户组签字</h4>
+                        </div>
+                        <div class="modal-body" style="margin-bottom:40px">
+                            <div id="myTabContent1" class="tab-content">
+                                <div>
+                                    <form action="#" class="bs-example form-horizontal" method="post">{% csrf_token %}
+                                        <div class="form-body">{% csrf_token %}
+                                            <div class="form-group ">
+                                                <label class="col-md-2 control-label">预案名称</label>
+                                                <div class="col-md-4 " style="padding-top:6px">
+                                                    <input id="mytask" type="text" hidden>
+                                                    <input type="text" id="processname" name="processname" disabled>
+                                                </div>
+                                                <label class="col-md-2 control-label">场景名称</label>
+                                                <div class="col-md-4 " style="padding-top:6px">
+                                                    <input type="text" id="processstage" name="processstage" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="form-group ">
+                                                <label class="col-md-2 control-label">发送时间</label>
+                                                <div class="col-md-4 " style="padding-top:6px">
+                                                    <input type="text" id="sendtime" name="sendtime" disabled>
+                                                </div>
+                                                <label class="col-md-2 control-label">签到角色</label>
+                                                <div class="col-md-4 " style="padding-top:6px">
+                                                    <input type="text" id="signrole" name="signrole" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="form-group ">
+                                                <label class="col-md-2 control-label">签到说明</label>
+                                                <div class="col-md-10">
+                                                    <textarea id="sign_info" class="form-control"
+                                                              placeholder="最大限制2500个汉字" rows="3"
+                                                              name="sign_info"></textarea>
+                                                    <div class="form-control-focus"></div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-actions">
+                                            <div class="row" style="TEXT-ALIGN: center;">
+                                                <div class="col-md-12">
+                                                    <button type="button" id="sign_save" name="sign_save"
+                                                            class="btn green uppercase">签到
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
 
             <div style="text-align:center">
                 <div class="copyright"> CopyRight &copy;2016 Maliang info tech Inc.</div>

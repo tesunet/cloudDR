@@ -210,6 +210,7 @@ class ProcessRun(models.Model):
     endtime = models.DateTimeField(u"结束时间", blank=True, null=True)
     creatuser = models.CharField(u"发起人", blank=True, max_length=50)
     state = models.CharField(u"状态", blank=True, null=True, max_length=20)
+    run_reason = models.CharField("启动原因", blank=True, null=True, max_length=2500)
 
 
 class StepRun(models.Model):

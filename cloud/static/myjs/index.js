@@ -1,18 +1,18 @@
-var Dashboard = function() {
+var Dashboard = function () {
 
     return {
 
-        initJQVMAP: function() {
+        initJQVMAP: function () {
             if (!jQuery().vectorMap) {
                 return;
             }
 
-            var showMap = function(name) {
+            var showMap = function (name) {
                 jQuery('.vmaps').hide();
                 jQuery('#vmap_' + name).show();
             }
 
-            var setMap = function(name) {
+            var setMap = function (name) {
                 var data = {
                     map: 'world_en',
                     backgroundColor: null,
@@ -29,15 +29,15 @@ var Dashboard = function() {
                     selectedColor: '#c9dfaf',
                     selectedRegion: null,
                     showTooltip: true,
-                    onLabelShow: function(event, label, code) {
+                    onLabelShow: function (event, label, code) {
 
                     },
-                    onRegionOver: function(event, code) {
+                    onRegionOver: function (event, code) {
                         if (code == 'ca') {
                             event.preventDefault();
                         }
                     },
-                    onRegionClick: function(element, code, region) {
+                    onRegionClick: function (element, code, region) {
                         var message = 'You clicked "' + region + '" which has the code: ' + code.toUpperCase();
                         alert(message);
                     }
@@ -61,36 +61,36 @@ var Dashboard = function() {
             setMap("germany");
             showMap("world");
 
-            jQuery('#regional_stat_world').click(function() {
+            jQuery('#regional_stat_world').click(function () {
                 showMap("world");
             });
 
-            jQuery('#regional_stat_usa').click(function() {
+            jQuery('#regional_stat_usa').click(function () {
                 showMap("usa");
             });
 
-            jQuery('#regional_stat_europe').click(function() {
+            jQuery('#regional_stat_europe').click(function () {
                 showMap("europe");
             });
-            jQuery('#regional_stat_russia').click(function() {
+            jQuery('#regional_stat_russia').click(function () {
                 showMap("russia");
             });
-            jQuery('#regional_stat_germany').click(function() {
+            jQuery('#regional_stat_germany').click(function () {
                 showMap("germany");
             });
 
             $('#region_statistics_loading').hide();
             $('#region_statistics_content').show();
 
-            App.addResizeHandler(function() {
-                jQuery('.vmaps').each(function() {
+            App.addResizeHandler(function () {
+                jQuery('.vmaps').each(function () {
                     var map = jQuery(this);
                     map.width(map.parent().width());
                 });
             });
         },
 
-        initCalendar: function() {
+        initCalendar: function () {
             if (!jQuery().fullCalendar) {
                 return;
             }
@@ -125,7 +125,6 @@ var Dashboard = function() {
                     };
                 }
             }
-
 
 
             $('#calendar').fullCalendar('destroy'); // destroy the calendar
@@ -178,7 +177,7 @@ var Dashboard = function() {
             });
         },
 
-        initCharts: function() {
+        initCharts: function () {
             if (!jQuery.plot) {
                 return;
             }
@@ -292,7 +291,7 @@ var Dashboard = function() {
                     });
 
                 var previousPoint = null;
-                $("#site_statistics").bind("plothover", function(event, pos, item) {
+                $("#site_statistics").bind("plothover", function (event, pos, item) {
                     $("#x").text(pos.x.toFixed(2));
                     $("#y").text(pos.y.toFixed(2));
                     if (item) {
@@ -398,7 +397,7 @@ var Dashboard = function() {
                         }
                     });
 
-                $("#site_activities").bind("plothover", function(event, pos, item) {
+                $("#site_activities").bind("plothover", function (event, pos, item) {
                     $("#x").text(pos.x.toFixed(2));
                     $("#y").text(pos.y.toFixed(2));
                     if (item) {
@@ -412,13 +411,13 @@ var Dashboard = function() {
                     }
                 });
 
-                $('#site_activities').bind("mouseleave", function() {
+                $('#site_activities').bind("mouseleave", function () {
                     $("#tooltip").remove();
                 });
             }
         },
 
-        initEasyPieCharts: function() {
+        initEasyPieCharts: function () {
             if (!jQuery().easyPieChart) {
                 return;
             }
@@ -444,8 +443,8 @@ var Dashboard = function() {
                 barColor: App.getBrandColor('red')
             });
 
-            $('.easy-pie-chart-reload').click(function() {
-                $('.easy-pie-chart .number').each(function() {
+            $('.easy-pie-chart-reload').click(function () {
+                $('.easy-pie-chart .number').each(function () {
                     var newValue = Math.floor(100 * Math.random());
                     $(this).data('easyPieChart').update(newValue);
                     $('span', this).text(newValue);
@@ -453,7 +452,7 @@ var Dashboard = function() {
             });
         },
 
-        initSparklineCharts: function() {
+        initSparklineCharts: function () {
             if (!jQuery().sparkline) {
                 return;
             }
@@ -501,7 +500,7 @@ var Dashboard = function() {
             });
         },
 
-        initMorisCharts: function() {
+        initMorisCharts: function () {
             if (Morris.EventEmitter && $('#sales_statistics').size() > 0) {
                 // Use Morris.Area instead of Morris.Line
                 dashboardMainChart = Morris.Area({
@@ -546,14 +545,14 @@ var Dashboard = function() {
             }
         },
 
-        initChat: function() {
+        initChat: function () {
             var cont = $('#chats');
             var list = $('.chats', cont);
             var form = $('.chat-form', cont);
             var input = $('input', form);
             var btn = $('.btn', form);
 
-            var handleClick = function(e) {
+            var handleClick = function (e) {
                 e.preventDefault();
 
                 var text = input.val();
@@ -579,9 +578,9 @@ var Dashboard = function() {
                 var msg = list.append(tpl);
                 input.val("");
 
-                var getLastPostPos = function() {
+                var getLastPostPos = function () {
                     var height = 0;
-                    cont.find("li.out, li.in").each(function() {
+                    cont.find("li.out, li.in").each(function () {
                         height = height + $(this).outerHeight();
                     });
 
@@ -593,7 +592,7 @@ var Dashboard = function() {
                 });
             }
 
-            $('body').on('click', '.message .name', function(e) {
+            $('body').on('click', '.message .name', function (e) {
                 e.preventDefault(); // prevent click event
 
                 var name = $(this).text(); // get clicked user's full name
@@ -603,7 +602,7 @@ var Dashboard = function() {
 
             btn.click(handleClick);
 
-            input.keypress(function(e) {
+            input.keypress(function (e) {
                 if (e.which == 13) {
                     handleClick(e);
                     return false; //<---- Add this line
@@ -611,7 +610,7 @@ var Dashboard = function() {
             });
         },
 
-        initDashboardDaterange: function() {
+        initDashboardDaterange: function () {
             if (!jQuery().daterangepicker) {
                 return;
             }
@@ -661,7 +660,7 @@ var Dashboard = function() {
                 //"startDate": "11/08/2015",
                 //"endDate": "11/14/2015",
                 opens: (App.isRTL() ? 'right' : 'left'),
-            }, function(start, end, label) {
+            }, function (start, end, label) {
                 $('#dashboard-report-range span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
             });
 
@@ -669,347 +668,345 @@ var Dashboard = function() {
             $('#dashboard-report-range').show();
         },
 
-        initAmChart1: function() {
+        initAmChart1: function () {
             if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_1').size() === 0) {
                 return;
             }
 
 
-
             $.ajax({
-                    type: "GET",
-                    url: "../get_dashboard_amchart_1/",
-                    data: {
-                        type:$('#type_1').val(),
-                    },
-                    success:function(data){
-                        var chartData=new Array;
-                        chartData=JSON.parse(data);
-                        var chart = AmCharts.makeChart("dashboard_amchart_1", {
-                            type: "serial",
-                            fontSize: 12,
-                            fontFamily: "Open Sans",
-                            dataProvider: chartData,
+                type: "GET",
+                url: "../get_dashboard_amchart_1/",
+                data: {
+                    type: $('#type_1').val(),
+                },
+                success: function (data) {
+                    var chartData = new Array;
+                    chartData = JSON.parse(data);
+                    var chart = AmCharts.makeChart("dashboard_amchart_1", {
+                        type: "serial",
+                        fontSize: 12,
+                        fontFamily: "Open Sans",
+                        dataProvider: chartData,
 
-                            addClassNames: true,
-                            startDuration: 1,
-                            color: "#6c7b88",
-                            marginLeft: 0,
+                        addClassNames: true,
+                        startDuration: 1,
+                        color: "#6c7b88",
+                        marginLeft: 0,
 
-                            categoryField: "date",
-                            categoryAxis: {
-                                parseDates: false,
-                                autoGridCount: false,
-                                gridCount: 50,
-                                gridAlpha: 0.1,
-                                gridColor: "#FFFFFF",
-                                axisColor: "#555555",
-                            },
+                        categoryField: "date",
+                        categoryAxis: {
+                            parseDates: false,
+                            autoGridCount: false,
+                            gridCount: 50,
+                            gridAlpha: 0.1,
+                            gridColor: "#FFFFFF",
+                            axisColor: "#555555",
+                        },
 
-                            valueAxes: [{
-                                id: "a1",
-                                gridAlpha: 0,
-                                axisAlpha: 0
-                            }, ],
-                            graphs: [{
-                                id: "g1",
-                                valueField: "times3",
-                                title: "备份成功",
-                                type: "column",
-                                fillAlphas: 0.7,
-                                valueAxis: "a1",
-                                balloonText: "[[value]] 次",
-                                legendValueText: "[[value]] 次",
-                                legendPeriodValueText: "小计: [[value.sum]] 次",
-                                lineColor: "#84b761",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]] 次",
-                                descriptionField: "date",
-                            },{
-                                id: "g2",
-                                valueField: "times2",
-                                title: "备份失败",
-                                type: "column",
-                                fillAlphas: 0.7,
-                                valueAxis: "a2",
-                                balloonText: "[[value]] 次",
-                                legendValueText: "[[value]] 次",
-                                legendPeriodValueText: "小计: [[value.sum]] 次",
-                                lineColor: "#F70909",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]] 次",
-                                descriptionField: "date",
-                            },{
-                                id: "g3",
-                                valueField: "times1",
-                                title: "备份合计",
-                                legendPeriodValueText: "合计: [[value.sum]] 次",
-                                lineColor: "#OOOOOO",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]] 次",
-                                descriptionField: "date",
-                            }],
+                        valueAxes: [{
+                            id: "a1",
+                            gridAlpha: 0,
+                            axisAlpha: 0
+                        },],
+                        graphs: [{
+                            id: "g1",
+                            valueField: "times3",
+                            title: "备份成功",
+                            type: "column",
+                            fillAlphas: 0.7,
+                            valueAxis: "a1",
+                            balloonText: "[[value]] 次",
+                            legendValueText: "[[value]] 次",
+                            legendPeriodValueText: "小计: [[value.sum]] 次",
+                            lineColor: "#84b761",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]] 次",
+                            descriptionField: "date",
+                        }, {
+                            id: "g2",
+                            valueField: "times2",
+                            title: "备份失败",
+                            type: "column",
+                            fillAlphas: 0.7,
+                            valueAxis: "a2",
+                            balloonText: "[[value]] 次",
+                            legendValueText: "[[value]] 次",
+                            legendPeriodValueText: "小计: [[value.sum]] 次",
+                            lineColor: "#F70909",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]] 次",
+                            descriptionField: "date",
+                        }, {
+                            id: "g3",
+                            valueField: "times1",
+                            title: "备份合计",
+                            legendPeriodValueText: "合计: [[value.sum]] 次",
+                            lineColor: "#OOOOOO",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]] 次",
+                            descriptionField: "date",
+                        }],
 
-                            chartCursor: {
-                                zoomable: false,
-                                categoryBalloonDateFormat: "DD",
-                                cursorAlpha: 0,
-                                categoryBalloonColor: "#e26a6a",
-                                categoryBalloonAlpha: 0.8,
-                                valueBalloonsEnabled: false
-                            },
-                            legend: {
-                                bulletType: "round",
-                                equalWidths: false,
-                                valueWidth: 120,
-                                useGraphSettings: true,
-                                color: "#6c7b88"
-                            }
-                        });
-                    },
-              });
+                        chartCursor: {
+                            zoomable: false,
+                            categoryBalloonDateFormat: "DD",
+                            cursorAlpha: 0,
+                            categoryBalloonColor: "#e26a6a",
+                            categoryBalloonAlpha: 0.8,
+                            valueBalloonsEnabled: false
+                        },
+                        legend: {
+                            bulletType: "round",
+                            equalWidths: false,
+                            valueWidth: 120,
+                            useGraphSettings: true,
+                            color: "#6c7b88"
+                        }
+                    });
+                },
+            });
 
         },
 
-        initAmChart2: function() {
-                        if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_2').size() === 0) {
+        initAmChart2: function () {
+            if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_2').size() === 0) {
                 return;
             }
 
             $.ajax({
-                    type: "GET",
-                    url: "../get_dashboard_amchart_2/",
-                    data: {
-                        type:$('#type_2').val(),
-                    },
-                    success:function(data){
-                        var chartData=new Array;
-                        chartData=JSON.parse(data);
-                        var chart = AmCharts.makeChart("dashboard_amchart_2", {
-                            type: "serial",
-                            fontSize: 12,
-                            fontFamily: "Open Sans",
-                            dataProvider: chartData,
+                type: "GET",
+                url: "../get_dashboard_amchart_2/",
+                data: {
+                    type: $('#type_2').val(),
+                },
+                success: function (data) {
+                    var chartData = new Array;
+                    chartData = JSON.parse(data);
+                    var chart = AmCharts.makeChart("dashboard_amchart_2", {
+                        type: "serial",
+                        fontSize: 12,
+                        fontFamily: "Open Sans",
+                        dataProvider: chartData,
 
-                            addClassNames: true,
-                            startDuration: 1,
-                            color: "#6c7b88",
-                            marginLeft: 0,
+                        addClassNames: true,
+                        startDuration: 1,
+                        color: "#6c7b88",
+                        marginLeft: 0,
 
-                            categoryField: "clientname",
-                            rotate: true,
-                            categoryAxis: {
-                                parseDates: false,
-                                autoGridCount: false,
-                                gridCount: 50,
-                                gridAlpha: 0.1,
-                                gridColor: "#FFFFFF",
-                                axisColor: "#555555",
-                            },
+                        categoryField: "clientname",
+                        rotate: true,
+                        categoryAxis: {
+                            parseDates: false,
+                            autoGridCount: false,
+                            gridCount: 50,
+                            gridAlpha: 0.1,
+                            gridColor: "#FFFFFF",
+                            axisColor: "#555555",
+                        },
 
-                            valueAxes: [{
-                                id: "a1",
-                                title: "",
-                                gridAlpha: 0,
-                                axisAlpha: 0
-                            },],
-                            graphs: [{
-                                id: "g1",
-                                valueField: "times3",
-                                title: "备份成功",
-                                type: "column",
-                                fillAlphas: 0.7,
-                                valueAxis: "a1",
-                                balloonText: "[[value]] 次",
-                                legendValueText: "[[value]] 次",
-                                legendPeriodValueText: "小计: [[value.sum]] 次",
-                                lineColor: "#84b761",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]]次",
-                                descriptionField: "clientname",
-                            },{
-                                id: "g2",
-                                valueField: "times2",
-                                title: "备份失败",
-                                type: "column",
-                                fillAlphas: 0.7,
-                                valueAxis: "a1",
-                                balloonText: "[[value]] 次",
-                                legendValueText: "[[value]] 次",
-                                legendPeriodValueText: "小计: [[value.sum]] 次",
-                                lineColor: "#F70909",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]]次",
-                                descriptionField: "clientname",
-                            },{
-                                id: "g3",
-                                valueField: "times1",
-                                title: "备份合计",
-                                legendPeriodValueText: "合计: [[value.sum]] 次",
-                                lineColor: "#OOOOOO",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]] 次 最近：[[lasttime]]",
-                                descriptionField: "clientname",
-                            }],
+                        valueAxes: [{
+                            id: "a1",
+                            title: "",
+                            gridAlpha: 0,
+                            axisAlpha: 0
+                        },],
+                        graphs: [{
+                            id: "g1",
+                            valueField: "times3",
+                            title: "备份成功",
+                            type: "column",
+                            fillAlphas: 0.7,
+                            valueAxis: "a1",
+                            balloonText: "[[value]] 次",
+                            legendValueText: "[[value]] 次",
+                            legendPeriodValueText: "小计: [[value.sum]] 次",
+                            lineColor: "#84b761",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]]次",
+                            descriptionField: "clientname",
+                        }, {
+                            id: "g2",
+                            valueField: "times2",
+                            title: "备份失败",
+                            type: "column",
+                            fillAlphas: 0.7,
+                            valueAxis: "a1",
+                            balloonText: "[[value]] 次",
+                            legendValueText: "[[value]] 次",
+                            legendPeriodValueText: "小计: [[value.sum]] 次",
+                            lineColor: "#F70909",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]]次",
+                            descriptionField: "clientname",
+                        }, {
+                            id: "g3",
+                            valueField: "times1",
+                            title: "备份合计",
+                            legendPeriodValueText: "合计: [[value.sum]] 次",
+                            lineColor: "#OOOOOO",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]] 次 最近：[[lasttime]]",
+                            descriptionField: "clientname",
+                        }],
 
-                            chartCursor: {
-                                zoomable: false,
-                                categoryBalloonDateFormat: "DD",
-                                cursorAlpha: 0,
-                                categoryBalloonColor: "#e26a6a",
-                                categoryBalloonAlpha: 0.8,
-                                valueBalloonsEnabled: false
-                            },
-                            legend: {
-                                bulletType: "round",
-                                equalWidths: false,
-                                valueWidth: 120,
-                                useGraphSettings: true,
-                                color: "#6c7b88"
-                            }
-                        });
-                    },
-              });
+                        chartCursor: {
+                            zoomable: false,
+                            categoryBalloonDateFormat: "DD",
+                            cursorAlpha: 0,
+                            categoryBalloonColor: "#e26a6a",
+                            categoryBalloonAlpha: 0.8,
+                            valueBalloonsEnabled: false
+                        },
+                        legend: {
+                            bulletType: "round",
+                            equalWidths: false,
+                            valueWidth: 120,
+                            useGraphSettings: true,
+                            color: "#6c7b88"
+                        }
+                    });
+                },
+            });
         },
 
-        initAmChart3: function() {
+        initAmChart3: function () {
             if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_1').size() === 0) {
                 return;
             }
 
 
-
             $.ajax({
-                    type: "GET",
-                    url: "../get_dashboard_amchart_3/",
-                    data: {
-                        type:$('#type_3').val(),
-                    },
-                    success:function(data){
-                        var chartData=new Array;
-                        chartData=JSON.parse(data);
-                        var chart = AmCharts.makeChart("dashboard_amchart_3", {
-                            type: "serial",
-                            fontSize: 12,
-                            fontFamily: "Open Sans",
-                            dataProvider: chartData,
+                type: "GET",
+                url: "../get_dashboard_amchart_3/",
+                data: {
+                    type: $('#type_3').val(),
+                },
+                success: function (data) {
+                    var chartData = new Array;
+                    chartData = JSON.parse(data);
+                    var chart = AmCharts.makeChart("dashboard_amchart_3", {
+                        type: "serial",
+                        fontSize: 12,
+                        fontFamily: "Open Sans",
+                        dataProvider: chartData,
 
-                            addClassNames: true,
-                            startDuration: 1,
-                            color: "#6c7b88",
-                            marginLeft: 0,
+                        addClassNames: true,
+                        startDuration: 1,
+                        color: "#6c7b88",
+                        marginLeft: 0,
 
-                            categoryField: "date",
-                            categoryAxis: {
-                                parseDates: false,
-                                autoGridCount: false,
-                                gridCount: 50,
-                                gridAlpha: 0.1,
-                                gridColor: "#FFFFFF",
-                                axisColor: "#555555",
-                            },
+                        categoryField: "date",
+                        categoryAxis: {
+                            parseDates: false,
+                            autoGridCount: false,
+                            gridCount: 50,
+                            gridAlpha: 0.1,
+                            gridColor: "#FFFFFF",
+                            axisColor: "#555555",
+                        },
 
-                            valueAxes: [{
-                                id: "a1",
-                                gridAlpha: 0,
-                                axisAlpha: 0
-                            }, ],
-                            graphs: [{
-                                id: "g1",
-                                valueField: "ll",
-                                title: "网络流量",
-                                type: "column",
-                                fillAlphas: 0.7,
-                                valueAxis: "a1",
-                                balloonText: "[[value]] MB",
-                                legendValueText: "[[value]] MB",
-                                legendPeriodValueText: "合计: [[value.sum]] MB",
-                                lineColor: "#84b761",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]] MB",
-                                descriptionField: "date",
-                            },{
-                                id: "g2",
-                                valueField: "rl",
-                                title: "磁盘容量",
-                                type: "column",
-                                fillAlphas: 0.7,
-                                valueAxis: "a2",
-                                balloonText: "[[value]] MB",
-                                legendValueText: "[[value]] MB",
+                        valueAxes: [{
+                            id: "a1",
+                            gridAlpha: 0,
+                            axisAlpha: 0
+                        },],
+                        graphs: [{
+                            id: "g1",
+                            valueField: "ll",
+                            title: "网络流量",
+                            type: "column",
+                            fillAlphas: 0.7,
+                            valueAxis: "a1",
+                            balloonText: "[[value]] MB",
+                            legendValueText: "[[value]] MB",
+                            legendPeriodValueText: "合计: [[value.sum]] MB",
+                            lineColor: "#84b761",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]] MB",
+                            descriptionField: "date",
+                        }, {
+                            id: "g2",
+                            valueField: "rl",
+                            title: "磁盘容量",
+                            type: "column",
+                            fillAlphas: 0.7,
+                            valueAxis: "a2",
+                            balloonText: "[[value]] MB",
+                            legendValueText: "[[value]] MB",
 
-                                lineColor: "#98F5FF",
-                                alphaField: "alpha",
-                                legendValueText: "[[description]]：[[value]] MB",
-                                descriptionField: "date",
-                            }],
+                            lineColor: "#98F5FF",
+                            alphaField: "alpha",
+                            legendValueText: "[[description]]：[[value]] MB",
+                            descriptionField: "date",
+                        }],
 
-                            chartCursor: {
-                                zoomable: false,
-                                categoryBalloonDateFormat: "DD",
-                                cursorAlpha: 0,
-                                categoryBalloonColor: "#e26a6a",
-                                categoryBalloonAlpha: 0.8,
-                                valueBalloonsEnabled: false
-                            },
-                            legend: {
-                                bulletType: "round",
-                                equalWidths: false,
-                                valueWidth: 120,
-                                useGraphSettings: true,
-                                color: "#6c7b88"
-                            }
-                        });
-                    },
-              });
+                        chartCursor: {
+                            zoomable: false,
+                            categoryBalloonDateFormat: "DD",
+                            cursorAlpha: 0,
+                            categoryBalloonColor: "#e26a6a",
+                            categoryBalloonAlpha: 0.8,
+                            valueBalloonsEnabled: false
+                        },
+                        legend: {
+                            bulletType: "round",
+                            equalWidths: false,
+                            valueWidth: 120,
+                            useGraphSettings: true,
+                            color: "#6c7b88"
+                        }
+                    });
+                },
+            });
 
         },
 
-        initAmChart4: function() {
+        initAmChart4: function () {
             if (typeof(AmCharts) === 'undefined' || $('#dashboard_amchart_4').size() === 0) {
                 return;
             }
             $.ajax({
-                    type: "GET",
-                    url: "../get_dashboard_amchart_4",
-                    data: {
-                        type:$('#type_4').val(),
-                    },
-                    success:function(data){
-                        var chartData=new Array;
-                        chartData=JSON.parse(data);
-                        var chart = AmCharts.makeChart("dashboard_amchart_4", {
-                            "type": "pie",
-                            "theme": "light",
-                            "dataProvider": chartData,
-                            "valueField": "value",
-                            "titleField": "country",
-                            "outlineAlpha": 0.4,
-                            "depth3D": 20,
-                            "balloonText": "[[title]]<br><span style='font-size:14px'><b>[[value]]</b> ([[percents]]%)</span>",
-                            "angle": 20,
-                            "export": {
-                                "enabled": true
-                            }
-                        });
-                        jQuery('.chart-input').off().on('input change', function() {
-                            var property = jQuery(this).data('property');
-                            var target = chart;
-                            var value = Number(this.value);
-                            chart.startDuration = 0;
+                type: "GET",
+                url: "../get_dashboard_amchart_4",
+                data: {
+                    type: $('#type_4').val(),
+                },
+                success: function (data) {
+                    var chartData = new Array;
+                    chartData = JSON.parse(data);
+                    var chart = AmCharts.makeChart("dashboard_amchart_4", {
+                        "type": "pie",
+                        "theme": "light",
+                        "dataProvider": chartData,
+                        "valueField": "value",
+                        "titleField": "country",
+                        "outlineAlpha": 0.4,
+                        "depth3D": 20,
+                        "balloonText": "[[title]]<br><span style='font-size:14px'><b>[[value]]</b> ([[percents]]%)</span>",
+                        "angle": 20,
+                        "export": {
+                            "enabled": true
+                        }
+                    });
+                    jQuery('.chart-input').off().on('input change', function () {
+                        var property = jQuery(this).data('property');
+                        var target = chart;
+                        var value = Number(this.value);
+                        chart.startDuration = 0;
 
-                            if (property == 'innerRadius') {
-                                value += "%";
-                            }
+                        if (property == 'innerRadius') {
+                            value += "%";
+                        }
 
-                            target[property] = value;
-                            chart.validateNow();
-                        });
-                    }
+                        target[property] = value;
+                        chart.validateNow();
+                    });
+                }
             });
         },
 
-        initWorldMapStats: function() {
+        initWorldMapStats: function () {
             if ($('#mapplic').size() === 0) {
                 return;
             }
@@ -1069,7 +1066,7 @@ var Dashboard = function() {
             });
         },
 
-        init: function() {
+        init: function () {
 
             this.initJQVMAP();
             this.initCalendar();
@@ -1092,76 +1089,76 @@ var Dashboard = function() {
 }();
 
 if (App.isAngularJsApp() === false) {
-    jQuery(document).ready(function() {
+    jQuery(document).ready(function () {
         Dashboard.init(); // init metronic core componets
     });
 }
 
-$(document).ready(function() {
-    $('#option4_2').click(function(){
+$(document).ready(function () {
+    $('#option4_2').click(function () {
         $('#type_4').val("2")
         Dashboard.initAmChart4();
     })
-    $('#option4_3').click(function(){
+    $('#option4_3').click(function () {
         $('#type_4').val("3")
         Dashboard.initAmChart4();
     })
-    $('#option4_4').click(function(){
+    $('#option4_4').click(function () {
         $('#type_4').val("4")
         Dashboard.initAmChart4();
     })
-    $('#option4_1').click(function(){
+    $('#option4_1').click(function () {
         $('#type_4').val("1")
         Dashboard.initAmChart4();
     })
 
-        $('#option1_2').click(function(){
+    $('#option1_2').click(function () {
         $('#type_1').val("2")
         Dashboard.initAmChart1();
     })
-    $('#option1_3').click(function(){
+    $('#option1_3').click(function () {
         $('#type_1').val("3")
         Dashboard.initAmChart1();
     })
-    $('#option1_4').click(function(){
+    $('#option1_4').click(function () {
         $('#type_1').val("4")
         Dashboard.initAmChart1();
     })
-    $('#option1_1').click(function(){
+    $('#option1_1').click(function () {
         $('#type_1').val("1")
         Dashboard.initAmChart1();
     })
 
-    $('#option2_2').click(function(){
+    $('#option2_2').click(function () {
         $('#type_2').val("2")
         Dashboard.initAmChart2();
     })
-    $('#option2_3').click(function(){
+    $('#option2_3').click(function () {
         $('#type_2').val("3")
         Dashboard.initAmChart2();
     })
-    $('#option2_4').click(function(){
+    $('#option2_4').click(function () {
         $('#type_2').val("4")
         Dashboard.initAmChart2();
     })
-    $('#option2_1').click(function(){
+    $('#option2_1').click(function () {
         $('#type_2').val("1")
         Dashboard.initAmChart2();
     })
 
-        $('#option3_2').click(function(){
+    $('#option3_2').click(function () {
         $('#type_3').val("2")
         Dashboard.initAmChart3();
     })
-    $('#option3_3').click(function(){
+    $('#option3_3').click(function () {
         $('#type_3').val("3")
         Dashboard.initAmChart3();
     })
-    $('#option3_4').click(function(){
+    $('#option3_4').click(function () {
         $('#type_3').val("4")
         Dashboard.initAmChart3();
     })
-    $('#option3_1').click(function(){
+    $('#option3_1').click(function () {
         $('#type_3').val("1")
         Dashboard.initAmChart3();
     })
@@ -1186,6 +1183,15 @@ $("ul#locate").on("click", " li", function () {
     $("input#jobid").val(job_id);
 });
 
+$("ul#locate_task").on("click", " li", function () {
+    var task_id = $(this).attr("id");
+    $("#mytask").val($("#a".replace("a", task_id)).find("input#task_id").val());
+    $("#processname").val($("#a".replace("a", task_id)).find("input#process_name").val());
+    $("#sendtime").val($("#a".replace("a", task_id)).find("input#send_time").val());
+    $("#signrole").val($("#a".replace("a", task_id)).find("input#sign_role").val());
+});
+
+
 $("button#not_display").on("click", function () {
     var job_id = $("input#jobid").val();
     var csrfToken = $("[name='csrfmiddlewaretoken']").val();
@@ -1197,9 +1203,9 @@ $("button#not_display").on("click", function () {
             "csrfmiddlewaretoken": csrfToken,
         },
         success: function (data) {
-            if (data["result"] == "0"){
+            if (data["result"] == "0") {
                 alert("取消显示成功!");
-            } else{
+            } else {
                 alert("取消显示失败,请联系系统管理员!")
             }
             $('#static').modal('hide');
@@ -1207,5 +1213,32 @@ $("button#not_display").on("click", function () {
         }
     });
 });
+
+
+$("#sign_save").click(function () {
+    var csrfToken = $("[name='csrfmiddlewaretoken']").val();
+    $.ajax({
+        type: "POST",
+        url: "../processsignsave/",
+        data: {
+            "task_id": $("#mytask").val(),
+            "sign_info": $("#sign_info").val(),
+            "csrfmiddlewaretoken": csrfToken,
+        },
+        success: function (data) {
+            if (data["res"] == "签字成功,同时启动流程。") {
+                window.location.href = data["data"];
+            }
+            else
+                alert(data["res"]);
+                $('#static01').modal('hide');
+        },
+        error: function (e) {
+            alert("流程启动失败，请于管理员联系。");
+        }
+    });
+});
+
+
 
 

@@ -89,13 +89,21 @@ def index(request):
             "-starttime").all()
         if len(allprosstasks) > 0:
             for task in allprosstasks:
+                send_time = task.starttime
+                process_name = task.processrun.process.name
                 myurl = task.processrun.process.url + "/" + str(task.processrun_id)
+                process_type = task.type
+                if process_type == "SIGN":
+                    pop = True
+                else:
+                    pop = False
                 time = ""
                 time = task.starttime
                 time = time.replace(tzinfo=None)
                 timenow = datetime.datetime.now()
                 days = int((timenow - time).days)
                 hours = int((timenow - time).seconds / 3600)
+                task_id = task.id
 
                 if days > 1095:
                     time = "很久以前"
@@ -137,8 +145,8 @@ def index(request):
                                                             else:
                                                                 time = "刚刚"
 
-                alltask.append({"content": task.content, "myurl": myurl, "time": time})
-
+                alltask.append({"content": task.content, "myurl": myurl, "time": time, "pop": pop, "task_id": task_id,
+                                "process_name": process_name, "send_time": send_time})
         # cvToken = CV_RestApi_Token()
         # cvToken.login(info)
         # cvAPI = CV_API(cvToken)
@@ -7299,6 +7307,9 @@ def falconstorrun(request):
     if request.user.is_authenticated():
         result = {}
         processid = request.POST.get('processid', '')
+        run_person = request.POST.get('run_person', '')
+        run_time = request.POST.get('run_time', '')
+        run_reason = request.POST.get('run_reason', '')
         try:
             processid = int(processid)
         except:
@@ -7316,6 +7327,7 @@ def falconstorrun(request):
                 myprocessrun.process = process[0]
                 myprocessrun.starttime = datetime.datetime.now()
                 myprocessrun.creatuser = request.user.username
+                myprocessrun.run_reason = run_reason
                 myprocessrun.state = "RUN"
                 myprocessrun.DataSet_id = 89
                 myprocessrun.save()
@@ -7340,18 +7352,26 @@ def falconstorrun(request):
                             myscriptrun.state = "EDIT"
                             myscriptrun.save()
 
-                    myprocesstask = ProcessTask()
-                    myprocesstask.processrun = myprocessrun
-                    myprocesstask.starttime = datetime.datetime.now()
-                    myprocesstask.senduser = request.user.username
-                    myprocesstask.receiveuser = request.user.username
-                    myprocesstask.type = "RUN"
-                    myprocesstask.state = "0"
-                    myprocesstask.content = process[0].name + " 流程已启动，点击查看。"
-                    myprocesstask.save()
-
-                    exec_process.delay(myprocessrun.id)
-
+                    allgroup = process[0].step_set.exclude(state="9").exclude(Q(approval="0") | Q(approval="")).values(
+                        "group").distinct()
+                    if process[0].sign == "1" and len(allgroup) > 0:
+                        for group in allgroup:
+                            print(group)
+                            try:
+                                signgroup = Group.objects.get(id=int(group["group"]))
+                                groupname = signgroup.name
+                                myprocesstask = ProcessTask()
+                                myprocesstask.processrun = myprocessrun
+                                myprocesstask.starttime = datetime.datetime.now()
+                                myprocesstask.senduser = request.user.username
+                                myprocesstask.receiveauth = group["group"]
+                                myprocesstask.type = "SIGN"
+                                myprocesstask.state = "0"
+                                myprocesstask.content = "管理员将启动流程“" + myprocessrun.process.name + "”，请" + groupname + "签字。"
+                                # print(myprocesstask.content)
+                                myprocesstask.save()
+                            except:
+                                pass
                     result["res"] = "新增成功。"
                     result["data"] = process[0].url + "/" + str(myprocessrun.id)
 
@@ -7536,3 +7556,51 @@ def falconstorcontinue(request):
         exec_process.delay(process)
         result["res"] = "执行成功。"
         return HttpResponse(json.dumps(result))
+
+
+def processsignsave(request):
+    """
+    判断是否最后一个签字，如果是,签字后启动程序
+    :param request:
+    :return:
+    """
+    if 'task_id' in request.POST:
+        result = {}
+        id = request.POST.get('task_id', '')
+        sign_info = request.POST.get('sign_info', '')
+
+        try:
+            id = int(id)
+        except:
+            raise Http404()
+        try:
+            prosstask = ProcessTask.objects.get(id=id)
+            prosstask.operator = request.user.username
+            prosstask.explain = sign_info
+            prosstask.endtime = datetime.datetime.now()
+            prosstask.state = "1"
+            prosstask.save()
+
+            myprocessrun = prosstask.processrun
+            prosssigns = ProcessTask.objects.filter(processrun=myprocessrun, state="0")
+            if len(prosssigns) <= 0:
+                # myprocessrun.state = "RUN"
+                # myprocessrun.save()
+
+                myprocess = myprocessrun.process
+                myprocesstask = ProcessTask()
+                myprocesstask.processrun = myprocessrun
+                myprocesstask.starttime = datetime.datetime.now()
+                myprocesstask.type = "RUN"
+                myprocesstask.state = "0"
+                myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
+                myprocesstask.save()
+
+                # exec_process.delay(myprocessrun.id)
+                result["res"] = "签字成功,同时启动流程。"
+                result["data"] = myprocess.url + "/" + str(myprocessrun.id)
+            else:
+                result["res"] = "签字成功。"
+        except:
+            result["res"] = "流程启动失败，请于管理员联系。"
+        return JsonResponse(result)

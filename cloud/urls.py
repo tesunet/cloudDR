@@ -3,7 +3,7 @@ from cloud.views import *
 from django.conf import settings
 
 urlpatterns = [
-    url(r'^$', index), 
+    url(r'^$', index),
     url(r'^test/$', test),
     url(r'^index/$', index),
     url(r'^get_dashboard_amchart_1/$', get_dashboard_amchart_1),
@@ -180,6 +180,7 @@ urlpatterns = [
     url(r'^falconstor/(\d+)/$', falconstor),
     url(r'^getrunsetps/$', getrunsetps),
     url(r'^falconstorcontinue/$', falconstorcontinue),
+    url(r'^processsignsave/$', processsignsave),
 
     url(r'^custom_step_tree/$', custom_step_tree),
     url(r'^step_tree_index/$', step_tree_index),

@@ -5,19 +5,19 @@ $(document).ready(function () {
         "bProcessing": true,
         "ajax": "../falconstorswitchdata/",
         "columns": [
-            { "data": "name" },
-            { "data": "rto" },
-            { "data": "rpo" },
-            { "data": "remark" },
-            { "data": null },
+            {"data": "name"},
+            {"data": "rto"},
+            {"data": "rpo"},
+            {"data": "remark"},
+            {"data": null},
 
         ],
 
         "columnDefs": [{
-                    "targets": -1,
-                    "data": null,
-                    "defaultContent": "<button title='启动'  id='runrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-play'></i></button>"
-            }],
+            "targets": -1,
+            "data": null,
+            "defaultContent": "<button title='启动'  id='runrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-play'></i></button>"
+        }],
         "oLanguage": {
             "sLengthMenu": "&nbsp;&nbsp;每页显示 _MENU_ 条记录",
             "sZeroRecords": "抱歉， 没有找到",
@@ -35,29 +35,43 @@ $(document).ready(function () {
 
         }
     });
-    // 行按钮
-    $('#sample_1 tbody').on( 'click', 'button#runrow', function () {
-                var table = $('#sample_1').DataTable();
-                var data = table.row( $(this).parents('tr') ).data();
-                var processid = data.id;
-                $.ajax({
-                    type: "POST",
-                    dataType: 'json',
-                    url: "../falconstorrun/",
-                    data:
-                        {
-                            processid: processid,
-                        },
-                    success: function (data) {
-                        if (data["res"] == "新增成功。") {
-                            window.location.href= data["data"];
-                        }
-                        else
-                            alert(data["res"]);
-                    },
-                    error: function (e) {
-                        alert("流程启动失败，请于管理员联系。");
-                    }
-                });
-            });
+
+
+    $('#sample_1 tbody').on('click', 'button#runrow', function () {
+        var table = $('#sample_1').DataTable();
+        var data = table.row($(this).parents('tr')).data();
+        $("#process_id").val(data.id);
+        $("#static").modal({backdrop: "static"});
+        // 写入当前时间
+        var myDate = new Date();
+        $("#run_time").val(myDate.toLocaleString());
+    });
+
+    $("#confirm").click(function () {
+        var processid = $("#process_id").val();
+        $.ajax({
+            type: "POST",
+            dataType: 'json',
+            url: "../falconstorrun/",
+            data:
+                {
+                    processid: processid,
+                    run_person: $("#run_person").val(),
+                    run_time: $("#run_time").val(),
+                    run_reason: $("#run_reason").val(),
+                },
+            success: function (data) {
+                if (data["res"] == "新增成功。") {
+                    window.location.href = data["data"];
+                }
+                else
+                    alert(data["res"]);
+            },
+            error: function (e) {
+                alert("流程启动失败，请于管理员联系。");
+            }
+        });
+    })
+
+
 });
