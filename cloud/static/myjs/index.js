@@ -1189,6 +1189,7 @@ $("ul#locate_task").on("click", " li", function () {
     $("#processname").val($("#a".replace("a", task_id)).find("input#process_name").val());
     $("#sendtime").val($("#a".replace("a", task_id)).find("input#send_time").val());
     $("#signrole").val($("#a".replace("a", task_id)).find("input#sign_role").val());
+    $("#processrunreason").val($("#a".replace("a", task_id)).find("input#process_run_reason").val());
 });
 
 

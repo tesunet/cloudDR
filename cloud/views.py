@@ -91,6 +91,7 @@ def index(request):
             for task in allprosstasks:
                 send_time = task.starttime
                 process_name = task.processrun.process.name
+                process_run_reason = task.processrun.run_reason
                 myurl = task.processrun.process.url + "/" + str(task.processrun_id)
                 process_type = task.type
                 if process_type == "SIGN":
@@ -146,7 +147,7 @@ def index(request):
                                                                 time = "刚刚"
 
                 alltask.append({"content": task.content, "myurl": myurl, "time": time, "pop": pop, "task_id": task_id,
-                                "process_name": process_name, "send_time": send_time})
+                                "process_name": process_name, "send_time": send_time, "process_run_reason": process_run_reason, "group_name": guoups[0].name})
         # cvToken = CV_RestApi_Token()
         # cvToken.login(info)
         # cvAPI = CV_API(cvToken)
@@ -2333,7 +2334,6 @@ def vmresourcedata(request):
                         password = hostnode.getAttribute("password")
                         datacenter = hostnode.getAttribute("datacenter")
                         cluster = hostnode.getAttribute("cluster")
-
                 vm_api = VM_API(ip, username, password)
                 vmlist = vm_api.getvmlist(datacenter, cluster, None, name)
                 state_tag = """<i class="fa fa-stop fa-2x" style="color:#ff0000;font-size:25px" title="已停止"></i>"""
@@ -2350,7 +2350,7 @@ def vmresourcedata(request):
                     cpu = node.getAttribute("cpu")
                     memory = node.getAttribute("memory")
                     disk = node.getAttribute("disk")
-
+                print("result", result)
                 result.append(
                     {"id": id, "name": name, "description": description,
                      "cpu": cpu, "memory": memory,
@@ -2382,7 +2382,6 @@ def vmresourcepooldata(request):
                         password = hostnode.getAttribute("password")
                 result.append({"id": id, "name": name, "type": type, "supplier": supplier, "description": description,
                                "ip": ip, "username": username, "password": password})
-
         return HttpResponse(json.dumps({"data": result}))
 
 
@@ -5688,6 +5687,7 @@ def getsetps(request):
                         result.append({"id": step.id, "code": step.code, "name": step.name, "approval": step.approval,
                                        "skip": step.skip, "group": step.group, "time": step.time,
                                        "curstring": curstring})
+            print("result", result)
             return HttpResponse(json.dumps(result))
 
 
@@ -7314,7 +7314,6 @@ def falconstorrun(request):
             processid = int(processid)
         except:
             raise Http404()
-
         process = Process.objects.filter(id=processid).exclude(state="9")
         if (len(process) <= 0):
             result["res"] = '流程启动失败，该流程不存在。'
@@ -7353,28 +7352,46 @@ def falconstorrun(request):
                             myscriptrun.save()
 
                     allgroup = process[0].step_set.exclude(state="9").exclude(Q(approval="0") | Q(approval="")).values(
-                        "group").distinct()
-                    if process[0].sign == "1" and len(allgroup) > 0:
-                        for group in allgroup:
-                            print(group)
-                            try:
-                                signgroup = Group.objects.get(id=int(group["group"]))
-                                groupname = signgroup.name
+                        "group").distinct()  # 当前预案下需要签字的组,但一个对象只发送一次task
+
+                    if process[0].sign == "1":
+                        if len(allgroup) > 0:  # 如果预案流程已经启动,发送签字tasks
+                            for group in allgroup:
+                                print(group)
+                                try:
+                                    signgroup = Group.objects.get(id=int(group["group"]))
+                                    groupname = signgroup.name
+                                    myprocesstask = ProcessTask()
+                                    myprocesstask.processrun = myprocessrun
+                                    myprocesstask.starttime = datetime.datetime.now()
+                                    myprocesstask.senduser = request.user.username
+                                    myprocesstask.receiveauth = group["group"]
+                                    myprocesstask.type = "SIGN"
+                                    myprocesstask.state = "0"
+                                    myprocesstask.content = "管理员将启动流程“" + myprocessrun.process.name + "”，请" + groupname + "签字。"
+                                    myprocesstask.save()
+                                except:
+                                    pass
+                            result["res"] = "新增成功。"
+                            result["data"] = "/"
+
+                        else:
+                            prosssigns = ProcessTask.objects.filter(processrun=myprocessrun, state="0")
+                            if len(prosssigns) <= 0:
+                                myprocess = myprocessrun.process
                                 myprocesstask = ProcessTask()
                                 myprocesstask.processrun = myprocessrun
                                 myprocesstask.starttime = datetime.datetime.now()
-                                myprocesstask.senduser = request.user.username
-                                myprocesstask.receiveauth = group["group"]
-                                myprocesstask.type = "SIGN"
+                                myprocesstask.type = "RUN"
                                 myprocesstask.state = "0"
-                                myprocesstask.content = "管理员将启动流程“" + myprocessrun.process.name + "”，请" + groupname + "签字。"
-                                # print(myprocesstask.content)
+                                myprocesstask.receiveuser = request.user.username
+                                myprocesstask.senduser = request.user.username
+                                myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
                                 myprocesstask.save()
-                            except:
-                                pass
-                    result["res"] = "新增成功。"
-                    result["data"] = process[0].url + "/" + str(myprocessrun.id)
 
+                                # exec_process.delay(myprocessrun.id)
+                                result["res"] = "新增成功。"
+                                result["data"] = process[0].url + "/" + str(myprocessrun.id)
         return HttpResponse(json.dumps(result))
 
 
@@ -7584,9 +7601,6 @@ def processsignsave(request):
             myprocessrun = prosstask.processrun
             prosssigns = ProcessTask.objects.filter(processrun=myprocessrun, state="0")
             if len(prosssigns) <= 0:
-                # myprocessrun.state = "RUN"
-                # myprocessrun.save()
-
                 myprocess = myprocessrun.process
                 myprocesstask = ProcessTask()
                 myprocesstask.processrun = myprocessrun
@@ -7594,6 +7608,8 @@ def processsignsave(request):
                 myprocesstask.type = "RUN"
                 myprocesstask.state = "0"
                 myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
+                myprocesstask.receiveuser = request.user.username
+                myprocesstask.senduser = request.user.username
                 myprocesstask.save()
 
                 # exec_process.delay(myprocessrun.id)
