@@ -7608,6 +7608,7 @@ def processsignsave(request):
                 myprocesstask.type = "RUN"
                 myprocesstask.state = "0"
                 myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
+                myprocesstask.starttime = datetime.datetime.now()
                 myprocesstask.receiveuser = request.user.username
                 myprocesstask.senduser = request.user.username
                 myprocesstask.save()

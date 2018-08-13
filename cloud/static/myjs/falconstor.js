@@ -1,5 +1,3 @@
-
-
 var FormWizard = function () {
 
 
@@ -17,14 +15,12 @@ var FormWizard = function () {
             }
 
 
-
-
             // default form wizard
             $('#form_wizard_1').bootstrapWizard({
                 'nextSelector': '.button-next',
                 'previousSelector': '.button-previous',
                 onTabClick: function (tab, navigation, index, clickedIndex) {
-                        handleTitle(clickedIndex, "EDIT");
+                    handleTitle(clickedIndex, "EDIT");
 
                 },
                 onNext: function (tab, navigation, index) {
@@ -44,7 +40,6 @@ var FormWizard = function () {
             });
 
 
-
         }
 
     };
@@ -52,23 +47,31 @@ var FormWizard = function () {
 }();
 
 if (App.isAngularJsApp() === false) {
-    jQuery(document).ready(function() {
-        var t1 = window.setTimeout(getstep,1000);
-        var t2 = window.setInterval(timefun,1000);
+    jQuery(document).ready(function () {
+        var t1 = window.setTimeout(getstep, 1000);
+        var t2 = window.setInterval(timefun, 1000);
         var num = 0;
-        var isinit = true
-        $(document).on('click',function(){
-            num=0;
-        })
+        var isinit = true;
+        $(document).on('click', function () {
+            num = 0;
+        });
+
         function timefun() {
-            num++;
-            if(num>=15){
-               $('#form_wizard_1').removeData('bootstrapWizard');
-                getstep();
-                num=0;
+            var strUrl = window.location.href;
+            if (strUrl.indexOf("falconstor") > -1) {
+                num++;
+                if (num >= 15) {
+                    $('#form_wizard_1').removeData('bootstrapWizard');
+                    getstep();
+                    num = 0;
+                }
+            }
+            else {
+                window.clearInterval(t2);
             }
         }
-        function getstep(){
+
+        function getstep() {
             $.ajax({
                 type: "POST",
                 url: "../../getrunsetps/",
@@ -88,61 +91,61 @@ if (App.isAngularJsApp() === false) {
                             first = "first"
                         if (i == data.length - 1)
                             last = "last"
-                        if(data[i]["state"]=="ERROR")
+                        if (data[i]["state"] == "ERROR")
                             $("#continue").show();
                         var tabdone = ""
-                        if(data[i]["state"]=="DONE")
-                            tabdone= "done"
+                        if (data[i]["state"] == "DONE")
+                            tabdone = "done"
                         var tabrun = ""
-                        if(data[i]["state"]=="RUN"||data[i]["state"]=="ERROR"||((i==data.length-1)&&data[i]["state"]=="DONE"))
-                            tabrun= "active"
-                        if(data[i]["state"]=="ERROR"||((i==data.length-1)&&data[i]["state"]=="DONE"))
+                        if (data[i]["state"] == "RUN" || data[i]["state"] == "ERROR" || ((i == data.length - 1) && data[i]["state"] == "DONE"))
+                            tabrun = "active"
+                        if (data[i]["state"] == "ERROR" || ((i == data.length - 1) && data[i]["state"] == "DONE"))
                             window.clearInterval(t2);
-                        $("ul.steps").append("<li id='li_" + (i + 1).toString() + "' class='" + tabdone + " " + tabrun  + "'><a href='#tab" + (i + 1).toString() + "' data-toggle='tab' class='step' aria-expanded='true'><span class='number'> " + (i + 1).toString() + " </span><span class='desc'><i hidden class='fa fa-check'></i> " + data[i]["name"] + " </span></a></li>")
+                        $("ul.steps").append("<li id='li_" + (i + 1).toString() + "' class='" + tabdone + " " + tabrun + "'><a href='#tab" + (i + 1).toString() + "' data-toggle='tab' class='step' aria-expanded='true'><span class='number'> " + (i + 1).toString() + " </span><span class='desc'><i hidden class='fa fa-check'></i> " + data[i]["name"] + " </span></a></li>")
                         $("div.tab-content").append("<div class='tab-pane " + tabrun + "' id='tab" + (i + 1).toString() + "'></div>")
-                        if(data[i]["children"].length>0){
+                        if (data[i]["children"].length > 0) {
                             $("#tab" + (i + 1).toString()).append("<div id='tabdiv" + (i + 1).toString() + "' class='mt-element-step'><div id='tabsteps" + (i + 1).toString() + "' class='row  step-background-thin'></div><br><br></div>")
                             for (var j = 0; j < data[i]["children"].length; j++) {
                                 var stepdone = ""
-                                if(data[i]["children"][j]["state"]=="DONE")
-                                    stepdone= "done"
+                                if (data[i]["children"][j]["state"] == "DONE")
+                                    stepdone = "done"
                                 var steprun = ""
                                 var hidediv = "hidden"
                                 var style = "display:none;"
-                                if(data[i]["children"][j]["state"]=="RUN"||data[i]["children"][j]["state"]=="ERROR"||((j==data[i]["children"].length-1)&&data[i]["children"][j]["state"]=="DONE")) {
+                                if (data[i]["children"][j]["state"] == "RUN" || data[i]["children"][j]["state"] == "ERROR" || ((j == data[i]["children"].length - 1) && data[i]["children"][j]["state"] == "DONE")) {
                                     hidediv = ""
                                     steprun = "active"
                                     style = ""
                                 }
-                                 $("#tabsteps" + (i + 1).toString()).append("<div id='step" + (i + 1).toString() + "_" + (j + 1).toString() + "' class='col-md-4 bg-grey-steel mt-step-col " + stepdone + " " + steprun + "'><div class='mt-step-number'>" + (j + 1).toString() + "</div><div class='mt-step-title uppercase font-grey-cascade'><i class='fa fa-hand-o-right' style='" + style + "'></i>     " + data[i]["children"][j]["name"] + "</div><div class='mt-step-content font-grey-cascade'>开始时间:" + data[i]["children"][j]["starttime"] + "</div><div class='mt-step-content font-grey-cascade'>结束时间:" + data[i]["children"][j]["endtime"] + "</div></div>")
+                                $("#tabsteps" + (i + 1).toString()).append("<div id='step" + (i + 1).toString() + "_" + (j + 1).toString() + "' class='col-md-4 bg-grey-steel mt-step-col " + stepdone + " " + steprun + "'><div class='mt-step-number'>" + (j + 1).toString() + "</div><div class='mt-step-title uppercase font-grey-cascade'><i class='fa fa-hand-o-right' style='" + style + "'></i>     " + data[i]["children"][j]["name"] + "</div><div class='mt-step-content font-grey-cascade'>开始时间:" + data[i]["children"][j]["starttime"] + "</div><div class='mt-step-content font-grey-cascade'>结束时间:" + data[i]["children"][j]["endtime"] + "</div></div>")
 
                                 $("#tabdiv" + (i + 1).toString()).append("<div " + hidediv + " class='form-group tabdiv' id='div" + (i + 1).toString() + "_" + (j + 1).toString() + "'><div class='col-md-12'><select id='se" + (i + 1).toString() + "_" + (j + 1).toString() + "' size='7' class='form-control' style='overflow-y:auto;'></select></div></div>")
                                 for (var k = 0; k < data[i]["children"][j]["scripts"].length; k++) {
-                                    var color=""
-                                    if(data[i]["children"][j]["scripts"][k]["scriptstate"]=="DONE")
-                                        color="#26C281"
-                                    if(data[i]["children"][j]["scripts"][k]["scriptstate"]=="RUN")
-                                        color="#32c5d2"
-                                    if(data[i]["children"][j]["scripts"][k]["scriptstate"]=="IGNORE")
-                                        color="#ffd966"
-                                    if(data[i]["children"][j]["scripts"][k]["scriptstate"]=="ERROR")
-                                        color="#ff0000"
-                                     $("#se" + (i + 1).toString() + "_" + (j + 1).toString()).append("<option style='color:" + color + "' value='" + data[i]["children"][j]["scripts"][k]["runscriptid"] + "'>" + data[i]["children"][j]["scripts"][k]["name"] + "</option>")
+                                    var color = ""
+                                    if (data[i]["children"][j]["scripts"][k]["scriptstate"] == "DONE")
+                                        color = "#26C281"
+                                    if (data[i]["children"][j]["scripts"][k]["scriptstate"] == "RUN")
+                                        color = "#32c5d2"
+                                    if (data[i]["children"][j]["scripts"][k]["scriptstate"] == "IGNORE")
+                                        color = "#ffd966"
+                                    if (data[i]["children"][j]["scripts"][k]["scriptstate"] == "ERROR")
+                                        color = "#ff0000"
+                                    $("#se" + (i + 1).toString() + "_" + (j + 1).toString()).append("<option style='color:" + color + "' value='" + data[i]["children"][j]["scripts"][k]["runscriptid"] + "'>" + data[i]["children"][j]["scripts"][k]["name"] + "</option>")
                                 }
                             }
                         }
-                        else{
+                        else {
                             $("#tab" + (i + 1).toString()).append("<div class='col-md-12'><select id='se" + (i + 1).toString() + "' size='7' class='form-control' style='overflow-y:auto;'></select><br><br></div>")
                             for (var j = 0; j < data[i]["scripts"].length; j++) {
-                                var color=""
-                                if(data[i]["scripts"][j]["scriptstate"]=="DONE")
-                                    color="#26C281"
-                                if(data[i]["scripts"][j]["scriptstate"]=="RUN")
-                                    color="#32c5d2"
-                                if(data[i]["scripts"][j]["scriptstate"]=="IGNORE")
-                                    color="#ffd966"
-                                if(data[i]["scripts"][j]["scriptstate"]=="ERROR")
-                                    color="#ff0000"
+                                var color = ""
+                                if (data[i]["scripts"][j]["scriptstate"] == "DONE")
+                                    color = "#26C281"
+                                if (data[i]["scripts"][j]["scriptstate"] == "RUN")
+                                    color = "#32c5d2"
+                                if (data[i]["scripts"][j]["scriptstate"] == "IGNORE")
+                                    color = "#ffd966"
+                                if (data[i]["scripts"][j]["scriptstate"] == "ERROR")
+                                    color = "#ff0000"
                                 $("#se" + (i + 1).toString()).append("<option style='color:" + color + "' value='" + data[i]["scripts"][j]["runscriptid"] + "'>" + data[i]["scripts"][j]["name"] + "</option>")
                             }
                         }
@@ -151,7 +154,7 @@ if (App.isAngularJsApp() === false) {
 
                     $(".mt-step-col").click(function () {
                         $(".tabdiv").hide()
-                        $("#" + this.id.replace('step','div')).show()
+                        $("#" + this.id.replace('step', 'div')).show()
                         $(".mt-step-col").removeClass("active");
                         $("#" + this.id).addClass("active");
                         $(".mt-step-col" + " i").hide();
@@ -160,45 +163,45 @@ if (App.isAngularJsApp() === false) {
                     $('select').dblclick(function () {
 
 
-                            if ($(this).find('option:selected').length == 0) {
-                                alert("请至少选中一个脚本。")
+                        if ($(this).find('option:selected').length == 0) {
+                            alert("请至少选中一个脚本。")
 
+                        } else {
+                            if ($(this).find('option:selected').length > 1) {
+                                alert("请不要选择多条记录。");
                             } else {
-                                if ($(this).find('option:selected').length > 1) {
-                                    alert("请不要选择多条记录。");
-                                } else {
-                                    $("#b1").hide();
-                                    $("#static").modal({backdrop: "static"});
-                                    $("#script_button").val($(this).find('option:selected').val());
-                                    // 获取当前步骤脚本信息
-                                    var steprunid = "0";
-                                    var scriptid = $(this).find('option:selected').val();
-                                    $.ajax({
-                                        url: "/get_current_scriptinfo/",
-                                        type: "post",
-                                        data: {"steprunid": steprunid, "scriptid": scriptid},
-                                        success: function (data) {
-                                            $("#steprunid").val(scriptid);
-                                            $("#code").val(data.data["code"]);
-                                            $("#script_ip").val(data.data["ip"]);
-                                            $("#script_port").val(data.data["port"]);
-                                            $("#filename").val(data.data["filename"]);
-                                            $("#scriptpath").val(data.data["scriptpath"]);
-                                            $("#scriptstate").val(data.data["state"]);
-                                            $("#ontime").val(data.data["starttime"]);
-                                            $("#offtime").val(data.data["endtime"]);
-                                            $("#errorinfo").val(data.data["explain"]);
-                                            if(data.data["state"]=="执行中"||data.data["state"]=="执行失败"){
-                                                $("#b1").show();
-                                            } else {
-                                                $("#b1").hide();
-                                            }
+                                $("#b1").hide();
+                                $("#static").modal({backdrop: "static"});
+                                $("#script_button").val($(this).find('option:selected').val());
+                                // 获取当前步骤脚本信息
+                                var steprunid = "0";
+                                var scriptid = $(this).find('option:selected').val();
+                                $.ajax({
+                                    url: "/get_current_scriptinfo/",
+                                    type: "post",
+                                    data: {"steprunid": steprunid, "scriptid": scriptid},
+                                    success: function (data) {
+                                        $("#steprunid").val(scriptid);
+                                        $("#code").val(data.data["code"]);
+                                        $("#script_ip").val(data.data["ip"]);
+                                        $("#script_port").val(data.data["port"]);
+                                        $("#filename").val(data.data["filename"]);
+                                        $("#scriptpath").val(data.data["scriptpath"]);
+                                        $("#scriptstate").val(data.data["state"]);
+                                        $("#ontime").val(data.data["starttime"]);
+                                        $("#offtime").val(data.data["endtime"]);
+                                        $("#errorinfo").val(data.data["explain"]);
+                                        if (data.data["state"] == "执行中" || data.data["state"] == "执行失败") {
+                                            $("#b1").show();
+                                        } else {
+                                            $("#b1").hide();
                                         }
-                                    });
-                                }
+                                    }
+                                });
                             }
+                        }
 
-                        });
+                    });
 
                     // 继续
                     $('#exec').click(function () {
