@@ -7,19 +7,20 @@ $(document).ready(function () {
         "columns": [
             {"data": "id"},
             {"data": "code"},
+            {"data": "name"},
             {"data": "ip"},
-            {"data": "port"},
+            // {"data": "port"},
             {"data": "type"},
-            {"data": "runtype"},
+            // {"data": "runtype"},
             {"data": "filename"},
-            {"data": "time"},
+            // {"data": "time"},
             {"data": "username"},
             {"data": "password"},
-            {"data": "paramtype"},
-            {"data": "param"},
+            // {"data": "paramtype"},
+            // {"data": "param"},
             {"data": "scriptpath"},
-            {"data": "runpath"},
-            {"data": "maxtime"},
+            // {"data": "runpath"},
+            // {"data": "maxtime"},
             {"data": null}
         ],
 
@@ -28,28 +29,32 @@ $(document).ready(function () {
             "data": null,
             "width": "60px",
             "defaultContent": "<button  id='edit' title='编辑' data-toggle='modal'  data-target='#static'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-edit'></i></button><button title='删除'  id='delrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-trash-o'></i></button>"
-        }, {
-            "targets": [-2],
-            "visible": false
-        }, {
-            "targets": [-3],
-            "visible": false
-        }, {
-            "targets": [-4],
-            "visible": false
-        }, {
-            "targets": [-5],
-            "visible": false
-        }, {
-            "targets": [-6],
-            "visible": false
-        }, {
-            "targets": [-7],
-            "visible": false
-        }, {
-            "targets": [-8],
-            "visible": false
-        }],
+        },
+            //     {
+            //     "targets": [-2],
+            //     "visible": false
+            // }, {
+            //     "targets": [-3],
+            //     "visible": false
+            // },
+            {
+                "targets": [-4],
+                "visible": false
+            },
+            //     {
+            //     "targets": [-5],
+            //     "visible": false
+            // }, {
+            //     "targets": [-6],
+            //     "visible": false
+            // },
+            {
+                "targets": [-7],
+                "visible": false
+            }, {
+                "targets": [-8],
+                "visible": false
+            }],
         "oLanguage": {
             "sLengthMenu": "每页显示 _MENU_ 条记录",
             "sZeroRecords": "抱歉， 没有找到",
@@ -99,6 +104,7 @@ $(document).ready(function () {
         var data = table.row($(this).parents('tr')).data();
         $("#id").val(data.id);
         $("#code").val(data.code);
+        $("#name").val(data.name);
         $("#ip").val(data.ip);
         $("#port").val(data.port);
         $("#type").val(data.type);
@@ -118,6 +124,7 @@ $(document).ready(function () {
     $("#new").click(function () {
         $("#id").val("0");
         $("#code").val("");
+        $("#name").val("");
         $("#ip").val("");
         $("#port").val("");
         $("#username").val("");
@@ -143,6 +150,7 @@ $(document).ready(function () {
                 {
                     id: $("#id").val(),
                     code: $("#code").val(),
+                    name: $("#name").val(),
                     ip: $("#ip").val(),
                     port: $("#port").val(),
                     type: $("#type").val(),

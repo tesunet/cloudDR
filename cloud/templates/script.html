@@ -50,19 +50,20 @@
                 <tr>
                     <th style="width:40px;"> 序号</th>
                     <th> 脚本编号</th>
+                    <th> 脚本名称</th>
                     <th> 主机IP</th>
-                    <th> 端口号</th>
+                    {#                    <th> 端口号</th>#}
                     <th> 连接类型</th>
-                    <th> 运行类型</th>
+                    {#                    <th> 运行类型</th>#}
                     <th> 脚本文件名</th>
-                    <th> 预计耗时</th>
+                    {#                    <th> 预计耗时</th>#}
                     <th> 用户名</th>
                     <th> 密码</th>
-                    <th> 参数类型</th>
-                    <th> 脚本参数</th>
+                    {#                    <th> 参数类型</th>#}
+                    {#                    <th> 脚本参数</th>#}
                     <th> 脚本文件路径</th>
-                    <th> 执行路径</th>
-                    <th> 超时时间</th>
+                    {#                    <th> 执行路径</th>#}
+                    {#                    <th> 超时时间</th>#}
                     <th style="width:50px;"> 操作</th>
                 </tr>
                 </thead>
@@ -89,6 +90,16 @@
                                                 style="color:red; ">*</span>脚本编号</label>
                                         <div class="col-md-10">
                                             <input id="code" type="text" name="code" class="form-control "
+                                                   placeholder="">
+                                            <div class="form-control-focus"></div>
+
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-md-2 control-label"><span
+                                                style="color:red; ">*</span>脚本名称</label>
+                                        <div class="col-md-10">
+                                            <input id="name" type="text" name="name" class="form-control "
                                                    placeholder="">
                                             <div class="form-control-focus"></div>
 
@@ -170,7 +181,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label class="col-md-2 control-label"><span
-                                                style="color:red; ">*</span>脚本名</label>
+                                                style="color:red; ">*</span>脚本文件</label>
                                         <div class="col-md-10">
                                             <input id="filename" type="text" name="filename" class="form-control"
                                                    placeholder="">

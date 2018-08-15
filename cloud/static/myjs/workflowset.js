@@ -106,6 +106,7 @@ $('#se_1').contextmenu({
         if ($(e.target).text() == "新增") {
             $("#scriptid").val("0");
             $("#scriptcode").val("");
+            $("#script_name").val("");
             $("#scriptip").val("");
             $("#scriptport").val("");
             $("#scriptusername").val("");
@@ -138,21 +139,22 @@ $('#se_1').contextmenu({
                         dataType: "json",
                         success: function (data) {
                             $("#scriptid").val(data["id"]);
-                            $("#scriptcode").val( data["code"]);
-                            $("#scriptip").val( data["ip"]);
-                            $("#scriptport").val( data["port"]);
+                            $("#scriptcode").val(data["code"]);
+                            $("#script_name").val(data["name"]);
+                            $("#scriptip").val(data["ip"]);
+                            // $("#scriptport").val(data["port"]);
                             $("#scripttype").val(data.type);
-                            $("#scriptruntype").val(data.runtype);
-                            $("#scriptusername").val( data.username);
-                            $("#scriptpassword").val( data.password);
-                            $("#scriptfilename").val( data.filename);
-                            $("#scriptparamtype").val( data.paramtype);
-                            $("#scriptparam").val( data.param);
+                            // $("#scriptruntype").val(data.runtype);
+                            $("#scriptusername").val(data.username);
+                            $("#scriptpassword").val(data.password);
+                            $("#scriptfilename").val(data.filename);
+                            // $("#scriptparamtype").val(data.paramtype);
+                            // $("#scriptparam").val(data.param);
                             $("#scriptscriptpath").val(data.scriptpath);
-                            $("#scriptrunpath").val( data.runpath);
-                            $("#scriptcommand").val("cd " + $("#scriptscriptpath").val() + ";" + $("#scriptrunpath").val() + "/" + $("#scriptfilename").val() + " " + $("#scriptparam").val());
-                            $("#scriptmaxtime").val(data.maxtime);
-                            $("#scripttime").val( data.time);
+                        //     $("#scriptrunpath").val(data.runpath);
+                        //     $("#scriptcommand").val("cd " + $("#scriptscriptpath").val() + ";" + $("#scriptrunpath").val() + "/" + $("#scriptfilename").val() + " " + $("#scriptparam").val());
+                        //     $("#scriptmaxtime").val(data.maxtime);
+                        //     $("#scripttime").val(data.time);
                         },
                         error: function (e) {
                             alert("数据读取失败，请于客服联系。");
@@ -208,19 +210,20 @@ $('#scriptsave').click(function () {
                 pid: $("#id").val().replace("demo_node_", ""),
                 id: $("#scriptid").val().replace("script_", ""),
                 code: $("#scriptcode").val(),
+                name: $("#script_name").val(),
                 ip: $("#scriptip").val(),
-                port: $("#scriptport").val(),
+                // port: $("#scriptport").val(),
                 type: $("#scripttype").val(),
-                runtype: $("#scriptruntype").val(),
+                // runtype: $("#scriptruntype").val(),
                 username: $("#scriptusername").val(),
                 password: $("#scriptpassword").val(),
                 filename: $("#scriptfilename").val(),
-                paramtype: $("#scriptparamtype").val(),
-                param: $("#scriptparam").val(),
+                // paramtype: $("#scriptparamtype").val(),
+                // param: $("#scriptparam").val(),
                 scriptpath: $("#scriptscriptpath").val(),
-                runpath: $("#scriptrunpath").val(),
-                maxtime: $("#scriptmaxtime").val(),
-                time: $("#scripttime").val(),
+                // runpath: $("#scriptrunpath").val(),
+                // maxtime: $("#scriptmaxtime").val(),
+                // time: $("#scripttime").val(),
             },
         success: function (data) {
             var myres = data["res"];
@@ -249,19 +252,20 @@ $('#sample_1').dataTable({
     "columns": [
         {"data": "id"},
         {"data": "code"},
+        {"data": "name"},
         {"data": "ip"},
-        {"data": "port"},
+        // {"data": "port"},
         {"data": "type"},
-        {"data": "runtype"},
+        // {"data": "runtype"},
         {"data": "filename"},
-        {"data": "time"},
+        // {"data": "time"},
         {"data": "username"},
         {"data": "password"},
-        {"data": "paramtype"},
-        {"data": "param"},
+        // {"data": "paramtype"},
+        // {"data": "param"},
         {"data": "scriptpath"},
-        {"data": "runpath"},
-        {"data": "maxtime"},
+        // {"data": "runpath"},
+        // {"data": "maxtime"},
         {"data": null}
     ],
 
@@ -269,34 +273,40 @@ $('#sample_1').dataTable({
         "targets": -1,
         "data": null,
         "defaultContent": "<button  id='select' title='选择'  class='btn btn-xs btn-primary' type='button'><i class='fa fa-check'></i></button>"
-    }, {
-        "targets": [-2],
-        "visible": false
-    }, {
-        "targets": [-3],
-        "visible": false
-    }, {
-        "targets": [-4],
-        "visible": false
-    }, {
-        "targets": [-5],
-        "visible": false
-    }, {
-        "targets": [-6],
-        "visible": false
-    }, {
-        "targets": [-7],
-        "visible": false
-    }, {
-        "targets": [-8],
-        "visible": false
-    }, {
-        "targets": [-9],
-        "visible": false
-    }, {
-        "targets": [0],
-        "visible": false
-    }],
+    },
+        //     {
+        //     "targets": [-2],
+        //     "visible": false
+        // }, {
+        //     "targets": [-3],
+        //     "visible": false
+        // },
+        {
+            "targets": [-2],
+            "visible": false
+        },
+        //     {
+        //     "targets": [-5],
+        //     "visible": false
+        // }, {
+        //     "targets": [-6],
+        //     "visible": false
+        // },
+        {
+            "targets": [-3],
+            "visible": false
+        }, {
+            "targets": [-4],
+            "visible": false
+        },
+        //     {
+        //     "targets": [-9],
+        //     "visible": false
+        // },
+        {
+            "targets": [0],
+            "visible": false
+        }],
     "oLanguage": {
         "sLengthMenu": "每页显示 _MENU_ 条记录",
         "sZeroRecords": "抱歉， 没有找到",
@@ -318,20 +328,21 @@ $('#sample_1 tbody').on('click', 'button#select', function () {
     var table = $('#sample_1').DataTable();
     var data = table.row($(this).parents('tr')).data();
     $("#scriptcode").val(data.code);
+    $("#script_name").val(data.name);
     $("#scriptip").val(data.ip);
-    $("#scriptport").val(data.port);
+    // $("#scriptport").val(data.port);
     $("#scripttype").val(data.type);
-    $("#scriptruntype").val(data.runtype);
+    // $("#scriptruntype").val(data.runtype);
     $("#scriptusername").val(data.username);
     $("#scriptpassword").val(data.password);
     $("#scriptfilename").val(data.filename);
-    $("#scriptparamtype").val(data.paramtype);
-    $("#scriptparam").val(data.param);
+    // $("#scriptparamtype").val(data.paramtype);
+    // $("#scriptparam").val(data.param);
     $("#scriptscriptpath").val(data.scriptpath);
-    $("#scriptrunpath").val(data.runpath);
-    $("#scriptcommand").val("cd " + $("#scriptscriptpath").val() + ";" + $("#scriptrunpath").val() + "/" + $("#scriptfilename").val() + " " + $("#scriptparam").val());
-    $("#scriptmaxtime").val(data.maxtime);
-    $("#scripttime").val(data.time);
+    // $("#scriptrunpath").val(data.runpath);
+    // $("#scriptcommand").val("cd " + $("#scriptscriptpath").val() + ";" + $("#scriptrunpath").val() + "/" + $("#scriptfilename").val() + " " + $("#scriptparam").val());
+    // $("#scriptmaxtime").val(data.maxtime);
+    // $("#scripttime").val(data.time);
     $('#static1').modal('hide');
 });
 
@@ -351,7 +362,7 @@ function myFunction(ob) {
     }
     else
         $("#group").removeProp("disabled");
-    if(ob.classList.contains("last")>0)
+    if (ob.classList.contains("last") > 0)
         $("#scriptsdiv").hide();
     else {
         $("#scriptsdiv").show();
