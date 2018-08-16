@@ -7644,7 +7644,7 @@ from reportlab.lib.units import inch, cm
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 
-import collections
+import collections  
 
 
 def custom_pdf_report(request):
