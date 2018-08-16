@@ -16,7 +16,7 @@ $(document).ready(function () {
         "columnDefs": [{
             "targets": -1,
             "data": null,
-            "defaultContent": "<button title='启动'  id='runrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-play'></i></button>"
+            "defaultContent": "<button title='启动'  id='runrow' class='btn btn-xs btn-primary' type='button'><i class='fa fa-play'></i></button><button title='报告'  id='report' class='btn btn-xs btn-error' type='button'><i class='fa fa-play'></i></button>"
         }],
         "oLanguage": {
             "sLengthMenu": "&nbsp;&nbsp;每页显示 _MENU_ 条记录",
@@ -71,7 +71,13 @@ $(document).ready(function () {
                 alert("流程启动失败，请于管理员联系。");
             }
         });
-    })
+    });
 
-
+    // 生成报告
+    $('#sample_1 tbody').on('click', 'button#report', function () {
+        var table = $('#sample_1').DataTable();
+        var data = table.row($(this).parents('tr')).data();
+        $("#processid").val(data.id);
+        $("#static01").modal({backdrop: "static"});
+    });
 });

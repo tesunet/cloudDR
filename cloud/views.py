@@ -7632,3 +7632,306 @@ def processsignsave(request):
         except:
             result["res"] = "流程启动失败，请于管理员联系。"
         return JsonResponse(result)
+
+
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.pagesizes import A4
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.units import inch, cm
+# 注册中文
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+
+import collections
+
+
+def custom_pdf_report(request):
+    if request.user.is_authenticated():
+        # 注册宋体
+        process_id = request.POST.get("processid", "")
+        current_path = os.getcwd()
+        fsong_path = current_path + os.sep + "cloud" + os.sep + "static" + os.sep + "fonts" + os.sep + "fangsong.ttf"
+        pdfmetrics.registerFont(TTFont('fsong', r'{0}'.format(fsong_path)))
+
+        response = HttpResponse(content_type='application/pdf')
+        today = datetime.datetime.now()
+        filename = '飞康切换报告' + today.strftime('%Y-%m-%d')
+        response['Content-Disposition'] = 'attachement; filename={0}.pdf'.format(filename)
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            rightMargin=72,
+            leftMargin=72,
+            topMargin=30,
+            bottomMargin=72)
+
+        styles = getSampleStyleSheet()
+
+        process_run_obj = ProcessRun.objects.filter(process_id=process_id).last()
+        # create document
+        elements = []
+        font_style_title = styles['Title']
+        font_style_title.fontName = "fsong"
+        font_style_title.fontSize = 40  # 字体大小
+        title_xml = "飞康自动化恢复流程"
+        abstract_xml = "切换报告"
+        manager_xml = "{0}".format(request.user.username)
+        run_time = "{0}".format(
+            process_run_obj.starttime.strftime("%Y-%m-%d") if process_run_obj.starttime else "")
+        elements.append(Paragraph(title_xml, font_style_title))
+        elements.append(Spacer(0, 0.5 * cm))
+        font_style_title.fontSize = 35
+        elements.append(Paragraph(abstract_xml, font_style_title))
+        elements.append(Spacer(0, 2 * cm))
+        font_style_title.fontSize = 20
+        elements.append(Paragraph(manager_xml, font_style_title))
+        elements.append(Spacer(0, 0.1 * cm))
+        elements.append(Paragraph(run_time, font_style_title))
+        elements.append(Spacer(0, 2 * cm))
+
+        font_style_ele = styles['Normal']
+        font_style_ele.fontName = "fsong"
+        font_style_ele.fontSize = 12  # 字体大小
+        ele_xml01 = "一、切换概述"
+        elements.append(Paragraph(ele_xml01, font_style_ele))
+        elements.append(Spacer(0, 0.5 * cm))
+
+        if process_run_obj:
+            first_el_dict = collections.OrderedDict()
+            start_time = process_run_obj.starttime
+            end_time = process_run_obj.endtime
+            create_user = process_run_obj.creatuser
+            run_reason = process_run_obj.run_reason
+
+            first_el_dict["开始时间:"] = r"<para><u>{0}</u></para>".format(
+                start_time.strftime("%Y-%m-%d %H:%M:%S") if start_time else "")
+            first_el_dict["结束时间:"] = r"<para><u>{0}</u></para>".format(
+                end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else "")
+            first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format(
+                (end_time - start_time) if end_time and start_time else "")
+            first_el_dict["发起人:"] = r"<para><u>{0}</u></para>".format(create_user)
+            process_run_objs = ProcessRun.objects.filter(process_id=process_id)
+            process_run_id_list = []
+            for run_obj in process_run_objs:
+                process_run_id_list.append(run_obj.id)
+            task_sign_obj = ProcessTask.objects.filter(processrun_id__in=process_run_id_list).exclude(state=9).filter(
+                type="SIGN")  # 有问题,还是需要传入processrun_id
+            if task_sign_obj:
+                receiveusers = ""
+                for task in task_sign_obj:
+                    receiveuser = task.receiveuser
+                    if receiveuser:
+                        receiveusers += receiveuser + "、"
+                first_el_dict["签字人:"] = r"<para><u>{0}</u></para>".format(receiveusers[:-1])
+
+            all_steprun_objs = StepRun.objects.filter(processrun_id__in=process_run_id_list)
+            operators = ""
+            for steprun_obj in all_steprun_objs:
+                if steprun_obj.operator:
+                    if steprun_obj.operator not in operators:
+                        operators += steprun_obj.operator + "、"
+            first_el_dict["参与人:"] = r"<para><u>{0}</u></para>".format(operators[:-1])
+            first_el_dict["切换原因:"] = r"<para><u>{0}</u></para>".format(run_reason)
+
+            for key, value in first_el_dict.items():
+                if not key:
+                    key = ""
+                if not value:
+                    value = ""
+
+                key_style = styles["Normal"]
+                key_style.fontName = "fsong"
+                key_style.fontSize = 12
+
+                value_style = styles["BodyText"]
+                value_style.fontName = "fsong"
+                value_style.fontSize = 12
+                value_style.wordWrap = "CJK"
+                value_style.firstLineIndent = 32
+
+                elements.append(Paragraph(key, key_style))
+                elements.append(Spacer(0, 0.1 * cm))
+                elements.append(Paragraph(value, value_style))
+
+                elements.append(Spacer(0, 0.2 * cm))
+
+            ele_xml02 = "二、步骤详情"
+            elements.append(Paragraph(ele_xml02, font_style_ele))
+            elements.append(Spacer(0, 0.5 * cm))
+
+            pnode_steplist = Step.objects.exclude(state=9).filter(process_id=process_id).order_by("sort").filter(
+                pnode_id=None)
+
+            for num, pstep in enumerate(pnode_steplist):
+                second_el_dict = collections.OrderedDict()
+                el_title = "{0}.{1}".format(num+1, pstep.name)
+                el_style = styles["Normal"]
+                el_style.fontName = "fsong"
+                el_style.fontSize = 12
+                elements.append(Paragraph(el_title, el_style))
+                elements.append(Spacer(0, 0.5 * cm))
+
+                el_style.fontSize = 12
+                processrun_id = ProcessRun.objects.exclude(state=9).filter(process_id=process_id).last()
+                pnode_steprun = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(step=pstep)  #
+                if pnode_steprun:
+                    second_el_dict["开始时间:"] = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[0].starttime else ""
+                    second_el_dict["结束时间:"] = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[0].endtime else ""
+                    second_el_dict["RTO:"] = (pnode_steprun[0].endtime - pnode_steprun[0].starttime) if pnode_steprun[0].endtime and pnode_steprun[0].starttime else ""
+                # ...需要审批时
+                if pstep.approval == 1:
+                    pstep_group_id = pstep.group
+                    if pstep_group_id:
+                        group_name = Group.objects.filter(id=pstep_group_id)[0].name
+                        second_el_dict["负责人:"] = group_name
+                for key, value in second_el_dict.items():
+                    if not key:
+                        key = ""
+                    if not value:
+                        value = ""
+
+                    dict_style = styles["Normal"]
+                    dict_style.fontName = "fsong"
+                    dict_style.fontSize = 12
+                    dict_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
+                    # if key == "RTO:":
+                    #     dict_data = r"<para>{0}<u>{1}小时</u></para>".format(key, value)
+                    elements.append(Paragraph(dict_data, dict_style))
+                    elements.append(Spacer(0, 0.5 * cm))
+
+                # 当前步骤下脚本
+                current_scripts = Script.objects.exclude(state=9).filter(step_id=pstep.id)
+                if current_scripts:
+                    script_title_style = styles["Normal"]
+                    script_title_style.fontName = "fsong"
+                    script_title_style.fontSize = 12
+                    script_title = "<para>脚本:</para>"
+                    elements.append(Paragraph(script_title, script_title_style))
+                    elements.append(Spacer(0, 0.2 * cm))
+
+                    for snum, current_script in enumerate(current_scripts):
+                        script_el_dict = collections.OrderedDict()
+                        # title
+                        script_title = "{0}.{1}".format("i"*(snum+1), current_script.name)
+                        script_title_style = styles["BodyText"]
+                        script_title_style.fontName = "fsong"
+                        script_title_style.fontSize = 12
+                        script_title_style.wordWrap = "CJK"
+                        script_title_style.firstLineIndent = 32
+                        script_title_style.leading = 20
+                        elements.append(Paragraph(script_title, script_title_style))
+                        elements.append(Spacer(0, 0.05 * cm))
+                        # content
+                        steprun_id = pnode_steprun[0].id
+                        current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id)
+                        script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
+                        script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].endtime else ""
+                        script_el_dict["RTO:"] = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime) if current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime else ""
+                        script_el_dict["状态:"] = current_scriptrun_obj[0].state
+                        script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
+                        for key, value in script_el_dict.items():
+                            if not key:
+                                key = ""
+                            if not value:
+                                value = ""
+                            script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
+                            # if key == "RTO:":
+                            #     script_data = r"<para>{0}<u>{1}小时</u></para>".format(key, value)
+                            elements.append(Paragraph(script_data, script_title_style))
+                            elements.append(Spacer(0, 0.05 * cm))
+
+                p_id = pstep.id
+                inner_steps = Step.objects.exclude(state=9).filter(process_id=process_id).order_by("sort").filter(
+                    pnode_id=p_id)
+
+                if inner_steps:
+                    for num, step in enumerate(inner_steps):
+                        el_title = "{0}){1}".format(num+1, step.name)
+                        el_style = styles["Normal"]
+                        el_style.fontName = "fsong"
+                        el_style.fontSize = 12
+                        elements.append(Paragraph(el_title, el_style))
+                        elements.append(Spacer(0, 0.5 * cm))
+
+                        el_style.fontSize = 12
+                        steprun_obj = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(
+                            step=step)  #
+                        if steprun_obj:
+                            second_el_dict["开始时间:"] = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if steprun_obj[0].starttime else ""
+                            second_el_dict["结束时间:"] = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if steprun_obj[0].endtime else ""
+                            second_el_dict["RTO:"] = (steprun_obj[0].endtime - steprun_obj[0].starttime) if steprun_obj[0].endtime and steprun_obj[0].starttime else ""
+                        # ...需要审批时
+                        if step.approval == 1:
+                            group_id = step.group
+                            if group_id:
+                                group_name = Group.objects.filter(id=group_id)[0].name
+                                second_el_dict["负责人:"] = group_name
+
+                        for key, value in second_el_dict.items():
+                            if not key:
+                                key = ""
+                            if not value:
+                                value = ""
+
+                            dict_style = styles["Normal"]
+                            dict_style.fontName = "fsong"
+                            dict_style.fontSize = 12
+                            dict_data = r"""<para>{0}<u>{1}</u></para>""".format(key, value)
+                            # if key == "RTO:":
+                            #     dict_data = r"""<para>{0}<u>{1}小时</u></para>""".format(key, value)
+                            elements.append(Paragraph(dict_data, dict_style))
+                            elements.append(Spacer(0, 0.5 * cm))
+
+                        # 当前步骤下脚本
+                        current_scripts = Script.objects.exclude(state=9).filter(step_id=step.id)
+                        if current_scripts:
+                            script_title_style = styles["Normal"]
+                            script_title_style.fontName = "fsong"
+                            script_title_style.fontSize = 12
+                            script_title = "<para>脚本:</para>"
+                            elements.append(Paragraph(script_title, script_title_style))
+                            elements.append(Spacer(0, 0.2 * cm))
+                            for snum, current_script in enumerate(current_scripts):
+                                script_el_dict = collections.OrderedDict()
+                                # title
+                                script_title = "{0}.{1}".format("i" * (snum + 1), current_script.name)
+                                script_title_style = styles["BodyText"]
+                                script_title_style.fontName = "fsong"
+                                script_title_style.fontSize = 12
+                                script_title_style.wordWrap = "CJK"
+                                script_title_style.firstLineIndent = 32
+                                script_title_style.leading = 20
+                                elements.append(Paragraph(script_title, script_title_style))
+                                elements.append(Spacer(0, 0.05 * cm))
+                                # content
+                                steprun_id = steprun_obj[0].id
+                                current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id)
+                                script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime(
+                                    "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
+                                script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime(
+                                    "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].endtime else ""
+                                script_el_dict["RTO:"] = (
+                                            current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime) if \
+                                current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime else ""
+                                script_el_dict["状态:"] = current_scriptrun_obj[0].state
+                                script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
+                                for key, value in script_el_dict.items():
+                                    if not key:
+                                        key = ""
+                                    if not value:
+                                        value = ""
+                                    script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
+                                    # if key == "RTO:":
+                                    #     script_data = r"<para>{0}<u>{1}小时</u></para>".format(key, value)
+                                    elements.append(Paragraph(script_data, script_title_style))
+                                    elements.append(Spacer(0, 0.05 * cm))
+
+
+            doc.multiBuild(elements)
+            pdf = buffer.getvalue()
+            buffer.close()
+            response.write(pdf)
+            return response

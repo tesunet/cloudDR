@@ -181,6 +181,7 @@ urlpatterns = [
     url(r'^getrunsetps/$', getrunsetps),
     url(r'^falconstorcontinue/$', falconstorcontinue),
     url(r'^processsignsave/$', processsignsave),
+    url(r'^custom_pdf_report/$', custom_pdf_report),
 
     url(r'^custom_step_tree/$', custom_step_tree),
     url(r'^step_tree_index/$', step_tree_index),
