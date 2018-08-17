@@ -7695,8 +7695,8 @@ def custom_pdf_report(request):
         title_xml = "飞康自动化恢复流程"
         abstract_xml = "切换报告"
         manager_xml = "{0}".format(request.user.userinfo.fullname)
-        run_time = "{0}".format(
-            process_run_obj.starttime.strftime("%Y-%m-%d") if process_run_obj.starttime else "")
+        report_time = datetime.datetime.now().strftime("%Y-%m-%d")
+        
         elements.append(Spacer(0, 5 * cm))
         elements.append(Paragraph(title_xml, font_style_title))
         elements.append(Spacer(0, 0.5 * cm))
@@ -7706,7 +7706,7 @@ def custom_pdf_report(request):
         font_style_title.fontSize = 20
         elements.append(Paragraph(manager_xml, font_style_title))
         elements.append(Spacer(0, 0.1 * cm))
-        elements.append(Paragraph(run_time, font_style_title))
+        elements.append(Paragraph(report_time, font_style_title))
         elements.append(Spacer(0, 14 * cm))
 
         font_style_ele = styles["Heading3"]
