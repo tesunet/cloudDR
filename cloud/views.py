@@ -7644,21 +7644,30 @@ from reportlab.lib.units import inch, cm
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 
-import collections  
+from reportlab.lib.fonts import tt2ps
+
+import collections
 
 
 def custom_pdf_report(request):
+    """
+    由于reportlab模块中styles.getSampleStyleSheet方法中的对象只能生成一次，所以这里选择将其中Heading1-5对象中的属性消除，
+    再添加适当缩进属性作为新的style来处理；
+    :param request: processrun_id, process_id
+    :return: response
+    """
     if request.user.is_authenticated():
         # 注册宋体
+        processrun_id = 63
         process_id = request.POST.get("processid", "")
         current_path = os.getcwd()
         fsong_path = current_path + os.sep + "cloud" + os.sep + "static" + os.sep + "fonts" + os.sep + "fangsong.ttf"
         pdfmetrics.registerFont(TTFont('fsong', r'{0}'.format(fsong_path)))
 
         response = HttpResponse(content_type='application/pdf')
-        today = datetime.datetime.now()
-        filename = '飞康切换报告' + today.strftime('%Y-%m-%d')
-        response['Content-Disposition'] = 'attachement; filename={0}.pdf'.format(filename)
+        # today = datetime.datetime.now()
+        # filename = '飞康切换报告' + today.strftime('%Y-%m-%d')
+        # response['Content-Disposition'] = 'attachement; filename={0}.pdf'.format(filename)
 
         buffer = BytesIO()
         doc = SimpleDocTemplate(
@@ -7670,7 +7679,11 @@ def custom_pdf_report(request):
 
         styles = getSampleStyleSheet()
 
-        process_run_obj = ProcessRun.objects.filter(process_id=process_id).last()
+        process_run_objs = ProcessRun.objects.filter(id=processrun_id)
+        if process_run_objs:
+            process_run_obj = process_run_objs[0]
+        else:
+            return Http404()
         # create document
         elements = []
         font_style_title = styles['Title']
@@ -7681,6 +7694,7 @@ def custom_pdf_report(request):
         manager_xml = "{0}".format(request.user.username)
         run_time = "{0}".format(
             process_run_obj.starttime.strftime("%Y-%m-%d") if process_run_obj.starttime else "")
+        elements.append(Spacer(0, 5 * cm))
         elements.append(Paragraph(title_xml, font_style_title))
         elements.append(Spacer(0, 0.5 * cm))
         font_style_title.fontSize = 35
@@ -7690,11 +7704,12 @@ def custom_pdf_report(request):
         elements.append(Paragraph(manager_xml, font_style_title))
         elements.append(Spacer(0, 0.1 * cm))
         elements.append(Paragraph(run_time, font_style_title))
-        elements.append(Spacer(0, 2 * cm))
+        elements.append(Spacer(0, 14 * cm))
 
         font_style_ele = styles['Normal']
         font_style_ele.fontName = "fsong"
         font_style_ele.fontSize = 12  # 字体大小
+
         ele_xml01 = "一、切换概述"
         elements.append(Paragraph(ele_xml01, font_style_ele))
         elements.append(Spacer(0, 0.5 * cm))
@@ -7710,15 +7725,32 @@ def custom_pdf_report(request):
                 start_time.strftime("%Y-%m-%d %H:%M:%S") if start_time else "")
             first_el_dict["结束时间:"] = r"<para><u>{0}</u></para>".format(
                 end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else "")
-            first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format(
-                (end_time - start_time) if end_time and start_time else "")
+
+            delta_time = (end_time - start_time)
+            delta_time_str = str(delta_time)
+            if delta_time.total_seconds() > 0:
+                if "," in delta_time_str:
+                    delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                    delta_time_list = delta_time_str.split(",")[-1].split(":")
+                    delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                       delta_time_list[2][:2] if len(delta_time_list[2]) > 2 else
+                                                       delta_time_list[2])
+                else:
+                    delta_time_list = delta_time_str.split(":")
+                    delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                       delta_time_list[2][:2] if len(delta_time_list[2]) > 2 else
+                                                       delta_time_list[2])
+            elif delta_time.total_seconds() == 0:
+                delta_time = ""
+            else:
+                return Http404()
+
+            first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format(delta_time)
             first_el_dict["发起人:"] = r"<para><u>{0}</u></para>".format(create_user)
-            process_run_objs = ProcessRun.objects.filter(process_id=process_id)
-            process_run_id_list = []
-            for run_obj in process_run_objs:
-                process_run_id_list.append(run_obj.id)
-            task_sign_obj = ProcessTask.objects.filter(processrun_id__in=process_run_id_list).exclude(state=9).filter(
+
+            task_sign_obj = ProcessTask.objects.filter(processrun_id=processrun_id).exclude(state=9).filter(
                 type="SIGN")  # 有问题,还是需要传入processrun_id
+
             if task_sign_obj:
                 receiveusers = ""
                 for task in task_sign_obj:
@@ -7727,7 +7759,7 @@ def custom_pdf_report(request):
                         receiveusers += receiveuser + "、"
                 first_el_dict["签字人:"] = r"<para><u>{0}</u></para>".format(receiveusers[:-1])
 
-            all_steprun_objs = StepRun.objects.filter(processrun_id__in=process_run_id_list)
+            all_steprun_objs = StepRun.objects.filter(processrun_id=processrun_id)
             operators = ""
             for steprun_obj in all_steprun_objs:
                 if steprun_obj.operator:
@@ -7742,19 +7774,21 @@ def custom_pdf_report(request):
                 if not value:
                     value = ""
 
-                key_style = styles["Normal"]
-                key_style.fontName = "fsong"
-                key_style.fontSize = 12
+                key_style01 = styles["BodyText"]
+                key_style01.fontName = "fsong"
+                key_style01.fontSize = 12
+                key_style01.spaceBefore = 0
+                key_style01.firstLineIndent = 30
 
-                value_style = styles["BodyText"]
-                value_style.fontName = "fsong"
-                value_style.fontSize = 12
-                value_style.wordWrap = "CJK"
-                value_style.firstLineIndent = 32
+                value_style01 = styles["Italic"]
+                value_style01.fontName = "fsong"
+                value_style01.fontSize = 12
+                value_style01.wordWrap = "CJK"
+                value_style01.firstLineIndent = 60
 
-                elements.append(Paragraph(key, key_style))
-                elements.append(Spacer(0, 0.1 * cm))
-                elements.append(Paragraph(value, value_style))
+                elements.append(Paragraph(key, key_style01))
+                elements.append(Spacer(0, 0.05 * cm))
+                elements.append(Paragraph(value, value_style01))
 
                 elements.append(Spacer(0, 0.2 * cm))
 
@@ -7767,20 +7801,45 @@ def custom_pdf_report(request):
 
             for num, pstep in enumerate(pnode_steplist):
                 second_el_dict = collections.OrderedDict()
-                el_title = "{0}.{1}".format(num+1, pstep.name)
-                el_style = styles["Normal"]
+                el_title = "{0}.{1}".format(num + 1, pstep.name)
+                el_style = styles["BodyText"]
                 el_style.fontName = "fsong"
                 el_style.fontSize = 12
                 elements.append(Paragraph(el_title, el_style))
-                elements.append(Spacer(0, 0.5 * cm))
+                elements.append(Spacer(0, 0.2 * cm))
 
                 el_style.fontSize = 12
-                processrun_id = ProcessRun.objects.exclude(state=9).filter(process_id=process_id).last()
-                pnode_steprun = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(step=pstep)  #
+
+                pnode_steprun = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(step=pstep)
                 if pnode_steprun:
-                    second_el_dict["开始时间:"] = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[0].starttime else ""
-                    second_el_dict["结束时间:"] = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[0].endtime else ""
-                    second_el_dict["RTO:"] = (pnode_steprun[0].endtime - pnode_steprun[0].starttime) if pnode_steprun[0].endtime and pnode_steprun[0].starttime else ""
+                    second_el_dict["开始时间:"] = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[
+                        0].starttime else ""
+                    second_el_dict["结束时间:"] = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[
+                        0].endtime else ""
+
+                    delta_time = (pnode_steprun[0].endtime - pnode_steprun[0].starttime)
+                    delta_time_str = str(delta_time)
+                    if delta_time.total_seconds() > 0:
+                        if "," in delta_time_str:
+                            delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                            delta_time_list = delta_time_str.split(",")[-1].split(":")
+                            delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                               delta_time_list[2][:2] if len(
+                                                                   delta_time_list[2]) > 2 else
+                                                               delta_time_list[2])
+                        else:
+                            delta_time_list = delta_time_str.split(":")
+                            delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                               delta_time_list[2][:2] if len(
+                                                                   delta_time_list[2]) > 2 else
+                                                               delta_time_list[2])
+                    elif delta_time.total_seconds() == 0:
+                        delta_time = ""
+                    else:
+                        return Http404()
+
+                    second_el_dict["RTO:"] = delta_time
+
                 # ...需要审批时
                 if pstep.approval == 1:
                     pstep_group_id = pstep.group
@@ -7793,55 +7852,109 @@ def custom_pdf_report(request):
                     if not value:
                         value = ""
 
-                    dict_style = styles["Normal"]
+                    dict_style = styles["Heading1"]
                     dict_style.fontName = "fsong"
                     dict_style.fontSize = 12
+                    dict_style.leading = 0
+                    dict_style.spaceAfter = 0
+                    dict_style.firstLineIndent = 45
                     dict_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
-                    # if key == "RTO:":
-                    #     dict_data = r"<para>{0}<u>{1}小时</u></para>".format(key, value)
+
                     elements.append(Paragraph(dict_data, dict_style))
                     elements.append(Spacer(0, 0.5 * cm))
 
                 # 当前步骤下脚本
+                state_dict = {
+                    "DONE": "已完成",
+                    "EDIT": "未执行",
+                    "RUN": "执行中",
+                    "ERROR": "执行失败",
+                    "IGNORE": "忽略",
+                    "": "",
+                }
+
                 current_scripts = Script.objects.exclude(state=9).filter(step_id=pstep.id)
                 if current_scripts:
-                    script_title_style = styles["Normal"]
+                    script_title_style = styles["Heading1"]
                     script_title_style.fontName = "fsong"
                     script_title_style.fontSize = 12
                     script_title = "<para>脚本:</para>"
                     elements.append(Paragraph(script_title, script_title_style))
-                    elements.append(Spacer(0, 0.2 * cm))
+                    elements.append(Spacer(0, 0.5 * cm))
 
                     for snum, current_script in enumerate(current_scripts):
                         script_el_dict = collections.OrderedDict()
                         # title
-                        script_title = "{0}.{1}".format("i"*(snum+1), current_script.name)
-                        script_title_style = styles["BodyText"]
-                        script_title_style.fontName = "fsong"
-                        script_title_style.fontSize = 12
-                        script_title_style.wordWrap = "CJK"
-                        script_title_style.firstLineIndent = 32
-                        script_title_style.leading = 20
-                        elements.append(Paragraph(script_title, script_title_style))
+                        script_title = "{0}.{1}".format("i" * (snum + 1), current_script.name)
+                        script_title01_style = styles["Heading4"]
+                        script_title01_style.fontName = "fsong"
+                        script_title01_style.fontSize = 12
+                        script_title01_style.wordWrap = "CJK"
+                        script_title01_style.leading = 0
+                        script_title01_style.spaceBefore = 0
+                        script_title01_style.spaceAfter = 0
+                        script_title01_style.firstLineIndent = 60
+
+
+                        elements.append(Paragraph(script_title, script_title01_style))
                         elements.append(Spacer(0, 0.05 * cm))
                         # content
                         steprun_id = pnode_steprun[0].id
                         current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id)
-                        script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
-                        script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].endtime else ""
-                        script_el_dict["RTO:"] = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime) if current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime else ""
-                        script_el_dict["状态:"] = current_scriptrun_obj[0].state
-                        script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
-                        for key, value in script_el_dict.items():
-                            if not key:
-                                key = ""
-                            if not value:
-                                value = ""
-                            script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
-                            # if key == "RTO:":
-                            #     script_data = r"<para>{0}<u>{1}小时</u></para>".format(key, value)
-                            elements.append(Paragraph(script_data, script_title_style))
-                            elements.append(Spacer(0, 0.05 * cm))
+                        if current_scriptrun_obj:
+                            script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if \
+                                current_scriptrun_obj[0].starttime else ""
+                            script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if \
+                                current_scriptrun_obj[0].endtime else ""
+
+                            delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
+                            delta_time_str = str(delta_time)
+                            if delta_time.total_seconds() > 0:
+                                if "," in delta_time_str:
+                                    delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                    delta_time_list = delta_time_str.split(",")[-1].split(":")
+                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                                       delta_time_list[2][:2] if len(
+                                                                           delta_time_list[2]) > 2 else
+                                                                       delta_time_list[2])
+                                else:
+                                    delta_time_list = delta_time_str.split(":")
+                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                                       delta_time_list[2][:2] if len(
+                                                                           delta_time_list[2]) > 2 else
+                                                                       delta_time_list[2])
+                            elif delta_time.total_seconds() == 0:
+                                delta_time = ""
+                            else:
+                                return Http404()
+
+                            script_el_dict["RTO:"] = delta_time
+
+                            state = current_scriptrun_obj[0].state
+                            if state in state_dict.keys():
+                                script_el_dict["状态:"] = state_dict[state]
+                            else:
+                                script_el_dict["状态:"] = ""
+                            script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
+                            for key, value in script_el_dict.items():
+                                if not key:
+                                    key = ""
+                                if not value:
+                                    value = ""
+                                script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
+
+                                script_content_style = styles["Heading5"]
+                                script_content_style.fontName = "fsong"
+                                script_content_style.fontSize = 12
+                                script_content_style.wordWrap = "CJK"
+                                script_content_style.leading = 0
+                                script_content_style.spaceBefore = 0
+                                script_content_style.spaceAfter = 0
+                                script_content_style.firstLineIndent = 75
+
+
+                                elements.append(Paragraph(script_data, script_title_style))
+                                elements.append(Spacer(0, 0.1 * cm))
 
                 p_id = pstep.id
                 inner_steps = Step.objects.exclude(state=9).filter(process_id=process_id).order_by("sort").filter(
@@ -7849,20 +7962,46 @@ def custom_pdf_report(request):
 
                 if inner_steps:
                     for num, step in enumerate(inner_steps):
-                        el_title = "{0}){1}".format(num+1, step.name)
-                        el_style = styles["Normal"]
+                        el_title = "{0}){1}".format(num + 1, step.name)
+                        el_style = styles["Italic"]
                         el_style.fontName = "fsong"
                         el_style.fontSize = 12
+
                         elements.append(Paragraph(el_title, el_style))
-                        elements.append(Spacer(0, 0.5 * cm))
+                        elements.append(Spacer(0, 0.2 * cm))
 
                         el_style.fontSize = 12
                         steprun_obj = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(
                             step=step)  #
                         if steprun_obj:
-                            second_el_dict["开始时间:"] = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if steprun_obj[0].starttime else ""
-                            second_el_dict["结束时间:"] = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if steprun_obj[0].endtime else ""
-                            second_el_dict["RTO:"] = (steprun_obj[0].endtime - steprun_obj[0].starttime) if steprun_obj[0].endtime and steprun_obj[0].starttime else ""
+                            second_el_dict["开始时间:"] = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if \
+                                steprun_obj[0].starttime else ""
+                            second_el_dict["结束时间:"] = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if \
+                                steprun_obj[0].endtime else ""
+
+                            delta_time = (steprun_obj[0].endtime - steprun_obj[0].starttime)
+                            delta_time_str = str(delta_time)
+                            if delta_time.total_seconds() > 0:
+                                if "," in delta_time_str:
+                                    delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                    delta_time_list = delta_time_str.split(",")[-1].split(":")
+                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                                       delta_time_list[2][:2] if len(
+                                                                           delta_time_list[2]) > 2 else
+                                                                       delta_time_list[2])
+                                else:
+                                    delta_time_list = delta_time_str.split(":")
+                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                                       delta_time_list[2][:2] if len(
+                                                                           delta_time_list[2]) > 2 else
+                                                                       delta_time_list[2])
+                            elif delta_time.total_seconds() == 0:
+                                delta_time = ""
+                            else:
+                                return Http404()
+
+                            second_el_dict["RTO:"] = delta_time
+
                         # ...需要审批时
                         if step.approval == 1:
                             group_id = step.group
@@ -7876,36 +8015,40 @@ def custom_pdf_report(request):
                             if not value:
                                 value = ""
 
-                            dict_style = styles["Normal"]
+                            dict_style = styles["Heading2"]
                             dict_style.fontName = "fsong"
                             dict_style.fontSize = 12
+                            dict_style.leading = 0
+                            dict_style.spaceBefore = 0
+                            dict_style.spaceAfter = 0
+                            dict_style.firstLineIndent = 72
+
                             dict_data = r"""<para>{0}<u>{1}</u></para>""".format(key, value)
-                            # if key == "RTO:":
-                            #     dict_data = r"""<para>{0}<u>{1}小时</u></para>""".format(key, value)
+
                             elements.append(Paragraph(dict_data, dict_style))
-                            elements.append(Spacer(0, 0.5 * cm))
+                            elements.append(Spacer(0, 0.7 * cm))
 
                         # 当前步骤下脚本
                         current_scripts = Script.objects.exclude(state=9).filter(step_id=step.id)
                         if current_scripts:
-                            script_title_style = styles["Normal"]
+                            script_title_style = styles["Heading2"]
                             script_title_style.fontName = "fsong"
                             script_title_style.fontSize = 12
+
                             script_title = "<para>脚本:</para>"
                             elements.append(Paragraph(script_title, script_title_style))
-                            elements.append(Spacer(0, 0.2 * cm))
+                            elements.append(Spacer(0, 0.5 * cm))
                             for snum, current_script in enumerate(current_scripts):
                                 script_el_dict = collections.OrderedDict()
                                 # title
                                 script_title = "{0}.{1}".format("i" * (snum + 1), current_script.name)
-                                script_title_style = styles["BodyText"]
-                                script_title_style.fontName = "fsong"
-                                script_title_style.fontSize = 12
-                                script_title_style.wordWrap = "CJK"
-                                script_title_style.firstLineIndent = 32
-                                script_title_style.leading = 20
-                                elements.append(Paragraph(script_title, script_title_style))
-                                elements.append(Spacer(0, 0.05 * cm))
+                                script_title01_style = styles["Bullet"]
+                                script_title01_style.fontName = "fsong"
+                                script_title01_style.firstLineIndent = 90
+                                script_title01_style.fontSize = 12
+
+                                elements.append(Paragraph(script_title, script_title01_style))
+                                elements.append(Spacer(0, 0.2 * cm))
                                 # content
                                 steprun_id = steprun_obj[0].id
                                 current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id)
@@ -7913,10 +8056,36 @@ def custom_pdf_report(request):
                                     "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
                                 script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime(
                                     "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].endtime else ""
-                                script_el_dict["RTO:"] = (
-                                            current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime) if \
-                                current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime else ""
-                                script_el_dict["状态:"] = current_scriptrun_obj[0].state
+
+                                delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
+                                delta_time_str = str(delta_time)
+                                if delta_time.total_seconds() > 0:
+                                    if "," in delta_time_str:
+                                        delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                        delta_time_list = delta_time_str.split(",")[-1].split(":")
+                                        delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                                           delta_time_list[2][:2] if len(
+                                                                               delta_time_list[2]) > 2 else
+                                                                           delta_time_list[2])
+                                    else:
+                                        delta_time_list = delta_time_str.split(":")
+                                        delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                                           delta_time_list[2][:2] if len(
+                                                                               delta_time_list[2]) > 2 else
+                                                                           delta_time_list[2])
+                                elif delta_time.total_seconds() == 0:
+                                    delta_time = ""
+                                else:
+                                    return Http404()
+
+                                script_el_dict["RTO:"] = delta_time
+
+                                state = current_scriptrun_obj[0].state
+                                if state in state_dict.keys():
+                                    script_el_dict["状态:"] = state_dict[state]
+                                else:
+                                    script_el_dict["状态:"] = ""
+
                                 script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
                                 for key, value in script_el_dict.items():
                                     if not key:
@@ -7924,11 +8093,19 @@ def custom_pdf_report(request):
                                     if not value:
                                         value = ""
                                     script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
-                                    # if key == "RTO:":
-                                    #     script_data = r"<para>{0}<u>{1}小时</u></para>".format(key, value)
-                                    elements.append(Paragraph(script_data, script_title_style))
-                                    elements.append(Spacer(0, 0.05 * cm))
 
+                                    script_content_style = styles["Heading3"]
+                                    script_content_style.fontName = "fsong"
+                                    script_content_style.fontSize = 12
+                                    script_content_style.wordWrap = "CJK"
+                                    script_content_style.leading = 0
+                                    script_content_style.spaceBefore = 0
+                                    script_content_style.spaceAfter = 0
+                                    script_content_style.firstLineIndent = 105
+
+                                    elements.append(Paragraph(script_data, script_content_style))
+                                    elements.append(Spacer(0, 0.7 * cm))
+                elements.append(Spacer(0, 0.5 * cm))
 
             doc.multiBuild(elements)
             pdf = buffer.getvalue()
