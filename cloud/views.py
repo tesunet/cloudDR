@@ -1607,7 +1607,7 @@ def get_scripts(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         step_id = request.POST.get("step_id", "")
         result = []
-        script_objs = Script.objects.exclude(state=9).filter(step_id=step_id)
+        script_objs = Script.objects.exclude(state="9").filter(step_id=step_id)
         for script in script_objs:
             result.append({
                 "script_id": script.id,
@@ -2374,7 +2374,7 @@ def vmresourcedata(request):
 def vmresourcepooldata(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         result = []
-        allresourcepool = ResourcePool.objects.filter(type="虚机资源").exclude(state=9)
+        allresourcepool = ResourcePool.objects.filter(type="虚机资源").exclude(state="9")
         if (len(allresourcepool) > 0):
             for resourcepool in allresourcepool:
                 id = resourcepool.id
@@ -5720,7 +5720,8 @@ def setpsave(request):
         # 新增步骤
         if id == 0:
             max_sort_from_pnode = \
-                Step.objects.exclude(state=9).filter(pnode_id=pid).filter(process_id=process_id).aggregate(Max("sort"))[
+                Step.objects.exclude(state="9").filter(pnode_id=pid).filter(process_id=process_id).aggregate(
+                    Max("sort"))[
                     "sort__max"]
             # 当前没有父节点
             if max_sort_from_pnode or max_sort_from_pnode == 0:
@@ -5739,7 +5740,7 @@ def setpsave(request):
             step.sort = my_sort
             step.save()
             # last_id
-            current_steps = Step.objects.filter(pnode_id=pid).exclude(state=9).order_by("sort").filter(
+            current_steps = Step.objects.filter(pnode_id=pid).exclude(state="9").order_by("sort").filter(
                 process_id=process_id)
             last_id = current_steps[0].id
             for num, step in enumerate(current_steps):
@@ -7005,14 +7006,14 @@ def ignore_current_script(request):
 
 def get_step_tree(parent, selectid):
     nodes = []
-    children = parent.children.exclude(state=9).order_by("sort").all()
+    children = parent.children.exclude(state="9").order_by("sort").all()
     for child in children:
         node = {}
         node["text"] = child.name
         node["id"] = child.id
         node["children"] = get_step_tree(child, selectid)
 
-        scripts = child.script_set.exclude(state=9)
+        scripts = child.script_set.exclude(state="9")
         script_string = ""
         for script in scripts:
             id_code_plus = str(script.id) + "+" + str(script.code) + "&"
@@ -7023,7 +7024,7 @@ def get_step_tree(parent, selectid):
             group_id = child.group
             group_name = Group.objects.filter(id=group_id)[0].name
 
-        all_groups = Group.objects.exclude(state=9)
+        all_groups = Group.objects.exclude(state="9")
         group_string = ""
         for group in all_groups:
             id_name_plus = str(group.id) + "+" + str(group.name) + "&"
@@ -7060,7 +7061,7 @@ def custom_step_tree(request):
             if id == 0:
                 sort = 1
                 try:
-                    maxstep = Step.objects.filter(pnode=p_step).latest('sort').exclude(state=9)
+                    maxstep = Step.objects.filter(pnode=p_step).latest('sort').exclude(state="9")
                     sort = maxstep.sort + 1
                 except:
                     pass
@@ -7081,11 +7082,11 @@ def custom_step_tree(request):
             errors.append('保存失败。')
 
         treedata = []
-        rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None).exclude(state=9)
+        rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None).exclude(state="9")
         if len(rootnodes) > 0:
             for rootnode in rootnodes:
                 root = {}
-                scripts = rootnode.script_set.exclude(state=9)
+                scripts = rootnode.script_set.exclude(state="9")
                 script_string = ""
                 for script in scripts:
                     id_code_plus = str(script.id) + "+" + str(script.code) + "&"
@@ -7096,7 +7097,7 @@ def custom_step_tree(request):
                 if rootnode.group:
                     group_id = rootnode.group
                     group_name = Group.objects.filter(id=group_id)[0].name
-                all_groups = Group.objects.exclude(state=9)
+                all_groups = Group.objects.exclude(state="9")
                 group_string = ""
                 for group in all_groups:
                     id_name_plus = str(group.id) + "+" + str(group.name) + "&"
@@ -7142,7 +7143,7 @@ def del_step(request):
                 pstep = allsteps[0].pnode
                 allsteps[0].state = 9
                 allsteps[0].save()
-                sortsteps = Step.objects.filter(pnode=pstep).filter(sort__gt=sort).exclude(state=9).filter(
+                sortsteps = Step.objects.filter(pnode=pstep).filter(sort__gt=sort).exclude(state="9").filter(
                     process_id=process_id)
                 if len(sortsteps) > 0:
                     for sortstep in sortsteps:
@@ -7154,7 +7155,8 @@ def del_step(request):
 
                 current_pnode_id = allsteps[0].pnode_id
                 # last_id
-                current_steps = Step.objects.filter(pnode_id=current_pnode_id).exclude(state=9).order_by("sort").filter(
+                current_steps = Step.objects.filter(pnode_id=current_pnode_id).exclude(state="9").order_by(
+                    "sort").filter(
                     process_id=process_id)
                 if current_steps:
                     last_id = current_steps[0].id
@@ -7209,15 +7211,16 @@ def move_step(request):
             # 同一pnode
             if parent == old_parent:
                 # 向上拽
-                steps_under_pnode = Step.objects.filter(pnode_id=old_parent).exclude(state=9).filter(sort__gte=position,
-                                                                                                     sort__lt=old_position).exclude(
+                steps_under_pnode = Step.objects.filter(pnode_id=old_parent).exclude(state="9").filter(
+                    sort__gte=position,
+                    sort__lt=old_position).exclude(
                     id=cur_step_id).filter(process_id=process_id)
                 for step in steps_under_pnode:
                     step.sort += 1
                     step.save()
 
                 # 向下拽
-                steps_under_pnode = Step.objects.filter(pnode_id=old_parent).exclude(state=9).filter(
+                steps_under_pnode = Step.objects.filter(pnode_id=old_parent).exclude(state="9").filter(
                     sort__gt=old_position, sort__lte=position).exclude(id=cur_step_id).filter(process_id=process_id)
                 for step in steps_under_pnode:
                     step.sort -= 1
@@ -7226,13 +7229,13 @@ def move_step(request):
             # 向其他节点拽
             else:
                 # 原来pnode下
-                old_steps = Step.objects.filter(pnode_id=old_parent).exclude(state=9).filter(
+                old_steps = Step.objects.filter(pnode_id=old_parent).exclude(state="9").filter(
                     sort__gt=old_position).exclude(id=cur_step_id).filter(process_id=process_id)
                 for step in old_steps:
                     step.sort -= 1
                     step.save()
                 # 后来pnode下
-                cur_steps = Step.objects.filter(pnode_id=parent).exclude(state=9).filter(sort__gte=position).exclude(
+                cur_steps = Step.objects.filter(pnode_id=parent).exclude(state="9").filter(sort__gte=position).exclude(
                     id=cur_step_id).filter(process_id=process_id)
                 for step in cur_steps:
                     step.sort += 1
@@ -7248,7 +7251,7 @@ def move_step(request):
                 pass
 
             # last_id
-            old_steps = Step.objects.filter(pnode_id=old_parent).exclude(state=9).order_by("sort").filter(
+            old_steps = Step.objects.filter(pnode_id=old_parent).exclude(state="9").order_by("sort").filter(
                 process_id=process_id)
             if old_steps:
                 last_id = old_steps[0].id
@@ -7259,7 +7262,7 @@ def move_step(request):
                         step.last_id = last_id
                     last_id = step.id
                     step.save()
-            after_steps = Step.objects.filter(pnode_id=parent).exclude(state=9).order_by("sort").filter(
+            after_steps = Step.objects.filter(pnode_id=parent).exclude(state="9").order_by("sort").filter(
                 process_id=process_id)
             if after_steps:
                 last_id = after_steps[0].id
@@ -7279,7 +7282,7 @@ def move_step(request):
 def get_all_groups(request):
     if request.user.is_authenticated():
         all_group_list = []
-        all_groups = Group.objects.exclude(state=9)
+        all_groups = Group.objects.exclude(state="9")
         for group in all_groups:
             group_info_dict = {
                 "group_id": group.id,
@@ -7691,7 +7694,7 @@ def custom_pdf_report(request):
         font_style_title.fontSize = 40  # 字体大小
         title_xml = "飞康自动化恢复流程"
         abstract_xml = "切换报告"
-        manager_xml = "{0}".format(request.user.username)
+        manager_xml = "{0}".format(request.user.userinfo.fullname)
         run_time = "{0}".format(
             process_run_obj.starttime.strftime("%Y-%m-%d") if process_run_obj.starttime else "")
         elements.append(Spacer(0, 5 * cm))
@@ -7706,19 +7709,28 @@ def custom_pdf_report(request):
         elements.append(Paragraph(run_time, font_style_title))
         elements.append(Spacer(0, 14 * cm))
 
-        font_style_ele = styles['Normal']
+        font_style_ele = styles["Heading3"]
         font_style_ele.fontName = "fsong"
-        font_style_ele.fontSize = 12  # 字体大小
+        font_style_ele.fontSize = 12
+        font_style_ele.leading = 0
+        font_style_ele.spaceBefore = 0
+        font_style_ele.spaceAfter = 0
 
+        elements.append(Spacer(0, 0.5 * cm))
         ele_xml01 = "一、切换概述"
         elements.append(Paragraph(ele_xml01, font_style_ele))
-        elements.append(Spacer(0, 0.5 * cm))
+        elements.append(Spacer(0, 1 * cm))
 
         if process_run_obj:
             first_el_dict = collections.OrderedDict()
             start_time = process_run_obj.starttime
             end_time = process_run_obj.endtime
             create_user = process_run_obj.creatuser
+            users = User.objects.filter(username=create_user)
+            if users:
+                create_user = users[0].userinfo.fullname
+            else:
+                return Http404()
             run_reason = process_run_obj.run_reason
 
             first_el_dict["开始时间:"] = r"<para><u>{0}</u></para>".format(
@@ -7727,19 +7739,24 @@ def custom_pdf_report(request):
                 end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else "")
 
             delta_time = (end_time - start_time)
+
+            end_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
+            start_time = start_time.strftime("%Y-%m-%d %H:%M:%S")
+            delta_seconds = datetime.datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                start_time, '%Y-%m-%d %H:%M:%S')
+            delta_second = str(delta_seconds).split(":")[-1]
+
             delta_time_str = str(delta_time)
             if delta_time.total_seconds() > 0:
                 if "," in delta_time_str:
                     delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
                     delta_time_list = delta_time_str.split(",")[-1].split(":")
                     delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                       delta_time_list[2][:2] if len(delta_time_list[2]) > 2 else
-                                                       delta_time_list[2])
+                                                       delta_second if delta_second else "")
                 else:
                     delta_time_list = delta_time_str.split(":")
                     delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                       delta_time_list[2][:2] if len(delta_time_list[2]) > 2 else
-                                                       delta_time_list[2])
+                                                       delta_second if delta_second else "")
             elif delta_time.total_seconds() == 0:
                 delta_time = ""
             else:
@@ -7748,15 +7765,21 @@ def custom_pdf_report(request):
             first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format(delta_time)
             first_el_dict["发起人:"] = r"<para><u>{0}</u></para>".format(create_user)
 
-            task_sign_obj = ProcessTask.objects.filter(processrun_id=processrun_id).exclude(state=9).filter(
-                type="SIGN")  # 有问题,还是需要传入processrun_id
+            task_sign_obj = ProcessTask.objects.filter(processrun_id=processrun_id).exclude(state="9").filter(
+                type="SIGN")
 
             if task_sign_obj:
                 receiveusers = ""
                 for task in task_sign_obj:
                     receiveuser = task.receiveuser
+
+                    users = User.objects.filter(username=receiveuser)
+                    if users:
+                        receiveuser = users[0].userinfo.fullname
+
                     if receiveuser:
                         receiveusers += receiveuser + "、"
+
                 first_el_dict["签字人:"] = r"<para><u>{0}</u></para>".format(receiveusers[:-1])
 
             all_steprun_objs = StepRun.objects.filter(processrun_id=processrun_id)
@@ -7764,7 +7787,13 @@ def custom_pdf_report(request):
             for steprun_obj in all_steprun_objs:
                 if steprun_obj.operator:
                     if steprun_obj.operator not in operators:
-                        operators += steprun_obj.operator + "、"
+                        users = User.objects.filter(username=steprun_obj.operator)
+                        if users:
+                            operator = users[0].userinfo.fullname
+                            if operator:
+                                if operator not in operators:
+                                    operators += operator + "、"
+
             first_el_dict["参与人:"] = r"<para><u>{0}</u></para>".format(operators[:-1])
             first_el_dict["切换原因:"] = r"<para><u>{0}</u></para>".format(run_reason)
 
@@ -7794,9 +7823,9 @@ def custom_pdf_report(request):
 
             ele_xml02 = "二、步骤详情"
             elements.append(Paragraph(ele_xml02, font_style_ele))
-            elements.append(Spacer(0, 0.5 * cm))
+            elements.append(Spacer(0, 1 * cm))
 
-            pnode_steplist = Step.objects.exclude(state=9).filter(process_id=process_id).order_by("sort").filter(
+            pnode_steplist = Step.objects.exclude(state="9").filter(process_id=process_id).order_by("sort").filter(
                 pnode_id=None)
 
             for num, pstep in enumerate(pnode_steplist):
@@ -7810,7 +7839,8 @@ def custom_pdf_report(request):
 
                 el_style.fontSize = 12
 
-                pnode_steprun = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(step=pstep)
+                pnode_steprun = StepRun.objects.exclude(state="9").filter(processrun_id=processrun_id).filter(
+                    step=pstep)
                 if pnode_steprun:
                     second_el_dict["开始时间:"] = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[
                         0].starttime else ""
@@ -7819,20 +7849,24 @@ def custom_pdf_report(request):
 
                     delta_time = (pnode_steprun[0].endtime - pnode_steprun[0].starttime)
                     delta_time_str = str(delta_time)
+
+                    end_time = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                    start_time = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                    delta_seconds = datetime.datetime.strptime(end_time,
+                                                               '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                        start_time, '%Y-%m-%d %H:%M:%S')
+                    delta_second = str(delta_seconds).split(":")[-1]
+
                     if delta_time.total_seconds() > 0:
                         if "," in delta_time_str:
                             delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
                             delta_time_list = delta_time_str.split(",")[-1].split(":")
                             delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                               delta_time_list[2][:2] if len(
-                                                                   delta_time_list[2]) > 2 else
-                                                               delta_time_list[2])
+                                                               delta_second if delta_second else "")
                         else:
                             delta_time_list = delta_time_str.split(":")
                             delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                               delta_time_list[2][:2] if len(
-                                                                   delta_time_list[2]) > 2 else
-                                                               delta_time_list[2])
+                                                               delta_second if delta_second else "")
                     elif delta_time.total_seconds() == 0:
                         delta_time = ""
                     else:
@@ -7873,7 +7907,7 @@ def custom_pdf_report(request):
                     "": "",
                 }
 
-                current_scripts = Script.objects.exclude(state=9).filter(step_id=pstep.id)
+                current_scripts = Script.objects.exclude(state="9").filter(step_id=pstep.id)
                 if current_scripts:
                     script_title_style = styles["Heading1"]
                     script_title_style.fontName = "fsong"
@@ -7895,34 +7929,39 @@ def custom_pdf_report(request):
                         script_title01_style.spaceAfter = 0
                         script_title01_style.firstLineIndent = 60
 
-
                         elements.append(Paragraph(script_title, script_title01_style))
                         elements.append(Spacer(0, 0.05 * cm))
                         # content
                         steprun_id = pnode_steprun[0].id
-                        current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id)
+                        script_id = current_script.id
+                        current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id, script_id=script_id)
                         if current_scriptrun_obj:
-                            script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if \
+                            script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime(
+                                "%Y-%m-%d %H:%M:%S") if \
                                 current_scriptrun_obj[0].starttime else ""
                             script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if \
                                 current_scriptrun_obj[0].endtime else ""
 
                             delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
                             delta_time_str = str(delta_time)
+
+                            end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                            start_time = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                            delta_seconds = datetime.datetime.strptime(end_time,
+                                                                       '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                                start_time, '%Y-%m-%d %H:%M:%S')
+                            delta_second = str(delta_seconds).split(":")[-1]
+
                             if delta_time.total_seconds() > 0:
                                 if "," in delta_time_str:
                                     delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
                                     delta_time_list = delta_time_str.split(",")[-1].split(":")
                                     delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                                       delta_time_list[2][:2] if len(
-                                                                           delta_time_list[2]) > 2 else
-                                                                       delta_time_list[2])
+                                                                       delta_second if delta_second else "")
                                 else:
                                     delta_time_list = delta_time_str.split(":")
                                     delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                                       delta_time_list[2][:2] if len(
-                                                                           delta_time_list[2]) > 2 else
-                                                                       delta_time_list[2])
+                                                                       delta_second if delta_second else "")
                             elif delta_time.total_seconds() == 0:
                                 delta_time = ""
                             else:
@@ -7952,12 +7991,11 @@ def custom_pdf_report(request):
                                 script_content_style.spaceAfter = 0
                                 script_content_style.firstLineIndent = 75
 
-
                                 elements.append(Paragraph(script_data, script_title_style))
                                 elements.append(Spacer(0, 0.1 * cm))
 
                 p_id = pstep.id
-                inner_steps = Step.objects.exclude(state=9).filter(process_id=process_id).order_by("sort").filter(
+                inner_steps = Step.objects.exclude(state="9").filter(process_id=process_id).order_by("sort").filter(
                     pnode_id=p_id)
 
                 if inner_steps:
@@ -7971,7 +8009,7 @@ def custom_pdf_report(request):
                         elements.append(Spacer(0, 0.2 * cm))
 
                         el_style.fontSize = 12
-                        steprun_obj = StepRun.objects.exclude(state=9).filter(processrun_id=processrun_id).filter(
+                        steprun_obj = StepRun.objects.exclude(state="9").filter(processrun_id=processrun_id).filter(
                             step=step)  #
                         if steprun_obj:
                             second_el_dict["开始时间:"] = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if \
@@ -7981,20 +8019,24 @@ def custom_pdf_report(request):
 
                             delta_time = (steprun_obj[0].endtime - steprun_obj[0].starttime)
                             delta_time_str = str(delta_time)
+
+                            end_time = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                            start_time = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                            delta_seconds = datetime.datetime.strptime(end_time,
+                                                                       '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                                start_time, '%Y-%m-%d %H:%M:%S')
+                            delta_second = str(delta_seconds).split(":")[-1]
+
                             if delta_time.total_seconds() > 0:
                                 if "," in delta_time_str:
                                     delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
                                     delta_time_list = delta_time_str.split(",")[-1].split(":")
                                     delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                                       delta_time_list[2][:2] if len(
-                                                                           delta_time_list[2]) > 2 else
-                                                                       delta_time_list[2])
+                                                                       delta_second if delta_second else "")
                                 else:
                                     delta_time_list = delta_time_str.split(":")
                                     delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                                       delta_time_list[2][:2] if len(
-                                                                           delta_time_list[2]) > 2 else
-                                                                       delta_time_list[2])
+                                                                       delta_second if delta_second else "")
                             elif delta_time.total_seconds() == 0:
                                 delta_time = ""
                             else:
@@ -8003,7 +8045,7 @@ def custom_pdf_report(request):
                             second_el_dict["RTO:"] = delta_time
 
                         # ...需要审批时
-                        if step.approval == 1:
+                        if step.approval == "1":
                             group_id = step.group
                             if group_id:
                                 group_name = Group.objects.filter(id=group_id)[0].name
@@ -8029,7 +8071,7 @@ def custom_pdf_report(request):
                             elements.append(Spacer(0, 0.7 * cm))
 
                         # 当前步骤下脚本
-                        current_scripts = Script.objects.exclude(state=9).filter(step_id=step.id)
+                        current_scripts = Script.objects.exclude(state="9").filter(step_id=step.id)
                         if current_scripts:
                             script_title_style = styles["Heading2"]
                             script_title_style.fontName = "fsong"
@@ -8051,7 +8093,8 @@ def custom_pdf_report(request):
                                 elements.append(Spacer(0, 0.2 * cm))
                                 # content
                                 steprun_id = steprun_obj[0].id
-                                current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id)
+                                script_id = current_script.id
+                                current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id, script_id=script_id)
                                 script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime(
                                     "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
                                 script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime(
@@ -8059,20 +8102,24 @@ def custom_pdf_report(request):
 
                                 delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
                                 delta_time_str = str(delta_time)
+
+                                end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                                start_time = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                                delta_seconds = datetime.datetime.strptime(end_time,
+                                                                           '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                                    start_time, '%Y-%m-%d %H:%M:%S')
+                                delta_second = str(delta_seconds).split(":")[-1]
+
                                 if delta_time.total_seconds() > 0:
                                     if "," in delta_time_str:
                                         delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
                                         delta_time_list = delta_time_str.split(",")[-1].split(":")
                                         delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                                           delta_time_list[2][:2] if len(
-                                                                               delta_time_list[2]) > 2 else
-                                                                           delta_time_list[2])
+                                                                           delta_second if delta_second else "")
                                     else:
                                         delta_time_list = delta_time_str.split(":")
                                         delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                                           delta_time_list[2][:2] if len(
-                                                                               delta_time_list[2]) > 2 else
-                                                                           delta_time_list[2])
+                                                                           delta_second if delta_second else "")
                                 elif delta_time.total_seconds() == 0:
                                     delta_time = ""
                                 else:
@@ -8094,17 +8141,14 @@ def custom_pdf_report(request):
                                         value = ""
                                     script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
 
-                                    script_content_style = styles["Heading3"]
+                                    script_content_style = styles['Normal']
                                     script_content_style.fontName = "fsong"
-                                    script_content_style.fontSize = 12
+                                    script_content_style.fontSize = 12  # 字体大小
                                     script_content_style.wordWrap = "CJK"
-                                    script_content_style.leading = 0
-                                    script_content_style.spaceBefore = 0
-                                    script_content_style.spaceAfter = 0
                                     script_content_style.firstLineIndent = 105
 
                                     elements.append(Paragraph(script_data, script_content_style))
-                                    elements.append(Spacer(0, 0.7 * cm))
+                                    elements.append(Spacer(0, 0.2 * cm))
                 elements.append(Spacer(0, 0.5 * cm))
 
             doc.multiBuild(elements)
