@@ -7660,18 +7660,17 @@ def custom_pdf_report(request):
     :return: response
     """
     if request.user.is_authenticated():
-        # 注册宋体
-        processrun_id = 63
+        # 请求参数
+        processrun_id = 65
         process_id = request.POST.get("processid", "")
+
+        # 注册宋体
         current_path = os.getcwd()
         fsong_path = current_path + os.sep + "cloud" + os.sep + "static" + os.sep + "fonts" + os.sep + "fangsong.ttf"
         pdfmetrics.registerFont(TTFont('fsong', r'{0}'.format(fsong_path)))
 
+        # 生成pdf对象
         response = HttpResponse(content_type='application/pdf')
-        # today = datetime.datetime.now()
-        # filename = '飞康切换报告' + today.strftime('%Y-%m-%d')
-        # response['Content-Disposition'] = 'attachement; filename={0}.pdf'.format(filename)
-
         buffer = BytesIO()
         doc = SimpleDocTemplate(
             buffer,
@@ -7679,24 +7678,30 @@ def custom_pdf_report(request):
             leftMargin=72,
             topMargin=30,
             bottomMargin=72)
-
         styles = getSampleStyleSheet()
 
+        # 获取当前流程对象
         process_run_objs = ProcessRun.objects.filter(id=processrun_id)
         if process_run_objs:
             process_run_obj = process_run_objs[0]
         else:
             return Http404()
-        # create document
+
+        # 构建元素列表
         elements = []
+
+        # 设置段落样式
         font_style_title = styles['Title']
         font_style_title.fontName = "fsong"
         font_style_title.fontSize = 40  # 字体大小
+
+        # 报表封页文字
         title_xml = "飞康自动化恢复流程"
         abstract_xml = "切换报告"
         manager_xml = "{0}".format(request.user.userinfo.fullname)
         report_time = datetime.datetime.now().strftime("%Y-%m-%d")
-        
+
+        # 添加元素，以及换行
         elements.append(Spacer(0, 5 * cm))
         elements.append(Paragraph(title_xml, font_style_title))
         elements.append(Spacer(0, 0.5 * cm))
@@ -7722,7 +7727,9 @@ def custom_pdf_report(request):
         elements.append(Spacer(0, 1 * cm))
 
         if process_run_obj:
+            # 切换概述节点下内容,有序字典中存放
             first_el_dict = collections.OrderedDict()
+
             start_time = process_run_obj.starttime
             end_time = process_run_obj.endtime
             create_user = process_run_obj.creatuser
@@ -7797,16 +7804,20 @@ def custom_pdf_report(request):
             first_el_dict["参与人:"] = r"<para><u>{0}</u></para>".format(operators[:-1])
             first_el_dict["切换原因:"] = r"<para><u>{0}</u></para>".format(run_reason)
 
+            # 有序字典中内容写入pdf
             for key, value in first_el_dict.items():
                 if not key:
                     key = ""
                 if not value:
                     value = ""
 
-                key_style01 = styles["BodyText"]
+                key_style01 = styles["Heading5"]
                 key_style01.fontName = "fsong"
                 key_style01.fontSize = 12
+                key_style01.wordWrap = "CJK"
+                key_style01.leading = 0
                 key_style01.spaceBefore = 0
+                key_style01.spaceAfter = 0
                 key_style01.firstLineIndent = 30
 
                 value_style01 = styles["Italic"]
@@ -7816,7 +7827,7 @@ def custom_pdf_report(request):
                 value_style01.firstLineIndent = 60
 
                 elements.append(Paragraph(key, key_style01))
-                elements.append(Spacer(0, 0.05 * cm))
+                elements.append(Spacer(0, 0.5 * cm))
                 elements.append(Paragraph(value, value_style01))
 
                 elements.append(Spacer(0, 0.2 * cm))
@@ -7831,11 +7842,11 @@ def custom_pdf_report(request):
             for num, pstep in enumerate(pnode_steplist):
                 second_el_dict = collections.OrderedDict()
                 el_title = "{0}.{1}".format(num + 1, pstep.name)
-                el_style = styles["BodyText"]
+                el_style = styles["Heading5"]
                 el_style.fontName = "fsong"
                 el_style.fontSize = 12
                 elements.append(Paragraph(el_title, el_style))
-                elements.append(Spacer(0, 0.2 * cm))
+                elements.append(Spacer(0, 1 * cm))
 
                 el_style.fontSize = 12
 
@@ -7874,12 +7885,13 @@ def custom_pdf_report(request):
 
                     second_el_dict["RTO:"] = delta_time
 
-                # ...需要审批时
-                if pstep.approval == 1:
-                    pstep_group_id = pstep.group
-                    if pstep_group_id:
-                        group_name = Group.objects.filter(id=pstep_group_id)[0].name
-                        second_el_dict["负责人:"] = group_name
+                # ...需要审批时，添加负责人
+                if pstep.approval == "1":
+                    users = User.objects.filter(username=pnode_steprun[0].operator)
+                    if users:
+                        operator = users[0].userinfo.fullname
+                        second_el_dict["负责人:"] = operator
+
                 for key, value in second_el_dict.items():
                     if not key:
                         key = ""
@@ -7930,7 +7942,7 @@ def custom_pdf_report(request):
                         script_title01_style.firstLineIndent = 60
 
                         elements.append(Paragraph(script_title, script_title01_style))
-                        elements.append(Spacer(0, 0.05 * cm))
+                        elements.append(Spacer(0, 0.5 * cm))
                         # content
                         steprun_id = pnode_steprun[0].id
                         script_id = current_script.id
@@ -7975,6 +7987,7 @@ def custom_pdf_report(request):
                             else:
                                 script_el_dict["状态:"] = ""
                             script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
+
                             for key, value in script_el_dict.items():
                                 if not key:
                                     key = ""
@@ -7982,18 +7995,16 @@ def custom_pdf_report(request):
                                     value = ""
                                 script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
 
-                                script_content_style = styles["Heading5"]
+                                script_content_style = styles["BodyText"]
                                 script_content_style.fontName = "fsong"
                                 script_content_style.fontSize = 12
                                 script_content_style.wordWrap = "CJK"
-                                script_content_style.leading = 0
-                                script_content_style.spaceBefore = 0
-                                script_content_style.spaceAfter = 0
                                 script_content_style.firstLineIndent = 75
 
-                                elements.append(Paragraph(script_data, script_title_style))
+                                elements.append(Paragraph(script_data, script_content_style))
                                 elements.append(Spacer(0, 0.1 * cm))
 
+                # 子步骤下相关内容
                 p_id = pstep.id
                 inner_steps = Step.objects.exclude(state="9").filter(process_id=process_id).order_by("sort").filter(
                     pnode_id=p_id)
@@ -8046,10 +8057,10 @@ def custom_pdf_report(request):
 
                         # ...需要审批时
                         if step.approval == "1":
-                            group_id = step.group
-                            if group_id:
-                                group_name = Group.objects.filter(id=group_id)[0].name
-                                second_el_dict["负责人:"] = group_name
+                            users = User.objects.filter(username=steprun_obj[0].operator)
+                            if users:
+                                operator = users[0].userinfo.fullname
+                                second_el_dict["负责人:"] = operator
 
                         for key, value in second_el_dict.items():
                             if not key:
