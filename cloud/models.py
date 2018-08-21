@@ -15,7 +15,7 @@ class Group(models.Model):
 class UserInfo(models.Model):
     client_host = models.ManyToManyField("ClientHost")
     group = models.ManyToManyField(Group)
-    user = models.OneToOneField(User, blank=True, null=True, )
+    user = models.OneToOneField(User, blank=True, null=True)
     userGUID = models.CharField("GUID", null=True, max_length=50)
     fullname = models.CharField("姓名", blank=True, max_length=50)
     phone = models.CharField("电话", blank=True, null=True, max_length=50)

@@ -89,41 +89,6 @@
                 </div>
             </div>
 
-            <div id="static01" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
-                            <h4 class="modal-title">飞康流程报表</h4>
-                            <input hidden id="id" type="text" name="id">
-                        </div>
-                        <div class="panel-body">
-                            <form class="bs-example form-horizontal activate-form" action="/custom_pdf_report/" method="post">{% csrf_token %}
-
-                                <div class="form-body">
-                                    <div class="form-group">
-                                        <label class="col-md-2 control-label"><span
-                                                style="color:red; ">*</span>启动人</label>
-                                        <div class="col-md-10">
-                                            <input id="run_person" type="text" name="run_person" class="form-control "
-                                                   placeholder="" value="{{ request.user.userinfo.fullname }}" readonly>
-                                            <input type="text" id="processid" name="processid" hidden>
-                                            <div class="form-control-focus"></div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-actions ">
-                                    <div class="modal-footer">
-                                        <button type="submit" class="btn green">确认</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </section>
 
 

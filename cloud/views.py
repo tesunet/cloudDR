@@ -7120,8 +7120,9 @@ def step_tree_index(request):
         processlist = []
         for process in processes:
             processlist.append({"id": process.id, "code": process.code, "name": process.name})
-        return render(request, 'processconfig.html', {'username': request.user.userinfo.fullname, "functionpage": True,
-                                                      "processlist": processlist})
+        return render(request, 'processconfig.html',
+                      {'username': request.user.userinfo.fullname, "step_tree_index_page": True,
+                       "processlist": processlist})
 
 
 def del_step(request):
@@ -7368,44 +7369,43 @@ def falconstorrun(request):
                     allgroup = process[0].step_set.exclude(state="9").exclude(Q(approval="0") | Q(approval="")).values(
                         "group").distinct()  # 当前预案下需要签字的组,但一个对象只发送一次task
 
-                    if process[0].sign == "1":
-                        if len(allgroup) > 0:  # 如果预案流程已经启动,发送签字tasks
-                            for group in allgroup:
-                                print(group)
-                                try:
-                                    signgroup = Group.objects.get(id=int(group["group"]))
-                                    groupname = signgroup.name
-                                    myprocesstask = ProcessTask()
-                                    myprocesstask.processrun = myprocessrun
-                                    myprocesstask.starttime = datetime.datetime.now()
-                                    myprocesstask.senduser = request.user.username
-                                    myprocesstask.receiveauth = group["group"]
-                                    myprocesstask.type = "SIGN"
-                                    myprocesstask.state = "0"
-                                    myprocesstask.content = "管理员将启动流程“" + myprocessrun.process.name + "”，请" + groupname + "签字。"
-                                    myprocesstask.save()
-                                except:
-                                    pass
-                            result["res"] = "新增成功。"
-                            result["data"] = "/"
-
-                        else:
-                            prosssigns = ProcessTask.objects.filter(processrun=myprocessrun, state="0")
-                            if len(prosssigns) <= 0:
-                                myprocess = myprocessrun.process
+                    if process[0].sign == "1" and len(allgroup) > 0:  # 如果预案流程已经启动,发送签字tasks
+                        for group in allgroup:
+                            print(group)
+                            try:
+                                signgroup = Group.objects.get(id=int(group["group"]))
+                                groupname = signgroup.name
                                 myprocesstask = ProcessTask()
                                 myprocesstask.processrun = myprocessrun
                                 myprocesstask.starttime = datetime.datetime.now()
-                                myprocesstask.type = "RUN"
-                                myprocesstask.state = "0"
-                                myprocesstask.receiveuser = request.user.username
                                 myprocesstask.senduser = request.user.username
-                                myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
+                                myprocesstask.receiveauth = group["group"]
+                                myprocesstask.type = "SIGN"
+                                myprocesstask.state = "0"
+                                myprocesstask.content = "管理员将启动流程“" + myprocessrun.process.name + "”，请" + groupname + "签字。"
                                 myprocesstask.save()
+                            except:
+                                pass
+                        result["res"] = "新增成功。"
+                        result["data"] = "/"
 
-                                # exec_process.delay(myprocessrun.id)
-                                result["res"] = "新增成功。"
-                                result["data"] = process[0].url + "/" + str(myprocessrun.id)
+                    else:
+                        prosssigns = ProcessTask.objects.filter(processrun=myprocessrun, state="0")
+                        if len(prosssigns) <= 0:
+                            myprocess = myprocessrun.process
+                            myprocesstask = ProcessTask()
+                            myprocesstask.processrun = myprocessrun
+                            myprocesstask.starttime = datetime.datetime.now()
+                            myprocesstask.type = "RUN"
+                            myprocesstask.state = "0"
+                            myprocesstask.receiveuser = request.user.username
+                            myprocesstask.senduser = request.user.username
+                            myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
+                            myprocesstask.save()
+
+                            # exec_process.delay(myprocessrun.id)
+                            result["res"] = "新增成功。"
+                            result["data"] = process[0].url + "/" + str(myprocessrun.id)
         return HttpResponse(json.dumps(result))
 
 
@@ -7647,8 +7647,6 @@ from reportlab.lib.units import inch, cm
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 
-from reportlab.lib.fonts import tt2ps
-
 import collections
 
 
@@ -7661,7 +7659,7 @@ def custom_pdf_report(request):
     """
     if request.user.is_authenticated():
         # 请求参数
-        processrun_id = 65
+        processrun_id = request.POST.get("processrunid", "")
         process_id = request.POST.get("processid", "")
 
         # 注册宋体
@@ -7696,8 +7694,12 @@ def custom_pdf_report(request):
         font_style_title.fontSize = 40  # 字体大小
 
         # 报表封页文字
-        title_xml = "飞康自动化恢复流程"
-        abstract_xml = "切换报告"
+        process_name = process_run_obj.process.name
+        title_xml = process_name
+        if title_xml == "飞康自动化恢复流程":
+            abstract_xml = "切换报告"
+        else:
+            abstract_xml = "恢复报告"
         manager_xml = "{0}".format(request.user.userinfo.fullname)
         report_time = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -7745,31 +7747,33 @@ def custom_pdf_report(request):
             first_el_dict["结束时间:"] = r"<para><u>{0}</u></para>".format(
                 end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else "")
 
-            delta_time = (end_time - start_time)
+            if end_time and start_time:
+                delta_time = (end_time - start_time)
+                end_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
+                start_time = start_time.strftime("%Y-%m-%d %H:%M:%S")
+                delta_seconds = datetime.datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                    start_time, '%Y-%m-%d %H:%M:%S')
+                delta_second = str(delta_seconds).split(":")[-1]
 
-            end_time = end_time.strftime("%Y-%m-%d %H:%M:%S")
-            start_time = start_time.strftime("%Y-%m-%d %H:%M:%S")
-            delta_seconds = datetime.datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
-                start_time, '%Y-%m-%d %H:%M:%S')
-            delta_second = str(delta_seconds).split(":")[-1]
-
-            delta_time_str = str(delta_time)
-            if delta_time.total_seconds() > 0:
-                if "," in delta_time_str:
-                    delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
-                    delta_time_list = delta_time_str.split(",")[-1].split(":")
-                    delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                       delta_second if delta_second else "")
+                delta_time_str = str(delta_time)
+                if delta_time.total_seconds() > 0:
+                    if "," in delta_time_str:
+                        delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                        delta_time_list = delta_time_str.split(",")[-1].split(":")
+                        delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                           delta_second if delta_second else "")
+                    else:
+                        delta_time_list = delta_time_str.split(":")
+                        delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                           delta_second if delta_second else "")
+                elif delta_time.total_seconds() == 0:
+                    delta_time = ""
                 else:
-                    delta_time_list = delta_time_str.split(":")
-                    delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                       delta_second if delta_second else "")
-            elif delta_time.total_seconds() == 0:
-                delta_time = ""
-            else:
-                return Http404()
+                    return Http404()
 
-            first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format(delta_time)
+                first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format(delta_time)
+            else:
+                first_el_dict["RTO:"] = r"<para><u>{0}</u></para>".format("")
             first_el_dict["发起人:"] = r"<para><u>{0}</u></para>".format(create_user)
 
             task_sign_obj = ProcessTask.objects.filter(processrun_id=processrun_id).exclude(state="9").filter(
@@ -7858,32 +7862,35 @@ def custom_pdf_report(request):
                     second_el_dict["结束时间:"] = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[
                         0].endtime else ""
 
-                    delta_time = (pnode_steprun[0].endtime - pnode_steprun[0].starttime)
-                    delta_time_str = str(delta_time)
+                    if pnode_steprun[0].endtime and pnode_steprun[0].starttime:
+                        delta_time = (pnode_steprun[0].endtime - pnode_steprun[0].starttime)
+                        delta_time_str = str(delta_time)
 
-                    end_time = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
-                    start_time = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
-                    delta_seconds = datetime.datetime.strptime(end_time,
-                                                               '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
-                        start_time, '%Y-%m-%d %H:%M:%S')
-                    delta_second = str(delta_seconds).split(":")[-1]
+                        end_time = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                        start_time = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                        delta_seconds = datetime.datetime.strptime(end_time,
+                                                                   '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                            start_time, '%Y-%m-%d %H:%M:%S')
+                        delta_second = str(delta_seconds).split(":")[-1]
 
-                    if delta_time.total_seconds() > 0:
-                        if "," in delta_time_str:
-                            delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
-                            delta_time_list = delta_time_str.split(",")[-1].split(":")
-                            delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                               delta_second if delta_second else "")
+                        if delta_time.total_seconds() > 0:
+                            if "," in delta_time_str:
+                                delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                delta_time_list = delta_time_str.split(",")[-1].split(":")
+                                delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                                   delta_second if delta_second else "")
+                            else:
+                                delta_time_list = delta_time_str.split(":")
+                                delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                                   delta_second if delta_second else "")
+                        elif delta_time.total_seconds() == 0:
+                            delta_time = ""
                         else:
-                            delta_time_list = delta_time_str.split(":")
-                            delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                               delta_second if delta_second else "")
-                    elif delta_time.total_seconds() == 0:
-                        delta_time = ""
-                    else:
-                        return Http404()
+                            return Http404()
 
-                    second_el_dict["RTO:"] = delta_time
+                        second_el_dict["RTO:"] = delta_time
+                    else:
+                        second_el_dict["RTO:"] = ""
 
                 # ...需要审批时，添加负责人
                 if pstep.approval == "1":
@@ -7954,32 +7961,35 @@ def custom_pdf_report(request):
                             script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if \
                                 current_scriptrun_obj[0].endtime else ""
 
-                            delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
-                            delta_time_str = str(delta_time)
+                            if current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime:
+                                delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
+                                delta_time_str = str(delta_time)
 
-                            end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
-                            start_time = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
-                            delta_seconds = datetime.datetime.strptime(end_time,
-                                                                       '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
-                                start_time, '%Y-%m-%d %H:%M:%S')
-                            delta_second = str(delta_seconds).split(":")[-1]
+                                end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                                start_time = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                                delta_seconds = datetime.datetime.strptime(end_time,
+                                                                           '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                                    start_time, '%Y-%m-%d %H:%M:%S')
+                                delta_second = str(delta_seconds).split(":")[-1]
 
-                            if delta_time.total_seconds() > 0:
-                                if "," in delta_time_str:
-                                    delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
-                                    delta_time_list = delta_time_str.split(",")[-1].split(":")
-                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                                       delta_second if delta_second else "")
+                                if delta_time.total_seconds() > 0:
+                                    if "," in delta_time_str:
+                                        delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                        delta_time_list = delta_time_str.split(",")[-1].split(":")
+                                        delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                                           delta_second if delta_second else "")
+                                    else:
+                                        delta_time_list = delta_time_str.split(":")
+                                        delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                                           delta_second if delta_second else "")
+                                elif delta_time.total_seconds() == 0:
+                                    delta_time = ""
                                 else:
-                                    delta_time_list = delta_time_str.split(":")
-                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                                       delta_second if delta_second else "")
-                            elif delta_time.total_seconds() == 0:
-                                delta_time = ""
-                            else:
-                                return Http404()
+                                    return Http404()
 
-                            script_el_dict["RTO:"] = delta_time
+                                script_el_dict["RTO:"] = delta_time
+                            else:
+                                script_el_dict["RTO:"] = ""
 
                             state = current_scriptrun_obj[0].state
                             if state in state_dict.keys():
@@ -8021,101 +8031,19 @@ def custom_pdf_report(request):
 
                         el_style.fontSize = 12
                         steprun_obj = StepRun.objects.exclude(state="9").filter(processrun_id=processrun_id).filter(
-                            step=step)  #
+                            step=step)
                         if steprun_obj:
                             second_el_dict["开始时间:"] = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if \
                                 steprun_obj[0].starttime else ""
                             second_el_dict["结束时间:"] = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if \
                                 steprun_obj[0].endtime else ""
 
-                            delta_time = (steprun_obj[0].endtime - steprun_obj[0].starttime)
-                            delta_time_str = str(delta_time)
-
-                            end_time = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
-                            start_time = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
-                            delta_seconds = datetime.datetime.strptime(end_time,
-                                                                       '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
-                                start_time, '%Y-%m-%d %H:%M:%S')
-                            delta_second = str(delta_seconds).split(":")[-1]
-
-                            if delta_time.total_seconds() > 0:
-                                if "," in delta_time_str:
-                                    delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
-                                    delta_time_list = delta_time_str.split(",")[-1].split(":")
-                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
-                                                                       delta_second if delta_second else "")
-                                else:
-                                    delta_time_list = delta_time_str.split(":")
-                                    delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
-                                                                       delta_second if delta_second else "")
-                            elif delta_time.total_seconds() == 0:
-                                delta_time = ""
-                            else:
-                                return Http404()
-
-                            second_el_dict["RTO:"] = delta_time
-
-                        # ...需要审批时
-                        if step.approval == "1":
-                            users = User.objects.filter(username=steprun_obj[0].operator)
-                            if users:
-                                operator = users[0].userinfo.fullname
-                                second_el_dict["负责人:"] = operator
-
-                        for key, value in second_el_dict.items():
-                            if not key:
-                                key = ""
-                            if not value:
-                                value = ""
-
-                            dict_style = styles["Heading2"]
-                            dict_style.fontName = "fsong"
-                            dict_style.fontSize = 12
-                            dict_style.leading = 0
-                            dict_style.spaceBefore = 0
-                            dict_style.spaceAfter = 0
-                            dict_style.firstLineIndent = 72
-
-                            dict_data = r"""<para>{0}<u>{1}</u></para>""".format(key, value)
-
-                            elements.append(Paragraph(dict_data, dict_style))
-                            elements.append(Spacer(0, 0.7 * cm))
-
-                        # 当前步骤下脚本
-                        current_scripts = Script.objects.exclude(state="9").filter(step_id=step.id)
-                        if current_scripts:
-                            script_title_style = styles["Heading2"]
-                            script_title_style.fontName = "fsong"
-                            script_title_style.fontSize = 12
-
-                            script_title = "<para>脚本:</para>"
-                            elements.append(Paragraph(script_title, script_title_style))
-                            elements.append(Spacer(0, 0.5 * cm))
-                            for snum, current_script in enumerate(current_scripts):
-                                script_el_dict = collections.OrderedDict()
-                                # title
-                                script_title = "{0}.{1}".format("i" * (snum + 1), current_script.name)
-                                script_title01_style = styles["Bullet"]
-                                script_title01_style.fontName = "fsong"
-                                script_title01_style.firstLineIndent = 90
-                                script_title01_style.fontSize = 12
-
-                                elements.append(Paragraph(script_title, script_title01_style))
-                                elements.append(Spacer(0, 0.2 * cm))
-                                # content
-                                steprun_id = steprun_obj[0].id
-                                script_id = current_script.id
-                                current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id, script_id=script_id)
-                                script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime(
-                                    "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
-                                script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime(
-                                    "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].endtime else ""
-
-                                delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
+                            if steprun_obj[0].endtime and steprun_obj[0].starttime:
+                                delta_time = (steprun_obj[0].endtime - steprun_obj[0].starttime)
                                 delta_time_str = str(delta_time)
 
-                                end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
-                                start_time = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                                end_time = steprun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                                start_time = steprun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
                                 delta_seconds = datetime.datetime.strptime(end_time,
                                                                            '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
                                     start_time, '%Y-%m-%d %H:%M:%S')
@@ -8136,34 +8064,210 @@ def custom_pdf_report(request):
                                 else:
                                     return Http404()
 
-                                script_el_dict["RTO:"] = delta_time
+                                second_el_dict["RTO:"] = delta_time
+                            else:
+                                second_el_dict["RTO:"] = ""
 
-                                state = current_scriptrun_obj[0].state
-                                if state in state_dict.keys():
-                                    script_el_dict["状态:"] = state_dict[state]
-                                else:
-                                    script_el_dict["状态:"] = ""
+                            # ...需要审批时
+                            if step.approval == "1":
+                                users = User.objects.filter(username=steprun_obj[0].operator)
+                                if users:
+                                    operator = users[0].userinfo.fullname
+                                    second_el_dict["负责人:"] = operator
 
-                                script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
-                                for key, value in script_el_dict.items():
-                                    if not key:
-                                        key = ""
-                                    if not value:
-                                        value = ""
-                                    script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
+                            for key, value in second_el_dict.items():
+                                if not key:
+                                    key = ""
+                                if not value:
+                                    value = ""
 
-                                    script_content_style = styles['Normal']
-                                    script_content_style.fontName = "fsong"
-                                    script_content_style.fontSize = 12  # 字体大小
-                                    script_content_style.wordWrap = "CJK"
-                                    script_content_style.firstLineIndent = 105
+                                dict_style = styles["Heading2"]
+                                dict_style.fontName = "fsong"
+                                dict_style.fontSize = 12
+                                dict_style.leading = 0
+                                dict_style.spaceBefore = 0
+                                dict_style.spaceAfter = 0
+                                dict_style.firstLineIndent = 72
 
-                                    elements.append(Paragraph(script_data, script_content_style))
+                                dict_data = r"""<para>{0}<u>{1}</u></para>""".format(key, value)
+
+                                elements.append(Paragraph(dict_data, dict_style))
+                                elements.append(Spacer(0, 0.7 * cm))
+
+                            # 当前步骤下脚本
+                            current_scripts = Script.objects.exclude(state="9").filter(step_id=step.id)
+                            if current_scripts:
+                                script_title_style = styles["Heading2"]
+                                script_title_style.fontName = "fsong"
+                                script_title_style.fontSize = 12
+
+                                script_title = "<para>脚本:</para>"
+                                elements.append(Paragraph(script_title, script_title_style))
+                                elements.append(Spacer(0, 0.5 * cm))
+                                for snum, current_script in enumerate(current_scripts):
+                                    script_el_dict = collections.OrderedDict()
+                                    # title
+                                    script_title = "{0}.{1}".format("i" * (snum + 1), current_script.name)
+                                    script_title01_style = styles["Bullet"]
+                                    script_title01_style.fontName = "fsong"
+                                    script_title01_style.firstLineIndent = 90
+                                    script_title01_style.fontSize = 12
+
+                                    elements.append(Paragraph(script_title, script_title01_style))
                                     elements.append(Spacer(0, 0.2 * cm))
-                elements.append(Spacer(0, 0.5 * cm))
+                                    # content
+                                    steprun_id = steprun_obj[0].id
+                                    script_id = current_script.id
+                                    current_scriptrun_obj = ScriptRun.objects.filter(steprun_id=steprun_id,
+                                                                                     script_id=script_id)
+                                    script_el_dict["开始时间:"] = current_scriptrun_obj[0].starttime.strftime(
+                                        "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].starttime else ""
+                                    script_el_dict["结束时间:"] = current_scriptrun_obj[0].endtime.strftime(
+                                        "%Y-%m-%d %H:%M:%S") if current_scriptrun_obj[0].endtime else ""
+
+                                    if current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime:
+
+                                        delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
+                                        delta_time_str = str(delta_time)
+
+                                        end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
+                                        start_time = current_scriptrun_obj[0].starttime.strftime("%Y-%m-%d %H:%M:%S")
+                                        delta_seconds = datetime.datetime.strptime(end_time,
+                                                                                   '%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(
+                                            start_time, '%Y-%m-%d %H:%M:%S')
+                                        delta_second = str(delta_seconds).split(":")[-1]
+
+                                        if delta_time.total_seconds() > 0:
+                                            if "," in delta_time_str:
+                                                delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                                delta_time_list = delta_time_str.split(",")[-1].split(":")
+                                                delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                                                   delta_second if delta_second else "")
+                                            else:
+                                                delta_time_list = delta_time_str.split(":")
+                                                delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                                                   delta_second if delta_second else "")
+                                        elif delta_time.total_seconds() == 0:
+                                            delta_time = ""
+                                        else:
+                                            return Http404()
+
+                                        script_el_dict["RTO:"] = delta_time
+                                    else:
+                                        script_el_dict["RTO:"] = ""
+
+                                    state = current_scriptrun_obj[0].state
+                                    if state in state_dict.keys():
+                                        script_el_dict["状态:"] = state_dict[state]
+                                    else:
+                                        script_el_dict["状态:"] = ""
+
+                                    script_el_dict["执行结果:"] = current_scriptrun_obj[0].explain
+                                    for key, value in script_el_dict.items():
+                                        if not key:
+                                            key = ""
+                                        if not value:
+                                            value = ""
+                                        script_data = r"<para>{0}<u>{1}</u></para>".format(key, value)
+
+                                        script_content_style = styles['Normal']
+                                        script_content_style.fontName = "fsong"
+                                        script_content_style.fontSize = 12  # 字体大小
+                                        script_content_style.wordWrap = "CJK"
+                                        script_content_style.firstLineIndent = 105
+
+                                        elements.append(Paragraph(script_data, script_content_style))
+                                        elements.append(Spacer(0, 0.2 * cm))
+                    elements.append(Spacer(0, 0.5 * cm))
 
             doc.multiBuild(elements)
             pdf = buffer.getvalue()
             buffer.close()
             response.write(pdf)
             return response
+
+
+def falconstorsearch(request):
+    if request.user.is_authenticated():
+        nowtime = datetime.datetime.now()
+        endtime = nowtime.strftime("%Y-%m-%d")
+        starttime = (nowtime - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        all_processes = Process.objects.exclude(state="9")
+        processname_list = []
+        for process in all_processes:
+            processname_list.append(process.name)
+
+        state_dict = {
+            "DONE": "已完成",
+            "EDIT": "未执行",
+            "RUN": "执行中",
+            "ERROR": "执行失败",
+            "IGNORE": "忽略",
+        }
+        return render(request, "falconstorsearch.html",
+                      {'username': request.user.userinfo.fullname, "starttime": starttime, "endtime": endtime,
+                       "processname_list": processname_list, "state_dict": state_dict, "falconstorsearchpage": True})
+    else:
+        return HttpResponseRedirect("/login")
+
+
+def falconstorsearchdata(request):
+    """
+    :param request: starttime, endtime, runperson, runstate
+    :return: starttime,endtime,createuser,state,process_id,processrun_id,runreason
+    """
+    if request.user.is_authenticated():
+        result = []
+        processname = request.GET.get('processname', '')
+        runperson = request.GET.get('runperson', '')
+        runstate = request.GET.get('runstate', '')
+        startdate = request.GET.get('startdate', '')
+        enddate = request.GET.get('enddate', '')
+        start_time = datetime.datetime.strptime(startdate, '%Y-%m-%d')
+        end_time = datetime.datetime.strptime(enddate, '%Y-%m-%d') + datetime.timedelta(days=1) - datetime.timedelta(
+            seconds=1)
+        all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time])
+        if runperson:
+            if processname != "" and runstate != "":
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
+                                                                                   process__name=processname,
+                                                                                   state=runstate, creatuser=runperson)
+            if processname == "" and runstate != "":
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
+                                                                                   state=runstate, creatuser=runperson)
+            if processname != "" and runstate == "":
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
+                                                                               process__name=processname, creatuser=runperson)
+        else:
+            if processname != "" and runstate != "":
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
+                                                                                   process__name=processname,
+                                                                                   state=runstate)
+            if processname == "" and runstate != "":
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
+                                                                                   state=runstate)
+            if processname != "" and runstate == "":
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
+                                                                               process__name=processname)
+        state_dict = {
+            "DONE": "已完成",
+            "EDIT": "未执行",
+            "RUN": "执行中",
+            "ERROR": "执行失败",
+            "IGNORE": "忽略",
+            "": "",
+        }
+
+        for processrun_obj in all_processrun_objs:
+            result.append({
+                "starttime": processrun_obj.starttime.strftime('%Y-%m-%d %H:%M:%S') if processrun_obj.starttime else "",
+                "endtime": processrun_obj.endtime.strftime('%Y-%m-%d %H:%M:%S') if processrun_obj.endtime else "",
+                "createuser": processrun_obj.creatuser if processrun_obj.creatuser else "",
+                "state": state_dict["{0}".format(processrun_obj.state)] if processrun_obj.state else "",
+                "process_id": processrun_obj.process_id if processrun_obj.process_id else "",
+                "processrun_id": processrun_obj.id if processrun_obj.id else "",
+                "run_reason": processrun_obj.run_reason[:20] if processrun_obj.run_reason else "",
+                "process_name": processrun_obj.process.name if processrun_obj.process.name else "",
+                "process_url": processrun_obj.process.url if processrun_obj.process.url else ""
+            })
+        return HttpResponse(json.dumps({"data": result}))
