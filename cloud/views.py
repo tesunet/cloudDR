@@ -7403,7 +7403,7 @@ def falconstorrun(request):
                             myprocesstask.content = myprocess.name + " 流程已启动，点击查看。"
                             myprocesstask.save()
 
-                            # exec_process.delay(myprocessrun.id)
+                            exec_process.delay(myprocessrun.id)
                             result["res"] = "新增成功。"
                             result["data"] = process[0].url + "/" + str(myprocessrun.id)
         return HttpResponse(json.dumps(result))
@@ -7627,7 +7627,7 @@ def processsignsave(request):
                 myprocesstask.senduser = request.user.username
                 myprocesstask.save()
 
-                # exec_process.delay(myprocessrun.id)
+                exec_process.delay(myprocessrun.id)
                 result["res"] = "签字成功,同时启动流程。"
                 result["data"] = myprocess.url + "/" + str(myprocessrun.id)
             else:
@@ -7650,6 +7650,7 @@ from reportlab.pdfbase import pdfmetrics
 import collections
 
 
+@csrf_exempt
 def custom_pdf_report(request):
     """
     由于reportlab模块中styles.getSampleStyleSheet方法中的对象只能生成一次，所以这里选择将其中Heading1-5对象中的属性消除，
@@ -7661,7 +7662,7 @@ def custom_pdf_report(request):
         # 请求参数
         processrun_id = request.POST.get("processrunid", "")
         process_id = request.POST.get("processid", "")
-
+        print('processrun_id, process_id', processrun_id, process_id)
         # 注册宋体
         current_path = os.getcwd()
         fsong_path = current_path + os.sep + "cloud" + os.sep + "static" + os.sep + "fonts" + os.sep + "fangsong.ttf"
@@ -7694,12 +7695,9 @@ def custom_pdf_report(request):
         font_style_title.fontSize = 40  # 字体大小
 
         # 报表封页文字
-        process_name = process_run_obj.process.name
-        title_xml = process_name
-        if title_xml == "飞康自动化恢复流程":
-            abstract_xml = "切换报告"
-        else:
-            abstract_xml = "恢复报告"
+        title_xml = "飞康自动化恢复流程"
+        abstract_xml = "切换报告"
+
         manager_xml = "{0}".format(request.user.userinfo.fullname)
         report_time = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -8226,29 +8224,30 @@ def falconstorsearchdata(request):
         start_time = datetime.datetime.strptime(startdate, '%Y-%m-%d')
         end_time = datetime.datetime.strptime(enddate, '%Y-%m-%d') + datetime.timedelta(days=1) - datetime.timedelta(
             seconds=1)
-        all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time])
+        all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time]).order_by("-starttime")
+
         if runperson:
             if processname != "" and runstate != "":
                 all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
                                                                                    process__name=processname,
-                                                                                   state=runstate, creatuser=runperson)
+                                                                                   state=runstate, creatuser=runperson).order_by("-starttime")
             if processname == "" and runstate != "":
                 all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                                   state=runstate, creatuser=runperson)
+                                                                                   state=runstate, creatuser=runperson).order_by("-starttime")
             if processname != "" and runstate == "":
                 all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                               process__name=processname, creatuser=runperson)
+                                                                               process__name=processname, creatuser=runperson).order_by("-starttime")
         else:
             if processname != "" and runstate != "":
                 all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
                                                                                    process__name=processname,
-                                                                                   state=runstate)
+                                                                                   state=runstate).order_by("-starttime")
             if processname == "" and runstate != "":
                 all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                                   state=runstate)
+                                                                                   state=runstate).order_by("-starttime")
             if processname != "" and runstate == "":
                 all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                               process__name=processname)
+                                                                               process__name=processname).order_by("-starttime")
         state_dict = {
             "DONE": "已完成",
             "EDIT": "未执行",

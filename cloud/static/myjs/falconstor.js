@@ -239,10 +239,6 @@ if (App.isAngularJsApp() === false) {
                             }
                         });
                     });
-
-                },
-                error: function (e) {
-                    alert("流程读取失败，请于客服联系。");
                 }
             });
         }
