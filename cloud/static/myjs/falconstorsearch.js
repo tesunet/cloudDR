@@ -31,7 +31,6 @@ $(document).ready(function () {
             "targets": -1,  // 指定最后一列添加按钮；
             "data": null,
             "width": "60px",  // 指定列宽；
-            "defaultContent": "<button title='报告'  id='report' class='btn btn-xs btn-primary' type='button'><i class='fa fa-arrow-down'></i>",
             "render": function (data, type, full) {
                 return "<td><a href='/custom_pdf_report/?processrunid&processid'></td><i class='fa fa-arrow-down'></i></a>".replace("processrunid", "processrunid="+full.processrun_id).replace("processid", "processid="+full.process_id)
             }
