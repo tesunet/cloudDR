@@ -7650,7 +7650,6 @@ from reportlab.pdfbase import pdfmetrics
 import collections
 
 
-@csrf_exempt
 def custom_pdf_report(request):
     """
     由于reportlab模块中styles.getSampleStyleSheet方法中的对象只能生成一次，所以这里选择将其中Heading1-5对象中的属性消除，
@@ -7660,9 +7659,8 @@ def custom_pdf_report(request):
     """
     if request.user.is_authenticated():
         # 请求参数
-        processrun_id = request.POST.get("processrunid", "")
-        process_id = request.POST.get("processid", "")
-        print('processrun_id, process_id', processrun_id, process_id)
+        processrun_id = request.GET.get("processrunid", "")
+        process_id = request.GET.get("processid", "")
         # 注册宋体
         current_path = os.getcwd()
         fsong_path = current_path + os.sep + "cloud" + os.sep + "static" + os.sep + "fonts" + os.sep + "fangsong.ttf"

@@ -3,7 +3,7 @@ $(document).ready(function () {
         "bAutoWidth": true,
         "bSort": false,
         "bProcessing": true,
-        "ajax": "../falconstorsearchdata?runstate=" + $('#runstate').val() + "&startdate=" + $('#startdate').val() + "&enddate=" + $('#enddate').val() + "&processname=" + $('#processname').val()+ "&runperson=" + $('#runperson').val(),
+        "ajax": "../falconstorsearchdata?runstate=" + $('#runstate').val() + "&startdate=" + $('#startdate').val() + "&enddate=" + $('#enddate').val() + "&processname=" + $('#processname').val() + "&runperson=" + $('#runperson').val(),
         "columns": [
             {"data": "processrun_id"},
             {"data": "process_name"},
@@ -31,7 +31,10 @@ $(document).ready(function () {
             "targets": -1,  // 指定最后一列添加按钮；
             "data": null,
             "width": "60px",  // 指定列宽；
-            "defaultContent": "<button title='报告'  id='report' class='btn btn-xs btn-primary' type='button'><i class='fa fa-arrow-down'></i>"
+            "defaultContent": "<button title='报告'  id='report' class='btn btn-xs btn-primary' type='button'><i class='fa fa-arrow-down'></i>",
+            "render": function (data, type, full) {
+                return "<td><a href='/custom_pdf_report/?processrunid&processid'></td><i class='fa fa-arrow-down'></i></a>".replace("processrunid", "processrunid="+full.processrun_id).replace("processid", "processid="+full.process_id)
+            }
         }],
 
         "oLanguage": {
@@ -63,20 +66,7 @@ $(document).ready(function () {
     });
     $('#cx').click(function () {
         var table = $('#sample_1').DataTable();
-        table.ajax.url("../falconstorsearchdata?runstate=" + $('#runstate').val() + "&startdate=" + $('#startdate').val() + "&enddate=" + $('#enddate').val() + "&processname=" + $('#processname').val()+ "&runperson=" + $('#runperson').val()).load();
+        table.ajax.url("../falconstorsearchdata?runstate=" + $('#runstate').val() + "&startdate=" + $('#startdate').val() + "&enddate=" + $('#enddate').val() + "&processname=" + $('#processname').val() + "&runperson=" + $('#runperson').val()).load();
     })
-
-    // 生成报告
-    $('#sample_1 tbody').on('click', 'button#report', function () {
-        var table = $('#sample_1').DataTable();
-        var data = table.row($(this).parents('tr')).data();
-        $("#processid").val(data.process_id);
-        $("#processrunid").val(data.processrun_id);
-        $("#static01").modal({backdrop: "static"});
-
-        // 写入当前时间
-        var myDate = new Date();
-        $("#run_time").val(myDate.toLocaleString());
-    });
 
 });
