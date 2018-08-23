@@ -37,6 +37,7 @@ $.ajax({
                     "新建": {
                         "label": "新建",
                         "action": function (data) {
+                            $("#formdiv").show();
                             var inst = jQuery.jstree.reference(data.reference),
                                 obj = inst.get_node(data.reference);
                             $("#se_1").empty();
@@ -56,7 +57,7 @@ $.ajax({
                                 var singlegroupInfoList = groupInfoList[i].split("+");
                                 $("#group").append('<option value="' + singlegroupInfoList[0] + '">' + singlegroupInfoList[1] + '</option>')
                             }
-                            inst.add_node(obj);
+                            // inst.add_node(obj);
                         }
                     },
                     "删除": {
@@ -66,7 +67,9 @@ $.ajax({
                                 obj = inst.get_node(data.reference);
                             if (obj.children.length > 0)
                                 alert("节点下还有其他节点或功能，无法删除。");
-                            else {
+                            else if (obj.data.verify == "first_node") {
+                                alert("该项为流程名称，无法删除。");
+                            } else {
                                 if (confirm("确定要删除此节点？删除后不可恢复。")) {
                                     $.ajax({
                                         type: "POST",
@@ -134,7 +137,12 @@ $.ajax({
                 }
             })
             .bind('select_node.jstree', function (event, data) {
-                $("#formdiv").show();
+                if (data.node.data.verify == "first_node") {
+                    $("#formdiv").hide();
+                } else {
+                    $("#formdiv").show();
+                }
+                // $("#formdiv").show();
                 $("#se_1").empty();
                 $("#group").empty();
                 $("#title").text(data.node.text);
@@ -160,10 +168,12 @@ $.ajax({
                 }
                 $("#approval").find("option[value='" + data.node.data.approval + "']").prop("selected", true);
                 $("#skip").find("option[value='" + data.node.data.skip + "']").prop("selected", true);
-                var scriptInfoList = data.node.data.scripts.split("&");
-                for (var i = 0; i < scriptInfoList.length - 1; i++) {
-                    var singleScriptInfoList = scriptInfoList[i].split("+");
-                    $("#se_1").append('<option value="' + singleScriptInfoList[0] + '">' + singleScriptInfoList[1] + '</option>')
+                if (data.node.data.verify != "first_node") {
+                    var scriptInfoList = data.node.data.scripts.split("&");
+                    for (var i = 0; i < scriptInfoList.length - 1; i++) {
+                        var singleScriptInfoList = scriptInfoList[i].split("+");
+                        $("#se_1").append('<option value="' + singleScriptInfoList[0] + '">' + singleScriptInfoList[1] + '</option>')
+                    }
                 }
 
                 var eventNodeName = event.target.nodeName;
@@ -430,6 +440,7 @@ $("#process").change(function () {
                         "新建": {
                             "label": "新建",
                             "action": function (data) {
+                                $("#formdiv").show();
                                 var inst = jQuery.jstree.reference(data.reference),
                                     obj = inst.get_node(data.reference);
                                 $("#se_1").empty();
@@ -448,7 +459,7 @@ $("#process").change(function () {
                                     var singlegroupInfoList = groupInfoList[i].split("+");
                                     $("#group").append('<option value="' + singlegroupInfoList[0] + '">' + singlegroupInfoList[1] + '</option>')
                                 }
-                                inst.add_node(obj);
+                                // inst.add_node(obj);
                             }
                         },
                         "删除": {
@@ -458,7 +469,9 @@ $("#process").change(function () {
                                     obj = inst.get_node(data.reference);
                                 if (obj.children.length > 0)
                                     alert("节点下还有其他节点或功能，无法删除。");
-                                else {
+                                else if (obj.data.verify == "first_node") {
+                                    alert("该项为流程名称，无法删除。");
+                                } else {
                                     if (confirm("确定要删除此节点？删除后不可恢复。")) {
                                         $.ajax({
                                             type: "POST",
@@ -526,7 +539,11 @@ $("#process").change(function () {
                     }
                 })
                 .bind('select_node.jstree', function (event, data) {
-                    $("#formdiv").show();
+                    if (data.node.data.verify == "first_node") {
+                        $("#formdiv").hide();
+                    } else {
+                        $("#formdiv").show();
+                    }
                     $("#se_1").empty();
                     $("#group").empty();
                     $("#group").attr("disabled", false);
@@ -553,11 +570,14 @@ $("#process").change(function () {
                     }
                     $("#approval").find("option[value='" + data.node.data.approval + "']").prop("selected", true);
                     $("#skip").find("option[value='" + data.node.data.skip + "']").prop("selected", true);
-                    var scriptInfoList = data.node.data.scripts.split("&");
-                    for (var i = 0; i < scriptInfoList.length - 1; i++) {
-                        var singleScriptInfoList = scriptInfoList[i].split("+");
-                        $("#se_1").append('<option value="' + singleScriptInfoList[0] + '">' + singleScriptInfoList[1] + '</option>')
+                    if (data.node.data.verify != "first_node") {
+                        var scriptInfoList = data.node.data.scripts.split("&");
+                        for (var i = 0; i < scriptInfoList.length - 1; i++) {
+                            var singleScriptInfoList = scriptInfoList[i].split("+");
+                            $("#se_1").append('<option value="' + singleScriptInfoList[0] + '">' + singleScriptInfoList[1] + '</option>')
+                        }
                     }
+
 
                     var eventNodeName = event.target.nodeName;
                     if (eventNodeName == 'INS') {
@@ -903,6 +923,7 @@ $('#save').click(function () {
                                 "新建": {
                                     "label": "新建",
                                     "action": function (data) {
+                                        $("#formdiv").show();
                                         var inst = jQuery.jstree.reference(data.reference),
                                             obj = inst.get_node(data.reference);
                                         $("#se_1").empty();
@@ -921,7 +942,7 @@ $('#save').click(function () {
                                             var singlegroupInfoList = groupInfoList[i].split("+");
                                             $("#group").append('<option value="' + singlegroupInfoList[0] + '">' + singlegroupInfoList[1] + '</option>')
                                         }
-                                        inst.add_node(obj);
+                                        // inst.add_node(obj);
                                     }
                                 },
                                 "删除": {
@@ -931,7 +952,9 @@ $('#save').click(function () {
                                             obj = inst.get_node(data.reference);
                                         if (obj.children.length > 0)
                                             alert("节点下还有其他节点或功能，无法删除。");
-                                        else {
+                                        else if (obj.data.verify == "first_node") {
+                                            alert("该项为流程名称，无法删除。");
+                                        } else {
                                             if (confirm("确定要删除此节点？删除后不可恢复。")) {
                                                 $.ajax({
                                                     type: "POST",
@@ -998,7 +1021,11 @@ $('#save').click(function () {
                             }
                         })
                         .bind('select_node.jstree', function (event, data) {
-                            $("#formdiv").show();
+                            if (data.node.data.verify == "first_node") {
+                                $("#formdiv").hide();
+                            } else {
+                                $("#formdiv").show();
+                            }
                             $("#se_1").empty();
                             $("#group").empty();
                             $("#group").attr("disabled", false);
@@ -1025,10 +1052,12 @@ $('#save').click(function () {
                             }
                             $("#approval").find("option[value='" + data.node.data.approval + "']").prop("selected", true);
                             $("#skip").find("option[value='" + data.node.data.skip + "']").prop("selected", true);
-                            var scriptInfoList = data.node.data.scripts.split("&");
-                            for (var i = 0; i < scriptInfoList.length - 1; i++) {
-                                var singleScriptInfoList = scriptInfoList[i].split("+");
-                                $("#se_1").append('<option value="' + singleScriptInfoList[0] + '">' + singleScriptInfoList[1] + '</option>')
+                            if (data.node.data.verify != "first_node") {
+                                var scriptInfoList = data.node.data.scripts.split("&");
+                                for (var i = 0; i < scriptInfoList.length - 1; i++) {
+                                    var singleScriptInfoList = scriptInfoList[i].split("+");
+                                    $("#se_1").append('<option value="' + singleScriptInfoList[0] + '">' + singleScriptInfoList[1] + '</option>')
+                                }
                             }
 
                             var eventNodeName = event.target.nodeName;

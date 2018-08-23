@@ -1262,6 +1262,11 @@ def scriptdata(request):
 
 
 def scriptdel(request):
+    """
+    当删除脚本管理中的脚本的同时，需要删除预案中绑定的脚本；
+    :param request:
+    :return:
+    """
     if request.user.is_authenticated() and request.session['isadmin']:
         if 'id' in request.POST:
             id = request.POST.get('id', '')
@@ -1272,6 +1277,11 @@ def scriptdel(request):
             script = Script.objects.get(id=id)
             script.state = "9"
             script.save()
+            script_code = script.code
+            related_scripts = Script.objects.filter(code=script_code)
+            for related_script in related_scripts:
+                related_script.state = "9"
+                related_script.save()
             return HttpResponse(1)
         else:
             return HttpResponse(0)
@@ -5713,22 +5723,32 @@ def setpsave(request):
         approval = request.POST.get('approval', '')
         group = request.POST.get('group', '')
         process_id = request.POST.get('process_id', '')
+        print("id, pid, name, time, skip, approval, group, process_id", id, pid, name, time, skip, approval, group,
+              process_id)
         try:
             id = int(id)
         except:
             raise Http404()
         # 新增步骤
         if id == 0:
-            max_sort_from_pnode = \
-                Step.objects.exclude(state="9").filter(pnode_id=pid).filter(process_id=process_id).aggregate(
-                    Max("sort"))[
-                    "sort__max"]
+            # process_name下右键新增
+            try:
+                pid = int(pid)
+            except:
+                pid = None
+                max_sort_from_pnode = \
+                    Step.objects.exclude(state="9").filter(pnode_id=None, process_id=process_id).aggregate(Max("sort"))[
+                        "sort__max"]
+            else:
+                max_sort_from_pnode = \
+                    Step.objects.exclude(state="9").filter(pnode_id=pid).filter(process_id=process_id).aggregate(
+                        Max("sort"))["sort__max"]
+
             # 当前没有父节点
             if max_sort_from_pnode or max_sort_from_pnode == 0:
                 my_sort = max_sort_from_pnode + 1
             else:
                 my_sort = 0
-
             step = Step()
             step.skip = skip
             step.approval = approval
@@ -5739,6 +5759,7 @@ def setpsave(request):
             step.pnode_id = pid
             step.sort = my_sort
             step.save()
+
             # last_id
             current_steps = Step.objects.filter(pnode_id=pid).exclude(state="9").order_by("sort").filter(
                 process_id=process_id)
@@ -7049,6 +7070,12 @@ def custom_step_tree(request):
         pid = request.POST.get('pid', "")
         name = request.POST.get('name', "")
         process_id = request.POST.get("process", "")
+        current_process = Process.objects.filter(id=process_id)
+        if current_process:
+            current_process = current_process[0]
+        else:
+            return Http404()
+        process_name = current_process.name
 
         if id == 0:
             selectid = pid
@@ -7083,6 +7110,13 @@ def custom_step_tree(request):
 
         treedata = []
         rootnodes = Step.objects.order_by("sort").filter(process_id=process_id, pnode=None).exclude(state="9")
+
+        all_groups = Group.objects.exclude(state="9")
+        group_string = ""
+        for group in all_groups:
+            id_name_plus = str(group.id) + "+" + str(group.name) + "&"
+            group_string += id_name_plus
+
         if len(rootnodes) > 0:
             for rootnode in rootnodes:
                 root = {}
@@ -7097,19 +7131,18 @@ def custom_step_tree(request):
                 if rootnode.group:
                     group_id = rootnode.group
                     group_name = Group.objects.filter(id=group_id)[0].name
-                all_groups = Group.objects.exclude(state="9")
-                group_string = ""
-                for group in all_groups:
-                    id_name_plus = str(group.id) + "+" + str(group.name) + "&"
-                    group_string += id_name_plus
 
                 root["data"] = {"time": rootnode.time, "approval": rootnode.approval, "skip": rootnode.skip,
                                 "allgroups": group_string, "group": rootnode.group, "group_name": group_name,
                                 "scripts": script_string, "errors": errors, "title": title}
                 root["children"] = get_step_tree(rootnode, selectid)
                 treedata.append(root)
+        process = {}
+        process["text"] = process_name
+        process["data"] = {"allgroups": group_string, "verify": "first_node"}
+        process["children"] = treedata
 
-        return JsonResponse({"treedata": treedata})
+        return JsonResponse({"treedata": process})
     else:
         return HttpResponseRedirect("/login")
 
@@ -7190,11 +7223,11 @@ def move_step(request):
             try:
                 parent = int(parent)
             except:
-                raise Http404()
+                parent = None
             try:
                 old_parent = int(old_parent)
             except:
-                raise Http404()
+                old_parent = None
             try:
                 old_position = int(old_position)
             except:
@@ -7205,7 +7238,8 @@ def move_step(request):
                 raise Http404()
 
             cur_step_obj = \
-                Step.objects.filter(pnode_id=old_parent).filter(sort=old_position).filter(process_id=process_id)[0]
+                Step.objects.filter(pnode_id=old_parent).filter(sort=old_position).filter(
+                    process_id=process_id).exclude(state="9")[0]
             cur_step_obj.sort = position
             cur_step_id = cur_step_obj.id
             cur_step_obj.save()
@@ -7243,7 +7277,10 @@ def move_step(request):
                     step.save()
 
             # pnode
-            parent_step = Step.objects.get(id=parent)
+            if parent:
+                parent_step = Step.objects.get(id=parent)
+            else:
+                parent_step = None
             mystep = Step.objects.get(id=id)
             try:
                 mystep.pnode = parent_step
@@ -7274,8 +7311,12 @@ def move_step(request):
                         step.last_id = last_id
                     last_id = step.id
                     step.save()
+
             if parent != old_parent:
-                return HttpResponse(parent_step.name + "^" + str(parent_step.id))
+                if parent == None:
+                    return HttpResponse(" ^ ")
+                else:
+                    return HttpResponse(parent_step.name + "^" + str(parent_step.id))
             else:
                 return HttpResponse("0")
 
@@ -8123,7 +8164,8 @@ def custom_pdf_report(request):
 
                                     if current_scriptrun_obj[0].endtime and current_scriptrun_obj[0].starttime:
 
-                                        delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[0].starttime)
+                                        delta_time = (current_scriptrun_obj[0].endtime - current_scriptrun_obj[
+                                            0].starttime)
                                         delta_time_str = str(delta_time)
 
                                         end_time = current_scriptrun_obj[0].endtime.strftime("%Y-%m-%d %H:%M:%S")
@@ -8135,13 +8177,16 @@ def custom_pdf_report(request):
 
                                         if delta_time.total_seconds() > 0:
                                             if "," in delta_time_str:
-                                                delta_time_example = str(delta_time.total_seconds() // 60 // 60).split(".")[0]
+                                                delta_time_example = \
+                                                    str(delta_time.total_seconds() // 60 // 60).split(".")[0]
                                                 delta_time_list = delta_time_str.split(",")[-1].split(":")
-                                                delta_time = "{0}时{1}分{2}秒".format(delta_time_example, delta_time_list[1],
+                                                delta_time = "{0}时{1}分{2}秒".format(delta_time_example,
+                                                                                   delta_time_list[1],
                                                                                    delta_second if delta_second else "")
                                             else:
                                                 delta_time_list = delta_time_str.split(":")
-                                                delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0], delta_time_list[1],
+                                                delta_time = "{0}时{1}分{2}秒".format(delta_time_list[0],
+                                                                                   delta_time_list[1],
                                                                                    delta_second if delta_second else "")
                                         elif delta_time.total_seconds() == 0:
                                             delta_time = ""
@@ -8222,30 +8267,37 @@ def falconstorsearchdata(request):
         start_time = datetime.datetime.strptime(startdate, '%Y-%m-%d')
         end_time = datetime.datetime.strptime(enddate, '%Y-%m-%d') + datetime.timedelta(days=1) - datetime.timedelta(
             seconds=1)
-        all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time]).order_by("-starttime")
+        all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+            starttime__range=[start_time, end_time]).order_by("-starttime")
 
         if runperson:
             if processname != "" and runstate != "":
-                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                                   process__name=processname,
-                                                                                   state=runstate, creatuser=runperson).order_by("-starttime")
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+                    starttime__range=[start_time, end_time],
+                    process__name=processname,
+                    state=runstate, creatuser=runperson).order_by("-starttime")
             if processname == "" and runstate != "":
-                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                                   state=runstate, creatuser=runperson).order_by("-starttime")
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+                    starttime__range=[start_time, end_time],
+                    state=runstate, creatuser=runperson).order_by("-starttime")
             if processname != "" and runstate == "":
-                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                               process__name=processname, creatuser=runperson).order_by("-starttime")
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+                    starttime__range=[start_time, end_time],
+                    process__name=processname, creatuser=runperson).order_by("-starttime")
         else:
             if processname != "" and runstate != "":
-                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                                   process__name=processname,
-                                                                                   state=runstate).order_by("-starttime")
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+                    starttime__range=[start_time, end_time],
+                    process__name=processname,
+                    state=runstate).order_by("-starttime")
             if processname == "" and runstate != "":
-                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                                   state=runstate).order_by("-starttime")
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+                    starttime__range=[start_time, end_time],
+                    state=runstate).order_by("-starttime")
             if processname != "" and runstate == "":
-                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(starttime__range=[start_time, end_time],
-                                                                               process__name=processname).order_by("-starttime")
+                all_processrun_objs = ProcessRun.objects.exclude(state="9").filter(
+                    starttime__range=[start_time, end_time],
+                    process__name=processname).order_by("-starttime")
         state_dict = {
             "DONE": "已完成",
             "EDIT": "未执行",
