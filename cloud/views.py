@@ -6982,6 +6982,11 @@ def get_current_scriptinfo(request):
 
 
 def exec_script_by_hand(request):
+    """
+    在filecrosss流程中手动执行单个脚本
+    :param request:
+    :return:
+    """
     if request.user.is_authenticated():
         current_step_id = request.POST.get('steprunid', '')
         selected_script_id = request.POST.get('scriptid', '')
@@ -7001,22 +7006,29 @@ def exec_script_by_hand(request):
         rm_obj = remote.ServerByPara(cmd, ip, username, password, system_tag)  # 服务器系统从视图中传入
         scriptruns.starttime = datetime.datetime.now()
         result = rm_obj.run()
-        script.result = result["exec_tag"]
+        scriptruns.result = result["exec_tag"]
+        scriptruns.explain = result['data'] if result['data'] <= 5000 else result['data'][-4999:]
         # 处理脚本执行失败问题
         if result["exec_tag"] == 1:
             print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
-            scriptruns.operator = result['data']
+            scriptruns.runlog = result['log']
+            scriptruns.explain = result['data'] if result['data'] <= 5000 else result['data'][-4999:]
+            scriptruns.state = "ERROR"
             scriptruns.save()
             steprun.state = "ERROR"
             steprun.save()
         scriptruns.endtime = datetime.datetime.now()
-        scriptruns.operator = ""
         scriptruns.state = "DONE"
         scriptruns.save()
         return JsonResponse({"data": result})
 
 
 def ignore_current_script(request):
+    """
+    在filecross流程中手动忽略脚本，并写入状态
+    :param request:
+    :return:
+    """
     if request.user.is_authenticated():
         selected_script_id = request.POST.get('scriptid', '')
         scriptruns = ScriptRun.objects.filter(id=selected_script_id)[0]
