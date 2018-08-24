@@ -7007,12 +7007,11 @@ def exec_script_by_hand(request):
         scriptruns.starttime = datetime.datetime.now()
         result = rm_obj.run()
         scriptruns.result = result["exec_tag"]
-        scriptruns.explain = result['data'] if result['data'] <= 5000 else result['data'][-4999:]
+        scriptruns.explain = result['data'] if result['data'] <= 5000 else result['data'][:5000]
         # 处理脚本执行失败问题
         if result["exec_tag"] == 1:
-            print("当前脚本执行失败,结束任务!")  # 2.写入错误信息至operator
+            print("当前脚本执行失败,结束任务!")  
             scriptruns.runlog = result['log']
-            scriptruns.explain = result['data'] if result['data'] <= 5000 else result['data'][-4999:]
             scriptruns.state = "ERROR"
             scriptruns.save()
             steprun.state = "ERROR"
