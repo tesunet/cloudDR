@@ -7147,12 +7147,13 @@ def custom_step_tree(request):
                                 "allgroups": group_string, "group": rootnode.group, "group_name": group_name,
                                 "scripts": script_string, "errors": errors, "title": title}
                 root["children"] = get_step_tree(rootnode, selectid)
+                root["state"] = {"opened": True}
                 treedata.append(root)
         process = {}
         process["text"] = process_name
         process["data"] = {"allgroups": group_string, "verify": "first_node"}
         process["children"] = treedata
-
+        process["state"] = {"opened": True}
         return JsonResponse({"treedata": process})
     else:
         return HttpResponseRedirect("/login")
