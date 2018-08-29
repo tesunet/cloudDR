@@ -837,10 +837,12 @@ $('#scriptsave').click(function () {
             var mydata = data["data"];
             if (myres == "新增成功。") {
                 $("#scriptid").val(data["data"]);
-                $("#se_1").append("<option id='" + "script_" + mydata + "'>" + $("#scriptcode").val() + "</option>");
+                $("#se_1").append("<option value='" + mydata + "'>" + $("#scriptcode").val() + "</option>");
                 $('#static01').modal('hide');
             }
             if (myres == "修改成功。") {
+                var script_id = $("#scriptid").val();
+                $("#se_1").find('option[value="script_id"]'.replace("script_id", script_id)).text($("#scriptcode").val());
                 $('#static01').modal('hide');
             }
             alert(myres);
