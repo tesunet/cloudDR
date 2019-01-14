@@ -25,13 +25,13 @@ from django.db.models import Sum, Max
 from django.db import connection
 from cloud.vmApi import *
 import xlrd, xlwt
-import pythoncom
+# import pythoncom
 import pymssql
 from lxml import etree
 from django.forms.models import model_to_dict
 
-pythoncom.CoInitialize()
-import wmi
+# pythoncom.CoInitialize()
+# import wmi
 
 info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
         "lastlogin": 0}
@@ -3194,13 +3194,13 @@ def registercvsave(request):
                 agentTypeList = "<agentTypeList>"
                 for node in clientInfo["agentList"]:
                     if node["agentType"] == "File System":
-                        agentTypeList += "<agentType>FILESYSTEM</agentType>"
+                        agentTypeList += "<agentType>File System</agentType>"
                     else:
                         if node["agentType"] == "Oracle":
-                            agentTypeList += "<agentType>ORACLE</agentType>"
+                            agentTypeList += "<agentType>Oracle</agentType>"
                         else:
                             if node["agentType"] == "SQL Server":
-                                agentTypeList += "<agentType>MSSQL</agentType>"
+                                agentTypeList += "<agentType>SQL Server</agentType>"
                             else:
                                 agentTypeList += "<agentType>" + node["agentType"] + "</agentType>"
                 agentTypeList += "</agentTypeList>"
@@ -3779,13 +3779,13 @@ def addPhyClient(request):
     agentTypeList = "<agentTypeList>"
     for node in clientInfo["agentList"]:
         if node["agentType"] == "File System":
-            agentTypeList += "<agentType>FILESYSTEM</agentType>"
+            agentTypeList += "<agentType>File System</agentType>"
         else:
             if node["agentType"] == "Oracle":
-                agentTypeList += "<agentType>ORACLE</agentType>"
+                agentTypeList += "<agentType>Oracle</agentType>"
             else:
                 if node["agentType"] == "SQL Server":
-                    agentTypeList += "<agentType>MSSQL</agentType>"
+                    agentTypeList += "<agentType>SQL Server</agentType>"
                 else:
                     agentTypeList += "<agentType>" + node["agentType"] + "</agentType>"
     agentTypeList += "</agentTypeList>"
@@ -4012,7 +4012,7 @@ def matchsave(request):
                 cvToken = CV_RestApi_Token()
                 cvToken.login(info)
                 cvAPI = CV_API(cvToken)
-
+                # 获取客户端信息
                 clientInfo = cvAPI.getClientInfo(int(listid))
                 newhost = ClientHost.objects.exclude(status="9").filter(
                     Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id)).filter(
@@ -4029,13 +4029,13 @@ def matchsave(request):
                     agentTypeList = "<agentTypeList>"
                     for node in clientInfo["agentList"]:
                         if node["agentType"] == "File System":
-                            agentTypeList += "<agentType>FILESYSTEM</agentType>"
+                            agentTypeList += "<agentType>File System</agentType>"
                         else:
                             if node["agentType"] == "Oracle":
-                                agentTypeList += "<agentType>ORACLE</agentType>"
+                                agentTypeList += "<agentType>Oracle</agentType>"
                             else:
                                 if node["agentType"] == "SQL Server":
-                                    agentTypeList += "<agentType>MSSQL</agentType>"
+                                    agentTypeList += "<agentType>SQL Server</agentType>"
                                 else:
                                     agentTypeList += "<agentType>" + node["agentType"] + "</agentType>"
                     agentTypeList += "</agentTypeList>"
@@ -4087,12 +4087,140 @@ def matchsave(request):
                     newhost.appGroup = "缺省"
                     newhost.installTime = datetime.datetime.now()
                     # newhost.save()
+                # save to dataSet
                 for backupset in clientInfo["backupsetList"]:
                     backupInfo = cvAPI.getSubclientInfo(backupset["subclientId"])
-                    try:
-                        a = 1
-                    except:
-                        pass
+                    # print("clientName:{0} backupInfo:{1} ".format(backupset["clientName"], backupInfo))
+
+                    c_dataset = DataSet.objects.filter(clientName=backupset["clientName"],
+                                                       agentType=backupInfo["appName"])
+                    print("{0}, {1}".format(backupset["clientName"], backupInfo["appName"]))
+                    if c_dataset:
+                        print(c_dataset[0].agentType, c_dataset[0].clientName)
+                        c_dataset = c_dataset[0]
+                        # schedule
+                        schedule_name = backupInfo["schedule_name"]
+                        certificate_list = SchduleResource.objects.all()
+                        schedule_id = ""
+                        for certificate in certificate_list:
+                            if schedule_name in certificate.certificate:
+                                schedule_id = certificate.id
+                                break
+                        # storage
+                        storage = backupInfo["Storage"]
+                        # 区分SQL Server/Oracle/Virtual/File
+                        if backupInfo["appName"] == "File System":
+                            file_system_dict = {}
+                            # path
+                            file_path_list = backupInfo["content"]
+                            file_path_string = ""
+                            if file_path_list:
+                                for file_path in file_path_list:
+                                    file_path_string += "<path>{0}</path>".format(file_path)
+
+                            # isBackupOS
+                            is_backup_os = backupInfo["backupSystemState"]
+
+                            # 构造格式化字典
+                            file_system_dict["file_path_string"] = file_path_string
+                            file_system_dict["schedule_id"] = schedule_id
+                            file_system_dict["storage"] = storage
+                            file_system_dict["is_backup_os"] = is_backup_os
+
+                            content = r"""<?xml version="1.0" ?>
+                            <content>
+                                <backupContent>
+                                    {file_path_string}
+                                </backupContent>
+                                <schdule>{schedule_id}</schdule>
+                                <storage>{storage}</storage>
+                                <isBackupOS>{is_backup_os}</isBackupOS>
+                            </content>""".format(**file_system_dict)
+                            c_dataset.content = content
+                        elif backupInfo["appName"] == "Oracle":
+                            oracle_dict = {}
+
+                            oracle_dict["username"] = backupInfo["oracleUser"]
+                            oracle_dict["oraclehome"] = backupInfo["oracleHome"]
+                            oracle_dict["conn1"] = backupInfo["conn1"]
+                            oracle_dict["conn2"] = backupInfo["conn2"]
+                            oracle_dict["conn3"] = backupInfo["conn3"]
+                            oracle_dict["dbschdule"] = storage
+                            oracle_dict["logschdule"] = storage
+                            oracle_dict["dbstorage"] = storage
+                            oracle_dict["logstorage"] = storage
+
+                            content = r"""<?xml version="1.0" ?>
+                            <content>
+                                <backupContent>
+                                    <username>{username}</username>
+                                    <oraclehome>{oraclehome}</oraclehome>
+                                    <conn1>{conn1}</conn1>
+                                    <conn2>{conn2}</conn2>
+                                    <conn3>{conn3}</conn3>
+                                </backupContent>
+                                <schdule>
+                                    <dbschdule>{dbschdule}</dbschdule>
+                                    <logschdule>{logschdule}</logschdule>
+                                </schdule>
+                                <storage>
+                                    <dbstorage>{dbstorage}</dbstorage>
+                                    <logstorage>{logstorage}</logstorage>
+                                </storage>
+                            </content>""".format(**oracle_dict)
+                            c_dataset.content = content
+                        elif backupInfo["appName"] == "SQL Server":
+                            sql_server_dict = {}
+
+                            sql_server_dict["username"] = "admin"
+                            sql_server_dict["isvvs"] = backupInfo["vss"]
+                            sql_server_dict["iscover"] = backupInfo["iscover"]
+                            sql_server_dict["dbschdule"] = storage
+                            sql_server_dict["logschdule"] = storage
+                            sql_server_dict["dbstorage"] = storage
+                            sql_server_dict["logstorage"] = storage
+
+                            content = r"""<?xml version="1.0" ?>
+                            <content>
+                                <backupContent>
+                                    <username>{username}</username>
+                                    <isvvs>{isvvs}</isvvs>
+                                    <iscover>{iscover}</iscover>
+                                </backupContent>
+                                <schdule>
+                                    <dbschdule>{dbschdule}</dbschdule>
+                                    <logschdule>{logschdule}</logschdule>
+                                </schdule>
+                                <storage>
+                                    <dbstorage>{dbstorage}</dbstorage>
+                                    <logstorage>{logstorage}</logstorage>
+                                </storage>
+                            </content>""".format(**sql_server_dict)
+                            c_dataset.content = content
+                        elif backupInfo["appName"] == "Virtual Server":
+                            virtual_server_dict = {}
+
+                            virtual_servers = backupInfo["content"]
+                            virtual_name = ""
+                            for virtual in virtual_servers:
+                                virtual_name += "<VM>{0}</VM>".format(virtual)
+
+                            virtual_server_dict["virtual_name"] = virtual_name
+                            virtual_server_dict["schedule"] = schedule_id
+                            virtual_server_dict["storage"] = storage
+
+                            content = r"""<?xml version="1.0" ?>
+                            <content>
+                                <backupContent>
+                                    {virtual_name}
+                                </backupContent>
+                                <schdule>{schedule}</schdule>
+                                <storage>{storage}</storage>
+                            </content>""".format(**virtual_server_dict)
+                            c_dataset.content = content
+                        # print("*************", c_dataset.content)
+
+                        # c_dataset.save()
 
             return HttpResponse(result)
 
@@ -4146,6 +4274,11 @@ def phyproconfigdata(request):
 
 
 def getphydataget(request):
+    """
+    dataSet表中取出子客户端信息展示
+    :param request:
+    :return:
+    """
     if request.user.is_authenticated():
         if request.method == 'POST':
             result = {}
@@ -4155,7 +4288,7 @@ def getphydataget(request):
             mssql = request.POST.get('mssql', '')
 
             if fs == "1":
-                alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='FILESYSTEM').exclude(status="9")
+                alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='File System').exclude(status="9")
                 if (len(alldataset) > 0):
                     id = alldataset[0].id
                     dataSetGUID = alldataset[0].dataSetGUID
@@ -4193,7 +4326,7 @@ def getphydataget(request):
                     result["fs"] = {"id": id, "dataSetGUID": dataSetGUID, "path": path, "isBackupOS": isBackupOS,
                                     "schdule": schdule, "storage": storage}
             if oracle == "1":
-                alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='ORACLE').exclude(status="9")
+                alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='Oracle').exclude(status="9")
                 if (len(alldataset) > 0):
                     id = alldataset[0].id
                     dataSetGUID = alldataset[0].dataSetGUID
@@ -4244,7 +4377,7 @@ def getphydataget(request):
                                         "oraclehome": oraclehome, "conn1": conn1, "conn2": conn2, "conn3": conn3,
                                         "name": name}
             if mssql == "1":
-                alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='MSSQL').exclude(status="9")
+                alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='SQL Server').exclude(status="9")
                 if (len(alldataset) > 0):
                     id = alldataset[0].id
                     dataSetGUID = alldataset[0].dataSetGUID
@@ -4309,6 +4442,11 @@ def phyproconfigsaveapp(request):
 
 
 def phyproconfigsavefile(request):
+    """
+    dataSet表中存储文件系统信息
+    :param request:
+    :return:
+    """
     if request.user.is_authenticated():
         if request.method == 'POST':
             result = {}
@@ -4336,7 +4474,8 @@ def phyproconfigsavefile(request):
 
                     databaseschdule = ""
                     databasestorage = ""
-                    alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='FILESYSTEM').exclude(
+                    # 取出数据库中已有存储策略/计划策略
+                    alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='File System').exclude(
                         status="9")
                     if (len(alldataset) > 0):
                         try:
@@ -4353,9 +4492,11 @@ def phyproconfigsavefile(request):
                         except:
                             pass
 
+                    # 构造xml数据
                     impl = xml.dom.minidom.getDOMImplementation()
                     dom = impl.createDocument(None, 'content', None)
                     root = dom.documentElement
+                    # 文件存储路径
                     backupcontentnode = dom.createElement('backupContent')
                     for path in fs_backupContent:
                         if path != "":
@@ -4372,15 +4513,15 @@ def phyproconfigsavefile(request):
                         pathNode.appendChild(pathTextNode)
                         backupcontentnode.appendChild(pathNode)
                     root.appendChild(backupcontentnode)
-                    schduleNode = dom.createElement('schdule')
+                    schduleNode = dom.createElement('schdule')  # 计划策略
                     schduleTextNode = dom.createTextNode(fs_schdule)
                     schduleNode.appendChild(schduleTextNode)
                     root.appendChild(schduleNode)
-                    storageNode = dom.createElement('storage')
+                    storageNode = dom.createElement('storage')  # 存储策略
                     storageTextNode = dom.createTextNode(fs_storage)
                     storageNode.appendChild(storageTextNode)
                     root.appendChild(storageNode)
-                    isBackupOSNode = dom.createElement('isBackupOS')
+                    isBackupOSNode = dom.createElement('isBackupOS')  # 备份系统状态
                     isBackupOSTextNode = dom.createTextNode(fs_isBackupOS)
                     isBackupOSNode.appendChild(isBackupOSTextNode)
                     root.appendChild(isBackupOSNode)
@@ -4388,6 +4529,7 @@ def phyproconfigsavefile(request):
 
                     storagename = None
                     schdulename = None
+                    # 如果前端传入与后端原有存储策略不同，并且需要更新，对应前端选项匹配BackupResource表中策略名
                     if databasestorage != fs_storage or fs_isupdate == 'TRUE':
                         try:
                             storage = BackupResource.objects.get(id=fs_storage)
@@ -4397,6 +4539,7 @@ def phyproconfigsavefile(request):
                                     storagename = hostnode.getAttribute("name")
                         except:
                             pass
+                    # 如果前端传入与后端原有计划策略不同，并且需要更新，对应前端选项匹配ScheduleResource表中策略名
                     if databaseschdule != fs_schdule or fs_isupdate == 'TRUE':
                         try:
                             schdule = SchduleResource.objects.get(id=fs_schdule)
@@ -4413,7 +4556,7 @@ def phyproconfigsavefile(request):
                         isBackupOS = True
                     fsBackupContent = {"SPName": storagename, "Schdule": schdulename, "Paths": paths,
                                        "OS": isBackupOS}
-
+                    # 新增文件系统
                     if fs_dataSetGUID == "0":
                         fs_dataset = DataSet()
                         fs_dataset.dataSetGUID = uuid.uuid1()
@@ -4423,17 +4566,19 @@ def phyproconfigsavefile(request):
                         fs_dataset.vendor = myclient.vendor
                         fs_dataset.zone = myclient.zone
                         fs_dataset.clientID = myclient.clientID
-                        fs_dataset.agentType = "FILESYSTEM"
+                        fs_dataset.agentType = "File System"
                         fs_dataset.statu = "0"
                         fs_dataset.content = content
                         fs_dataset.installTime = datetime.datetime.now()
                         fs_dataset.save()
                         result["fs_GUID"] = str(fs_dataset.dataSetGUID)
+                    # 更新文件系统信息
                     else:
                         fs_dataset = DataSet.objects.get(dataSetGUID=fs_dataSetGUID)
                         fs_dataset.content = content
                         fs_dataset.save()
                         result["fs_GUID"] = str(fs_dataset.dataSetGUID)
+                    # 强制提交更新备份服务器
                     cvToken = CV_RestApi_Token()
                     cvToken.login(info)
                     cvAPI = CV_API(cvToken)
@@ -4488,7 +4633,7 @@ def phyproconfigsaveoracle(request):
                     databaseinstanceName = ""
                     databaseoraclehome = ""
                     databaseusername = ""
-                    alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='ORACLE').exclude(status="9")
+                    alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='Oracle').exclude(status="9")
                     if (len(alldataset) > 0):
                         databaseinstanceName = alldataset[0].instanceName
                         databasecontent = alldataset[0].content
@@ -4603,7 +4748,7 @@ def phyproconfigsaveoracle(request):
                         oracle_dataset.vendor = myclient.vendor
                         oracle_dataset.zone = myclient.zone
                         oracle_dataset.clientID = myclient.clientID
-                        oracle_dataset.agentType = "ORACLE"
+                        oracle_dataset.agentType = "Oracle"
                         oracle_dataset.statu = "0"
                         oracle_dataset.instanceName = oracle_name
                         oracle_dataset.content = content
@@ -4665,7 +4810,8 @@ def phyproconfigsavemssql(request):
                     databaseschdule = ""
                     databasestorage = ""
                     databaseinstanceName = ""
-                    alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='MSSQL').exclude(status="9")
+                    alldataset = DataSet.objects.filter(clientGUID=clientGUID, agentType='SQL Server').exclude(
+                        status="9")
                     if (len(alldataset) > 0):
                         databaseinstanceName = alldataset[0].instanceName
                         databasecontent = alldataset[0].content
@@ -4762,7 +4908,7 @@ def phyproconfigsavemssql(request):
                         mssql_dataset.vendor = myclient.vendor
                         mssql_dataset.zone = myclient.zone
                         mssql_dataset.clientID = myclient.clientID
-                        mssql_dataset.agentType = "MSSQL"
+                        mssql_dataset.agentType = "SQL Server"
                         mssql_dataset.instanceName = mssql_name
                         mssql_dataset.statu = "0"
                         mssql_dataset.content = content
@@ -5208,7 +5354,7 @@ def racproconfig(request):
                 doc = parseString(agentTypeList)
                 for node in doc.getElementsByTagName("agentTypeList"):
                     for agenttypenode in node.getElementsByTagName("agentType"):
-                        if agenttypenode.childNodes[0].data == "ORACLE":
+                        if agenttypenode.childNodes[0].data == "Oracle":
                             clientName = host.clientName
                             pyhhost.append({"GUID": host.clientGUID, "NAME": clientName})
                             break
@@ -5928,13 +6074,13 @@ def oraclerecovery(request, offset):
         myhost = ClientHost.objects.filter(id=id)
         if len(myhost) > 0:
             if myhost[0].owernID == request.user.userinfo.userGUID:
-                alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='ORACLE').exclude(
+                alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='Oracle').exclude(
                     status="9")
                 if len(alldataset) > 0:
                     allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box") & (
                             Q(owernID=request.user.userinfo.userGUID) | Q(
                         userinfo__id=request.user.userinfo.id))).filter(
-                        agentTypeList__contains="<agentType>ORACLE</agentType>")
+                        agentTypeList__contains="<agentType>Oracle</agentType>")
                     destClient = []
                     for host in allhost:
                         destClient.append(host.clientName)
@@ -6004,14 +6150,14 @@ def mssqlrecovery(request, offset):
         myhost = ClientHost.objects.filter(id=id)
         if len(myhost) > 0:
             if myhost[0].owernID == request.user.userinfo.userGUID:
-                alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='MSSQL').exclude(
+                alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='SQL Server').exclude(
                     status="9")
                 if len(alldataset) > 0:
                     allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box") &
                                                                             (Q(
                                                                                 owernID=request.user.userinfo.userGUID) | Q(
                                                                                 userinfo__id=request.user.userinfo.id))).filter(
-                        agentTypeList__contains="<agentType>MSSQL</agentType>")
+                        agentTypeList__contains="<agentType>SQL Server</agentType>")
                     destClient = []
                     for host in allhost:
                         destClient.append(host.clientName)
@@ -6084,14 +6230,14 @@ def filerecovery(request, offset):
         myhost = ClientHost.objects.filter(id=id)
         if len(myhost) > 0:
             if myhost[0].owernID == request.user.userinfo.userGUID:
-                alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='FILESYSTEM').exclude(
+                alldataset = DataSet.objects.filter(clientGUID=myhost[0].clientGUID, agentType='File System').exclude(
                     status="9")
                 if len(alldataset) > 0:
                     allhost = ClientHost.objects.exclude(status="9").filter(Q(hostType="physical box") &
                                                                             (Q(
                                                                                 owernID=request.user.userinfo.userGUID) | Q(
                                                                                 userinfo__id=request.user.userinfo.id))).filter(
-                        agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
+                        agentTypeList__contains="<agentType>File System</agentType>")
                     destClient = []
                     for host in allhost:
                         destClient.append(host.clientName)
@@ -6541,7 +6687,7 @@ def filecross(request, offset):
                 (Q(
                     owernID=request.user.userinfo.userGUID) | Q(
                     userinfo__id=request.user.userinfo.id))).filter(
-                agentTypeList__contains="<agentType>FILESYSTEM</agentType>")
+                agentTypeList__contains="<agentType>File System</agentType>")
             destClient = []
             for host in allhost:
                 destClient.append(host.clientName)
@@ -7908,8 +8054,8 @@ def custom_pdf_report(request):
             step=pstep)
         if pnode_steprun:
             second_el_dict["start_time"] = pnode_steprun[0].starttime.strftime("%Y-%m-%d %H:%M:%S") if \
-            pnode_steprun[
-                0].starttime else ""
+                pnode_steprun[
+                    0].starttime else ""
             second_el_dict["end_time"] = pnode_steprun[0].endtime.strftime("%Y-%m-%d %H:%M:%S") if pnode_steprun[
                 0].endtime else ""
 
@@ -8169,7 +8315,7 @@ def custom_pdf_report(request):
     css = [r"{0}".format(css_path)]
 
     pdfkit.from_string(t.content.decode(encoding="utf-8"), r"falconstor.pdf", configuration=config,
-                              options=options, css=css)
+                       options=options, css=css)
 
     def file_iterator(file_name, chunk_size=512):
         with open(file_name, "rb") as f:
