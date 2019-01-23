@@ -941,15 +941,15 @@ class CV_Client(CV_GetAllInformation):
                         # connect
                         sqlConnect = instancenode.findall(".//oracleInstance/sqlConnect")
                         backupInfo["conn1"] = sqlConnect[0].get("userName", "")
-                        backupInfo["conn2"] = ""   # sys密码，没有
+                        backupInfo["conn2"] = ""  # sys密码，没有
                         backupInfo["conn3"] = sqlConnect[0].get("domainName", "")
                         break
             if backupInfo["appName"] == "Virtual Server":
-                    children = resp.findall(".//vmContent/children")
-                    for child in children:
-                        mycontent.append(child.get("displayName", ""))
-                    backupInfo["content"] = mycontent
-                    backupInfo["backupsetName"] = subClientEntity[0].get("backupsetName", "")
+                children = resp.findall(".//vmContent/children")
+                for child in children:
+                    mycontent.append(child.get("displayName", ""))
+                backupInfo["content"] = mycontent
+                backupInfo["backupsetName"] = subClientEntity[0].get("backupsetName", "")
         except:
             self.msg = "error get client instance"
         # print(backupInfo)
@@ -3520,15 +3520,20 @@ class CV_API(object):
 
 
 if __name__ == "__main__":
-    info = {"webaddr": "cv-server", "port": "81", "username": "cvadmin", "passwd": "1qaz@WSX", "token": "",
+    info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
             "lastlogin": 0}
+    # info = {"webaddr": "cv-server", "port": "81", "username": "cvadmin", "passwd": "1qaz@WSX", "token": "",
+    #         "lastlogin": 0}
     cvToken = CV_RestApi_Token()
 
     cvToken.login(info)
     cvAPI = CV_API(cvToken)
 
-    # subclientId = "61"
-    # backupInfo = cvAPI.getSubclientInfo(subclientId)
+    print(cvAPI.getBackupset("cv-server", "File"))
+
+
+
+    # backupInfo = cvAPI.getSubclientInfo("22")
     # print(backupInfo)
     # print('it is main')
     # #info = {"webaddr":"172.16.110.55", "port":"81", "username":"cvadmin", "passwd":"1qaz@WSX", "token":"", "lastlogin":0}
@@ -3557,7 +3562,8 @@ if __name__ == "__main__":
     # print(cvAPI.getClientInfo("vcTest"))
     # print(cvAPI.getSPList())
     # print(cvAPI.getSchduleList())
-    # vmList = cvAPI.getVMWareVMList("vcTest")
+    # vmList = cvAPI.getVMWareVMList("vctest.hzx")
+    # print(vmList)
     # for node in vmList:
     #    print(node)
 
@@ -3591,10 +3597,20 @@ if __name__ == "__main__":
     # operator = {"restoreTime":None, "destPath":"f:\\", "sourcePaths":["\\c:\\AUTOEXEC.BAT", "\\c:\\WMPUT"], "overWrite":True, "OS Restore": False, "inPlace":False}
     # retCode = cvAPI.restoreFSBackupset("win64-db1", "win64-db1", None, operator)
     # print(retCode, cvAPI.msg)
-    # list = cvAPI.getVMWareDataStoreList("vcenter2")
+    # list = cvAPI.getVMWareDataStoreList(14)
+    # print(list)
     # for node in list:
     #    print(node)
     # print(cvAPI.msg)
-    # list = cvAPI.getJobList("test2.paulwen", "File")
+    # list = cvAPI.getJobList("cv-server", "File")
+    # {'backupSetName': 'defaultBackupSet', 'LastTime': '1540299610','diskSize': '0','jobId': '4437664', 'client': None,
+    # 'agentType': 'File System', 'status': '启动失败', 'StartTime': '1540299610', 'jobType': 'Backup', 'appSize': '0',
+    # 'Level': 'INCREMANTAL'}
+    # print(list)
+    # ['4437664', '4437685', '4437704', '4437725', '4437745', '4437764', '4437784', '4437802', '4437823', '4437844',
+    #  '4437863', '4437884', '4437902', '4437921', '4437940', '4437962', '4437967', '4437980']
+    # temp_list = []
     # for node in list:
-    #    print(node)
+    #    temp_list.append(node["jobId"])
+    # print(temp_list)
+

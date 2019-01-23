@@ -29,6 +29,7 @@ import xlrd, xlwt
 import pymssql
 from lxml import etree
 from django.forms.models import model_to_dict
+from .utils import *
 
 # pythoncom.CoInitialize()
 # import wmi
@@ -3448,13 +3449,11 @@ def getbackupcert(request):
                     poolid = int(poolid)
                 except:
                     raise Http404()
-
             cvToken = CV_RestApi_Token()
             cvToken.login(info)
             cvAPI = CV_API(cvToken)
             for node in cvAPI.getSPList():
                 result.append({"id": node["SPName"], "name": node["SPName"]})
-
             return HttpResponse(json.dumps(result))
 
 
@@ -3653,6 +3652,12 @@ def getschdulecert(request):
             cvAPI = CV_API(cvToken)
             for node in cvAPI.getSchduleList():
                 result.append({"id": node["SchduleName"], "name": node["SchduleName"]})
+
+            # 数据库查询
+            # sql_server = SQLServerFilter()
+            # for node in sql_server.get_schedule_list():
+            #     result.append({"id": node["SchduleName"], "name": node["SchduleName"]})
+
             return HttpResponse(json.dumps(result))
 
 
@@ -3830,6 +3835,9 @@ def addPhyClient(request):
 
 @csrf_exempt
 def checkPhyClient(request):
+    # sql_server = SQLServerFilter()
+    # client_list = sql_server.get_client_list()
+
     username = request.GET.get('username', '').replace('^', ' ')
     password = request.GET.get('password', '').replace('^', ' ')
     clientName = request.GET.get('clientName', '').replace('^', ' ')
@@ -3842,6 +3850,11 @@ def checkPhyClient(request):
         if (len(allhost) > 0):
             result = {"value": "-2", "text": u"主机名称" + clientName + u'已存在。'}
         else:
+
+            # 数据库查询
+            # sql_server = SQLServerFilter()
+            # clientList = sql_server.get_client_list()
+
             cvToken = CV_RestApi_Token()
             cvToken.login(info)
             cvAPI = CV_API(cvToken)
@@ -3974,6 +3987,12 @@ def matching(request):
     if request.user.is_authenticated() and request.session['isadmin']:
         if request.method == 'POST':
             result = {}
+
+            # 数据库查询
+            # sql_server = SQLServerFilter()
+            # clientList = sql_server.get_client_list()
+
+
             cvToken = CV_RestApi_Token()
             cvToken.login(info)
             cvAPI = CV_API(cvToken)
@@ -3987,6 +4006,7 @@ def matching(request):
                 else:
                     client["selected"] = False
                 returnclientList.append(client)
+            # print(returnclientList)
             result = {"value": "1", "list": returnclientList}
 
             return HttpResponse(json.dumps(result))
@@ -4009,11 +4029,20 @@ def matchsave(request):
                     client.status = "9"
                     # client.save()
             for listid in myclientlist:
+                # 已知客户端id，查询该客户端下的相关信息与配置
+
+                # 1.db
+                # client_info_dict = {}
+                # sql_server = SQLServerFilter()
+                # clientInfo = sql_server.get_client_info(listid)
+
+                # 2.接口
                 cvToken = CV_RestApi_Token()
                 cvToken.login(info)
                 cvAPI = CV_API(cvToken)
                 # 获取客户端信息
                 clientInfo = cvAPI.getClientInfo(int(listid))
+
                 newhost = ClientHost.objects.exclude(status="9").filter(
                     Q(owernID=request.user.userinfo.userGUID) | Q(userinfo__id=request.user.userinfo.id)).filter(
                     clientID=int(listid)).exclude(status="9")
@@ -4089,14 +4118,14 @@ def matchsave(request):
                     # newhost.save()
                 # save to dataSet
                 for backupset in clientInfo["backupsetList"]:
+                    # print(backupset["subclientId"], type(backupset["subclientId"]))
                     backupInfo = cvAPI.getSubclientInfo(backupset["subclientId"])
                     # print("clientName:{0} backupInfo:{1} ".format(backupset["clientName"], backupInfo))
-
                     c_dataset = DataSet.objects.filter(clientName=backupset["clientName"],
                                                        agentType=backupInfo["appName"])
-                    print("{0}, {1}".format(backupset["clientName"], backupInfo["appName"]))
+                    # print("{0}, {1}".format(backupset["clientName"], backupInfo["appName"]))
                     if c_dataset:
-                        print(c_dataset[0].agentType, c_dataset[0].clientName)
+                        # print(c_dataset[0].agentType, c_dataset[0].clientName)
                         c_dataset = c_dataset[0]
                         # schedule
                         schedule_name = backupInfo["schedule_name"]
