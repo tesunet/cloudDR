@@ -75,6 +75,7 @@ class CV_RestApi_Token(object):
         self.isLogin = self._login(self.credit)
         return self.credit["token"]
 
+
     def _login(self, credit):
         """
         Constructor 
@@ -3520,6 +3521,9 @@ class CV_API(object):
 
 
 if __name__ == "__main__":
+    # commvault-10
+    # info = {"webaddr": "192.168.1.121", "port": "81", "username": "admin", "passwd": "admin", "token": "",
+    #         "lastlogin": 0}
     info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
             "lastlogin": 0}
     # info = {"webaddr": "cv-server", "port": "81", "username": "cvadmin", "passwd": "1qaz@WSX", "token": "",
@@ -3529,11 +3533,20 @@ if __name__ == "__main__":
     cvToken.login(info)
     cvAPI = CV_API(cvToken)
 
-    print(cvAPI.getBackupset("cv-server", "File"))
+    ret = cvAPI.getJobList(3)  # backup status
+    # ret = cvAPI.getClientInfo(3)
+    # ret = cvAPI.getClientList()
+
+    print(ret)
+    import json
+    with open(r"C:\Users\Administrator\Desktop\ret.json", "w") as f:
+        f.write(json.dumps(ret))
+
+    # print(cvAPI.getBackupset("cv-server", "File"))
 
 
 
-    # backupInfo = cvAPI.getSubclientInfo("22")
+    backupInfo = cvAPI.getSubclientInfo("22")
     # print(backupInfo)
     # print('it is main')
     # #info = {"webaddr":"172.16.110.55", "port":"81", "username":"cvadmin", "passwd":"1qaz@WSX", "token":"", "lastlogin":0}
