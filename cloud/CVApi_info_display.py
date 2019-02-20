@@ -490,7 +490,8 @@ class CV_Client(CV_GetAllInformation):
         self.platform = {"platform": None, "ProcessorType": 0, "hostName": None}
         self.clientInfo = {"clientName": None, "clientId": None, "platform": self.platform, "backupsetList": [],
                            "agentList": []}
-        # self.backupInfo = {"clientId":None, "clientName":None, "agentType":None, "agentId":None, "backupsetId":None, "backupsetName":None, "instanceName":None, "instanceId":None}
+        # self.backupInfo = {"clientId":None, "clientName":None, "agentType":None, "agentId":None, "backupsetId":None,
+        # "backupsetName":None, "instanceName":None, "instanceId":None}
 
         self.isNewClient = True
         self.getClientInfo(client)
@@ -525,7 +526,8 @@ class CV_Client(CV_GetAllInformation):
         return True
 
     def getSubClientList(self, clientId):
-        # subclientInfo {'subclientName','instanceName','backupsetName','appName','applicationId','clientName','instanceId','backupsetId','subclientId', 'clientId'}
+        # subclientInfo {'subclientName','instanceName','backupsetName','appName','applicationId','clientName',
+        # 'instanceId','backupsetId','subclientId', 'clientId'}
         subList = self.subclientList
         del subList[:]
         if clientId == None:
@@ -668,21 +670,24 @@ class CV_Client(CV_GetAllInformation):
             backupInfo["appName"] = subClientEntity[0].get("appName", "")
             # 存储策略
             dataBackupStoragePolicy = resp.findall(".//dataBackupStoragePolicy")
-            backupInfo["Storage"] = dataBackupStoragePolicy[0].get("storagePolicyName", "")
 
-            # 存储策略具体内容   >>>>>   没取到
+            # 存储策略具体内容
             storagePolicyId = dataBackupStoragePolicy[0].get("storagePolicyId", "")
             storage_policy_cmd = "/StoragePolicy/{0}?propertyLevel=10".format(storagePolicyId)
-            # /V2/StoragePolicy/10?propertyLevel=1
             storage_policy_xml = self.getCmd(storage_policy_cmd)
-            storage_policy_info = storage_policy_xml.findall(".//policies") if storage_policy_xml else []
-            if storage_policy_info:
-                storage_policy_info = storage_policy_info[0]
-                storage_policy_dict = dict(storage_policy_info.items())
-                backupInfo["storage_info"] = storage_policy_dict
-            else:
-                backupInfo["storage_info"] = {}
-            # *********************** Schedule, Oracle connect string, SQL Server if  default covered
+            storage_policy_copy = storage_policy_xml.findall(".//StoragePolicyCopy") if storage_policy_xml else []
+            storage_library = storage_policy_xml.findall(".//library") if storage_policy_xml else []
+            storage_drive_pool = storage_policy_xml.findall(".//drivePool") if storage_policy_xml else []
+            storage_retention_rules = storage_policy_xml.findall(".//retentionRules") if storage_policy_xml else []
+
+            backupInfo["storage_info"] = {
+                "storage_id": dataBackupStoragePolicy[0].get("storagePolicyId", ""),
+                "storage_name": dataBackupStoragePolicy[0].get("storagePolicyName", ""),
+                "storage_policy_copy": dict(storage_policy_copy[0].items()) if storage_policy_copy else "",
+                "storage_library": dict(storage_library[0].items()) if storage_library else "",
+                "storage_drive_pool": dict(storage_drive_pool[0].items()) if storage_drive_pool else "",
+                "storage_retention_rules": dict(storage_retention_rules[0].items()) if storage_retention_rules else "",
+            }
             # 计划策略
             schduleList = []
             cmd = "Schedules?subclientId=<<subclientId>>"
@@ -694,23 +699,23 @@ class CV_Client(CV_GetAllInformation):
                     schduleList.append(node.attrib)
             except:
                 self.msg = "did not get Task"
+            schedule_policy_list = []
+            for schedule in schduleList:
+                task_id = schedule["taskId"] if schduleList else ""
 
-            backupInfo["schedule_name"] = schduleList[0]["taskName"] if schduleList else ""
-            task_id = schduleList[0]["taskId"] if schduleList else ""
+                # 计划策略具体内容
+                cmd_get_schedule_name = "SchedulePolicy/{0}".format(task_id)
+                content = self.getCmd(cmd_get_schedule_name)
+                schedule_info = content.findall(".//pattern") if content else []
+                if schedule_info:
+                    schedule_info = schedule_info[0]
+                    schedule_policy_dict = dict(schedule_info.items())
+                    schedule_policy_dict["schdule_name"] = schduleList[0]["taskName"] if schduleList else ""
 
-            # 计划策略具体内容
-            cmd_get_schedule_name = "SchedulePolicy/{0}".format(task_id)
-            content = self.getCmd(cmd_get_schedule_name)
-            schedule_info = content.findall(".//pattern") if content else []
-            if schedule_info:
-                schedule_info = schedule_info[0]
-                schedule_policy_dict = dict(schedule_info.items())
-                backupInfo["schedule_info"] = schedule_policy_dict
-            else:
-                backupInfo["schedule_info"] = {}
+                    schedule_policy_list.append(schedule_policy_dict)
+            backupInfo["schedule_info"] = schedule_policy_list
 
-            # *****************************************************************************
-
+            # 客户端备份内容
             # 文件备份集信息
             if backupInfo["appName"] == "File System":
                 # content
@@ -869,23 +874,65 @@ class CV_API(object):
         """
         根据client_id获取所有备份信息：
         {
-            agent_list: [{
-                agent_type: "File System",
-                backup_set_list: [{
-                    back_up_set_id: 1,
-                    back_up_set_name: "defaultBackupSet",
-                    sub_client_list: [{
-                        sub_client_id: 1,
-                        schedule: "计划时间",
-                        storage: "存储策略",
-                    },
-                    }], ],
-            },
-            ],
+            "agent_list": [{
+                "backup_set_list": [{
+                    "sub_client_list": [{
+                        "sub_client_id": "7",
+                        "storage_info": {
+                            "storage_drive_pool": {
+                                "drivePoolId": "1",
+                                "__type__": "47",
+                                "drivePoolName": "DrivePool(win2008)1"
+                            },
+                            "storage_retention_rules": {
+                                "retainBackupDataForDays": "-1",
+                                "jobs": "0",
+                                "retainBackupDataForCycles": "-1",
+                                "retainArchiverDataForDays": "-1",
+                                "retentionFlags": "2"
+                            },
+                            "storage_library": {
+                                "libraryName": "test_disk",
+                                "libraryId": "1",
+                                "__type__": "9"
+                            },
+                            "storage_policy_copy": {
+                                "copyId": "2",
+                                "__type__": "18",
+                                "copyName": "\u4e3b"
+                            },
+                            "storage_name": "test_storage_policy",
+                            "storage_id": "3"
+                        },
+                        "schedule_info": [{
+                            "freq_interval": "127",
+                            "active_end_occurence": "0",
+                            "active_start_time": "00:00:00",
+                            "active_end_time": "23:59:00",
+                            "freq_restart_interval": "0",
+                            "active_end_date": "0",
+                            "skipDayNumber": "0",
+                            "freq_relative_interval": "0",
+                            "name": "",
+                            "description": "",
+                            "freq_subday_interval": "28800",
+                            "patternId": "7",
+                            "active_start_date": "2013-01-14 08:00:00",
+                            "flags": "0",
+                            "schdule_name": "System Created for DDB subclients",
+                            "freq_recurrence_factor": "1",
+                            "skipOccurence": "0",
+                            "freq_type": "Weekly"
+                        }]
+                    }],
+                    "back_up_set_id": "3",
+                    "back_up_set_name": "defaultBackupSet"
+                }],
+                "agent_type": "File System"
+            }]
         }
         :return: backup_info_by_client
         """
-        # 1.agent_list
         cv_client = CV_Client(self.token)
         c_agent_list = cv_client.getClientAgentList(client)
 
@@ -913,10 +960,10 @@ class CV_API(object):
                             c_sub_client_info = cv_client.getSubclientInfo(sub_client_id)
                             sub_client_info = dict()
                             sub_client_info["sub_client_id"] = sub_client_id
-                            sub_client_info["schedule"] = c_sub_client_info["schedule_name"]
+                            # sub_client_info["schedule"] = c_sub_client_info["schedule_name"]
                             sub_client_info["schedule_info"] = c_sub_client_info["schedule_info"]
 
-                            sub_client_info["storage"] = c_sub_client_info["Storage"]
+                            # sub_client_info["storage"] = c_sub_client_info["Storage"]
                             sub_client_info["storage_info"] = c_sub_client_info["storage_info"]
                             sub_client_list.append(sub_client_info)
 
@@ -934,10 +981,10 @@ class CV_API(object):
 
 if __name__ == "__main__":
     # commvault-10
-    # info = {"webaddr": "192.168.1.121", "port": "81", "username": "admin", "passwd": "admin", "token": "",
-    #         "lastlogin": 0}
-    info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
+    info = {"webaddr": "192.168.1.121", "port": "81", "username": "admin", "passwd": "admin", "token": "",
             "lastlogin": 0}
+    # info = {"webaddr": "cv-server", "port": "81", "username": "admin", "passwd": "Admin@2017", "token": "",
+    #         "lastlogin": 0}
     # info = {"webaddr": "cv-server", "port": "81", "username": "cvadmin", "passwd": "1qaz@WSX", "token": "",
     #         "lastlogin": 0}
     cvToken = CV_RestApi_Token()
@@ -945,11 +992,11 @@ if __name__ == "__main__":
     cvToken.login(info)
     cvAPI = CV_API(cvToken)
     # ret = cvAPI.getJobList(3)  # backup status
-    ret = cvAPI.getClientInfo(3)  # 备份策略统计
+    ret = cvAPI.get_backup_info_by_client("2")  # 备份策略统计
     # ret = cvAPI.getClientList()
     # ret = cvAPI.getSubclientInfo("34")
     print("***********************", "\n", ret)
     # import json
     #
-    # with open(r"C:\Users\Administrator\Desktop\6.json", "w") as f:
+    # with open(r"C:\Users\Administrator\Desktop\json\2.json", "w") as f:
     #     f.write(json.dumps(ret))
