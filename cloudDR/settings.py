@@ -100,7 +100,6 @@ DATABASES = {
         'NAME': 'clouddr',
         'USER': 'root',
         'PASSWORD': 'password',
-        #'HOST': '',
         'HOST': '223.247.155.54',
         'PORT': '3306',
     }
