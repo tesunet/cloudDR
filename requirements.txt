@@ -4,7 +4,7 @@ billiard==3.3.0.23
 celery==3.1.25
 certifi==2017.7.27.1
 chardet==3.0.4
-django==1.9.7
+django==1.11.29
 django-celery==3.2.1
 ez-setup==0.9
 idna==2.6
